@@ -763,7 +763,6 @@ func (r *Readline) acceptMenuSelection() {
 	}
 
 	selected := r.completionList[r.menuSelected].Text
-	r.resetCompletion()
 
 	// Apply the selected completion
 	words := strings.Fields(r.completionBase)
@@ -771,21 +770,36 @@ func (r *Readline) acceptMenuSelection() {
 		// Completing command
 		r.buffer = []rune(selected)
 	} else {
-		// Completing file
-		lastWord := ""
-		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
-			lastWord = words[len(words)-1]
-		}
-
-		if strings.Contains(lastWord, "/") {
-			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+		// Completing file - check for trailing space
+		if strings.HasSuffix(r.completionBase, " ") {
+			// Trailing space - append file to command
+			r.buffer = []rune(r.completionBase + selected)
 		} else {
-			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+			// No trailing space - replace last word
+			lastWord := ""
+			if len(words) > 0 {
+				lastWord = words[len(words)-1]
+			}
+			if strings.Contains(lastWord, "/") {
+				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+			} else {
+				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+			}
 		}
 	}
 
 	r.cursor = len(r.buffer)
-	r.redraw()
+
+	// Clear the menu before resetting completion
+	r.clearCompletionMenu()
+
+	// Redraw command line and position cursor at end
+	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo
+	r.displayPrompt()
+	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
+
+	// Reset completion AFTER using completionBase
+	r.resetCompletion()
 }
 
 // applyCycleCompletion applies completion while keeping menu active for cycling.
@@ -802,16 +816,21 @@ func (r *Readline) applyCycleCompletion() {
 		// Completing command
 		r.buffer = []rune(selected)
 	} else {
-		// Completing file
-		lastWord := ""
-		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
-			lastWord = words[len(words)-1]
-		}
-
-		if strings.Contains(lastWord, "/") {
-			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+		// Completing file - check for trailing space
+		if strings.HasSuffix(r.completionBase, " ") {
+			// Trailing space - append file to command
+			r.buffer = []rune(r.completionBase + selected)
 		} else {
-			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+			// No trailing space - replace last word
+			lastWord := ""
+			if len(words) > 0 {
+				lastWord = words[len(words)-1]
+			}
+			if strings.Contains(lastWord, "/") {
+				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+			} else {
+				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+			}
 		}
 	}
 
