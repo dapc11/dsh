@@ -114,6 +114,9 @@ func (r *Readline) handleEscapeSequence() error { //nolint:cyclop // Escape sequ
 	}
 
 	switch ch1 {
+	case 127: // Alt+Backspace (ESC + DEL)
+		r.killRing.ResetYank()
+		r.killWordBackward()
 	case '[':
 		ch2, err := r.readChar()
 		if err != nil {
