@@ -89,6 +89,7 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.killRing.ResetYank()
 		r.backspace()
 		r.searchPrefix = ""
+		r.browseMode = false // Exit browse mode when editing
 		r.updateSuggestion()
 	case KeyEscape:
 		err := r.handleEscapeSequence()
@@ -99,7 +100,8 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		if ch >= 32 && ch < 127 {
 			r.killRing.ResetYank()
 			r.insertChar(rune(ch))
-			r.searchPrefix = "" // Reset search prefix on new input
+			r.searchPrefix = ""  // Reset search prefix on new input
+			r.browseMode = false // Exit browse mode when typing
 			r.updateSuggestion()
 		}
 	}
@@ -415,6 +417,21 @@ func (r *Readline) moveWordBackward() {
 
 // History operations.
 func (r *Readline) historyPrevious() {
+	// Start browse mode if buffer is empty
+	if len(r.buffer) == 0 && r.searchPrefix == "" {
+		r.browseMode = true
+	}
+
+	// Use regular history navigation in browse mode
+	if r.browseMode {
+		line := r.history.Previous()
+		if line != "" {
+			r.setBufferFromHistory(line)
+		}
+		return
+	}
+
+	// Use prefix search if there's input
 	prefix := r.searchPrefix
 	if prefix == "" {
 		prefix = string(r.buffer)
@@ -428,6 +445,14 @@ func (r *Readline) historyPrevious() {
 }
 
 func (r *Readline) historyNext() {
+	// Use regular history navigation in browse mode
+	if r.browseMode {
+		line := r.history.Next()
+		r.setBufferFromHistory(line)
+		return
+	}
+
+	// Use prefix search if there's input
 	prefix := r.searchPrefix
 	if prefix == "" {
 		prefix = string(r.buffer)
