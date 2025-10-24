@@ -658,6 +658,10 @@ func (r *Readline) showCompletionMenu() {
 	r.displayPrompt()
 	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
 	r.setCursorPosition()
+
+	// Mark menu as displayed
+	r.menuDisplayed = true
+	r.menuLinesDrawn = maxRows + 1 // menu rows + pagination line
 }
 
 // applyCompletion applies a completion option.
@@ -805,10 +809,13 @@ func (r *Readline) applyCycleCompletion() {
 
 	r.cursor = len(r.buffer)
 
-	// Clear current line and redraw buffer only
-	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo // Move to start and clear line
+	// Just redraw command line and menu - let it overwrite
+	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo
 	r.displayPrompt()
 	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
+
+	// Show menu (will overwrite previous)
+	r.showCompletionMenu()
 }
 
 // clearCompletionMenu clears the displayed completion menu.
@@ -817,11 +824,12 @@ func (r *Readline) clearCompletionMenu() {
 		return
 	}
 
-	// Clear menu lines
-	clearLines := r.menuMaxRows + 3 // menu + pagination info
-	for i := 0; i < clearLines; i++ {
-		_, _ = fmt.Print("\033[A\033[K") //nolint:forbidigo
-	}
+	// Move down to clear area, clear to end, move back up
+	_, _ = fmt.Print("\n\033[0J") //nolint:forbidigo // Move down, clear to end of display
+	_, _ = fmt.Print("\033[A")    //nolint:forbidigo // Move back up to command line
+
+	r.menuDisplayed = false
+	r.menuLinesDrawn = 0
 }
 
 // resetCompletion clears completion state.

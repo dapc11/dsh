@@ -32,6 +32,7 @@ type Readline struct {
 	menuDisplayed  bool
 	menuPage       int
 	menuMaxRows    int
+	menuLinesDrawn int
 }
 
 // New creates a new readline instance.
