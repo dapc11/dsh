@@ -139,7 +139,7 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 	return true // Continue reading
 }
 
-func (r *Readline) handleEscapeSequence() error { //nolint:cyclop // Escape sequence handling requires many branches
+func (r *Readline) handleEscapeSequence() error { //nolint:gocognit,cyclop,funlen // Terminal input handling requires complexity //nolint:cyclop // Escape sequence handling requires many branches
 	ch1, err := r.readChar()
 	if err != nil {
 		return err
@@ -563,7 +563,7 @@ func (r *Readline) performCompletion() {
 }
 
 // showCompletionMenu displays the completion menu with pagination.
-func (r *Readline) showCompletionMenu() {
+func (r *Readline) showCompletionMenu() { //nolint:cyclop,funlen // Complex UI rendering is acceptable
 	width, height := r.terminal.GetTerminalSize()
 	maxItemWidth := 0
 

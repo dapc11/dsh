@@ -127,7 +127,7 @@ func loadTodos() []string {
 	}
 
 	todoFile := filepath.Join(homeDir, ".dsh_todos")
-	file, err := os.Open(todoFile)
+	file, err := os.Open(todoFile) //nolint:gosec // User's home directory is safe
 	if err != nil {
 		return nil // File doesn't exist yet
 	}
@@ -154,7 +154,7 @@ func addTodo(todo string) error {
 	}
 
 	todoFile := filepath.Join(homeDir, ".dsh_todos")
-	file, err := os.OpenFile(todoFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	file, err := os.OpenFile(todoFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec // User's home directory is safe
 	if err != nil {
 		return fmt.Errorf("failed to open todo file: %w", err)
 	}

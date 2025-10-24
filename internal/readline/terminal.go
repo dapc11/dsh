@@ -90,7 +90,7 @@ func (t *Terminal) GetTerminalSize() (int, int) {
 		Ypixel uint16
 	}
 
-	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(0), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
+	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(0), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws))) //nolint:gosec // Required for terminal size detection
 	if errno != 0 {
 		return 80, 24 // Default fallback
 	}
