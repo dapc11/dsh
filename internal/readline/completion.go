@@ -21,6 +21,43 @@ func NewCompletion() *Completion {
 	return c
 }
 
+// CompletionItem represents a completion with its type.
+type CompletionItem struct {
+	Text string
+	Type string // "builtin", "command", "file", "directory"
+}
+
+// Complete performs tab completion.
+func (c *Completion) Complete(input string, _ int) ([]CompletionItem, string) {
+	if input == "" {
+		return nil, ""
+	}
+
+	// Split input into words
+	words := strings.Fields(input)
+	if len(words) == 0 {
+		return nil, ""
+	}
+
+	// Determine what we're completing
+	if len(words) == 1 && !strings.HasSuffix(input, " ") {
+		// Completing command name
+		return c.completeCommand(words[0])
+	}
+
+	// Completing file/directory name
+	lastWord := ""
+	if len(words) > 0 {
+		if strings.HasSuffix(input, " ") {
+			lastWord = ""
+		} else {
+			lastWord = words[len(words)-1]
+		}
+	}
+
+	return c.completeFile(lastWord)
+}
+
 // loadCommands loads available commands from PATH and builtins.
 func (c *Completion) loadCommands() {
 	var commands []string
@@ -68,43 +105,6 @@ func (c *Completion) getPathCommands() []string {
 	}
 
 	return commands
-}
-
-// CompletionItem represents a completion with its type.
-type CompletionItem struct {
-	Text string
-	Type string // "builtin", "command", "file", "directory"
-}
-
-// Complete performs tab completion.
-func (c *Completion) Complete(input string, _ int) ([]CompletionItem, string) {
-	if input == "" {
-		return nil, ""
-	}
-
-	// Split input into words
-	words := strings.Fields(input)
-	if len(words) == 0 {
-		return nil, ""
-	}
-
-	// Determine what we're completing
-	if len(words) == 1 && !strings.HasSuffix(input, " ") {
-		// Completing command name
-		return c.completeCommand(words[0])
-	}
-
-	// Completing file/directory name
-	lastWord := ""
-	if len(words) > 0 {
-		if strings.HasSuffix(input, " ") {
-			lastWord = ""
-		} else {
-			lastWord = words[len(words)-1]
-		}
-	}
-
-	return c.completeFile(lastWord)
 }
 
 // completeCommand completes command names.

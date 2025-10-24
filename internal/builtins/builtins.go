@@ -110,7 +110,8 @@ func handleTodo(args []string) bool {
 
 	// Add new todo
 	todoText := strings.Join(args[1:], " ")
-	if err := addTodo(todoText); err != nil {
+	err := addTodo(todoText)
+	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "dsh: todo: %v\n", err)
 		return false
 	}
