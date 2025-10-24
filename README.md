@@ -20,6 +20,12 @@ A minimal, secure, POSIX-compatible shell implementation written in Go.
 - **Clean code standards** - 0 linting issues, comprehensive error handling
 
 ### Phase 3 🚧 (Planned)
+- **Emacs-like line editing** - Readline functionality with key bindings
+  - Cursor movement (Ctrl+A/E, Ctrl+B/F, arrows)
+  - Word movement (Ctrl+←/→)  
+  - Command history (↑/↓, Ctrl+P/N)
+  - Line editing (Ctrl+D/K/U/W, backspace)
+  - Screen control (Ctrl+L)
 - Pipeline support (`|`)
 - Job control and signal handling
 - Variable expansion (`$VAR`, `${VAR}`)

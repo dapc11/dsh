@@ -50,6 +50,12 @@
 - [x] Clean code standards (0 linting issues)
 
 ### Phase 3: Advanced Features (Next)
+- [ ] **Emacs-like line editing** - Readline functionality with key bindings
+  - [ ] Cursor movement (Ctrl+A/E, Ctrl+B/F, arrows)
+  - [ ] Word movement (Ctrl+←/→)
+  - [ ] Command history (↑/↓, Ctrl+P/N)
+  - [ ] Line editing (Ctrl+D/K/U/W, backspace)
+  - [ ] Screen control (Ctrl+L)
 - [ ] Pipeline support (|)
 - [ ] Variable expansion ($VAR, ${VAR})
 - [ ] Command substitution $(command)
