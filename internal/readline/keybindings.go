@@ -232,22 +232,20 @@ func (r *Readline) redraw() {
 	// Display prompt and buffer
 	_, _ = fmt.Print(r.prompt + string(r.buffer)) //nolint:forbidigo
 
-	// Display autosuggestion with simple text indicator
+	// Display autosuggestion with colors if available
 	if r.suggestion != "" {
-		_, _ = fmt.Print(" -> " + r.suggestion + " [TAB]") //nolint:forbidigo // Simple text suggestion
+		suggestion := r.color.Colorize(r.suggestion, Gray)
+		_, _ = fmt.Print(suggestion) //nolint:forbidigo
 	}
 
 	r.setCursorPosition()
 }
 
 func (r *Readline) setCursorPosition() {
-	if r.cursor < len(r.buffer) {
-		_, _ = fmt.Printf("\r%s%s\r%s%s", //nolint:forbidigo
-			r.prompt,
-			string(r.buffer),
-			r.prompt,
-			string(r.buffer[:r.cursor]))
-	}
+	// Move cursor to correct position using ANSI escape sequences
+	promptLen := len(r.prompt)
+	cursorPos := promptLen + r.cursor
+	_, _ = fmt.Printf("\r\033[%dC", cursorPos) //nolint:forbidigo // Move cursor to position
 }
 
 func (r *Readline) clearScreen() {

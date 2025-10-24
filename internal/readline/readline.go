@@ -22,6 +22,7 @@ type Readline struct {
 	suggestion   string
 	searchPrefix string
 	browseMode   bool
+	color        *Color
 }
 
 // New creates a new readline instance.
@@ -41,6 +42,7 @@ func New(prompt string) (*Readline, error) {
 		suggestion:   "",
 		searchPrefix: "",
 		browseMode:   false,
+		color:        NewColor(),
 	}, nil
 }
 
