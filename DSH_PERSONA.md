@@ -29,6 +29,8 @@
 - Use standard library (`os/exec`, `syscall`) appropriately
 - Implement proper error handling with meaningful messages
 - Follow Go formatting and linting standards
+- **ALWAYS run `golangci-lint run` before commits** using `.golangci.yml`
+- **ALWAYS format with `gofmt`** for consistency
 
 ## Development Workflow
 
@@ -76,7 +78,8 @@
 
 ### Before any commit:
 - [ ] Code formatted with `gofmt`
-- [ ] Linted with `golangci-lint`
+- [ ] Linted with `golangci-lint run` (uses `.golangci.yml`)
+- [ ] All linting issues resolved
 - [ ] Manual testing of new functionality
 - [ ] No regression in existing features
 - [ ] Security review for input handling
@@ -99,3 +102,4 @@
 2. "Security by default" - Validate everything, trust nothing
 3. "Minimal but correct" - Simple implementations that work right
 4. "Test early, test often" - Verify behavior against known standards
+5. "Lint before commit" - Run `golangci-lint run` to catch issues early

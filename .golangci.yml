@@ -1,0 +1,55 @@
+version: "2"
+
+linters:
+  default: all
+
+  disable:
+    - lll              # Intentionally excluded
+    - mnd              # Evaluated, not worth it
+    - nonamedreturns   # Intentionally excluded
+    - tagliatelle      # Evaluated, not worth it
+    - testpackage      # Intentionally excluded
+    - wsl              # Intentionally excluded
+    - wsl_v5           # Intentionally excluded
+
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: "github.com/pkg/errors"
+              desc: use standard lib errors package
+            - pkg: "gopkg.in/yaml.v3"
+              desc: use go.yaml.in/yaml/v3
+            - pkg: "math/rand$"
+              desc: use math/rand/v2
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      - path: "test/.*go$"
+        linters:
+          - funlen
+          - goconst
+          - gosec
+      - path: ".*_test.go$"
+        linters:
+          - funlen
+          - goconst
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  timeout: 2m
+
+output:
+  formats:
+    tab:
+      path: stdout
+      print-linter-name: true

@@ -1,171 +1,200 @@
+// Package main implements Daniel's Shell (dsh) - a minimal POSIX-compatible shell.
 package main
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 )
 
+// TokenType represents different types of shell tokens.
 type TokenType int
 
 const (
-	WORD TokenType = iota
-	PIPE
-	REDIRECT_OUT
-	REDIRECT_IN
-	REDIRECT_APPEND
-	BACKGROUND
-	SEMICOLON
+	Word TokenType = iota
+	Pipe
+	RedirectOut
+	RedirectIn
+	RedirectAppend
+	Background
+	Semicolon
 	EOF
 )
 
+// Token represents a lexical token with its type and value.
 type Token struct {
 	Type  TokenType
 	Value string
 }
 
+// Lexer tokenizes shell input.
 type Lexer struct {
 	input    string
 	position int
 	current  rune
 }
 
+var (
+	ErrUnexpectedEOF      = errors.New("unexpected EOF in quoted string")
+	ErrUnterminatedString = errors.New("unterminated quoted string")
+)
+
+// NewLexer creates a new lexer for the given input.
 func NewLexer(input string) *Lexer {
-	l := &Lexer{input: input}
-	l.readChar()
-	return l
+	lexer := &Lexer{
+		input:    input,
+		position: 0,
+		current:  0,
+	}
+	lexer.readChar()
+
+	return lexer
 }
 
-func (l *Lexer) readChar() {
-	if l.position >= len(l.input) {
-		l.current = 0 // EOF
-	} else {
-		l.current = rune(l.input[l.position])
-	}
-	l.position++
-}
+// NextToken returns the next token from the input.
+func (lexer *Lexer) NextToken() Token {
+	lexer.skipWhitespace()
 
-func (l *Lexer) peekChar() rune {
-	if l.position >= len(l.input) {
-		return 0
-	}
-	return rune(l.input[l.position])
-}
-
-func (l *Lexer) skipWhitespace() {
-	for l.current == ' ' || l.current == '\t' || l.current == '\n' || l.current == '\r' {
-		l.readChar()
-	}
-}
-
-func (l *Lexer) readQuotedString(quote rune) (string, error) {
-	var result strings.Builder
-	l.readChar() // skip opening quote
-	
-	for l.current != 0 && l.current != quote {
-		if quote == '"' && l.current == '\\' {
-			// Handle escape sequences in double quotes
-			l.readChar()
-			if l.current == 0 {
-				return "", fmt.Errorf("unexpected EOF in quoted string")
-			}
-			switch l.current {
-			case 'n':
-				result.WriteRune('\n')
-			case 't':
-				result.WriteRune('\t')
-			case 'r':
-				result.WriteRune('\r')
-			case '\\':
-				result.WriteRune('\\')
-			case '"':
-				result.WriteRune('"')
-			case '$':
-				result.WriteRune('$')
-			default:
-				result.WriteRune('\\')
-				result.WriteRune(l.current)
-			}
-		} else {
-			result.WriteRune(l.current)
-		}
-		l.readChar()
-	}
-	
-	if l.current != quote {
-		return "", fmt.Errorf("unterminated quoted string")
-	}
-	l.readChar() // skip closing quote
-	
-	return result.String(), nil
-}
-
-func (l *Lexer) readWord() string {
-	var result strings.Builder
-	
-	for l.current != 0 && !isWhitespace(l.current) && !isSpecialChar(l.current) {
-		if l.current == '\'' || l.current == '"' {
-			quoted, err := l.readQuotedString(l.current)
-			if err != nil {
-				// For now, just include the quote as literal
-				result.WriteRune(l.current)
-				l.readChar()
-			} else {
-				result.WriteString(quoted)
-			}
-		} else if l.current == '\\' {
-			l.readChar()
-			if l.current != 0 {
-				result.WriteRune(l.current)
-				l.readChar()
-			}
-		} else {
-			result.WriteRune(l.current)
-			l.readChar()
-		}
-	}
-	
-	return result.String()
-}
-
-func (l *Lexer) NextToken() Token {
-	l.skipWhitespace()
-	
-	switch l.current {
+	switch lexer.current {
 	case 0:
 		return Token{Type: EOF, Value: ""}
 	case '#':
-		l.skipComment()
-		return l.NextToken()
+		lexer.skipComment()
+
+		return lexer.NextToken()
 	case '|':
-		l.readChar()
-		return Token{Type: PIPE, Value: "|"}
+		lexer.readChar()
+
+		return Token{Type: Pipe, Value: "|"}
 	case ';':
-		l.readChar()
-		return Token{Type: SEMICOLON, Value: ";"}
+		lexer.readChar()
+
+		return Token{Type: Semicolon, Value: ";"}
 	case '&':
-		l.readChar()
-		return Token{Type: BACKGROUND, Value: "&"}
+		lexer.readChar()
+
+		return Token{Type: Background, Value: "&"}
 	case '>':
-		if l.peekChar() == '>' {
-			l.readChar()
-			l.readChar()
-			return Token{Type: REDIRECT_APPEND, Value: ">>"}
+		if lexer.peekChar() == '>' {
+			lexer.readChar()
+			lexer.readChar()
+
+			return Token{Type: RedirectAppend, Value: ">>"}
 		}
-		l.readChar()
-		return Token{Type: REDIRECT_OUT, Value: ">"}
+		lexer.readChar()
+
+		return Token{Type: RedirectOut, Value: ">"}
 	case '<':
-		l.readChar()
-		return Token{Type: REDIRECT_IN, Value: "<"}
+		lexer.readChar()
+
+		return Token{Type: RedirectIn, Value: "<"}
 	default:
-		word := l.readWord()
-		return Token{Type: WORD, Value: word}
+		word := lexer.readWord()
+
+		return Token{Type: Word, Value: word}
 	}
 }
 
-func (l *Lexer) skipComment() {
-	for l.current != 0 && l.current != '\n' {
-		l.readChar()
+func (lexer *Lexer) readChar() {
+	if lexer.position >= len(lexer.input) {
+		lexer.current = 0 // EOF
+	} else {
+		lexer.current = rune(lexer.input[lexer.position])
 	}
+	lexer.position++
+}
+
+func (lexer *Lexer) peekChar() rune {
+	if lexer.position >= len(lexer.input) {
+		return 0
+	}
+
+	return rune(lexer.input[lexer.position])
+}
+
+func (lexer *Lexer) skipWhitespace() {
+	for lexer.current == ' ' || lexer.current == '\t' || lexer.current == '\n' || lexer.current == '\r' {
+		lexer.readChar()
+	}
+}
+
+func (lexer *Lexer) skipComment() {
+	for lexer.current != 0 && lexer.current != '\n' {
+		lexer.readChar()
+	}
+}
+
+func (lexer *Lexer) readQuotedString(quote rune) (string, error) {
+	var result strings.Builder
+	lexer.readChar() // skip opening quote
+
+	for lexer.current != 0 && lexer.current != quote {
+		if quote == '"' && lexer.current == '\\' {
+			lexer.readChar()
+			if lexer.current == 0 {
+				return "", ErrUnexpectedEOF
+			}
+
+			result.WriteRune(lexer.handleEscapeSequence())
+		} else {
+			result.WriteRune(lexer.current)
+		}
+		lexer.readChar()
+	}
+
+	if lexer.current != quote {
+		return "", ErrUnterminatedString
+	}
+	lexer.readChar() // skip closing quote
+
+	return result.String(), nil
+}
+
+func (lexer *Lexer) handleEscapeSequence() rune {
+	switch lexer.current {
+	case 'n':
+		return '\n'
+	case 't':
+		return '\t'
+	case 'r':
+		return '\r'
+	case '\\':
+		return '\\'
+	case '"':
+		return '"'
+	case '$':
+		return '$'
+	default:
+		// For unknown escape sequences, return both backslash and character
+		return lexer.current
+	}
+}
+
+func (lexer *Lexer) readWord() string {
+	var result strings.Builder
+
+	for lexer.current != 0 && !isWhitespace(lexer.current) && !isSpecialChar(lexer.current) {
+		switch lexer.current {
+		case '\'', '"':
+			quoted, err := lexer.readQuotedString(lexer.current)
+			if err != nil {
+				result.WriteRune(lexer.current)
+				lexer.readChar()
+			} else {
+				result.WriteString(quoted)
+			}
+		case '\\':
+			lexer.readChar()
+			if lexer.current != 0 {
+				result.WriteRune(lexer.current)
+				lexer.readChar()
+			}
+		default:
+			result.WriteRune(lexer.current)
+			lexer.readChar()
+		}
+	}
+
+	return result.String()
 }
 
 func isWhitespace(ch rune) bool {

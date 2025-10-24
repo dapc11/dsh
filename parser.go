@@ -1,145 +1,222 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"errors"
 )
 
+var (
+	ErrExpectedCommandAfterPipe    = errors.New("expected command after pipe")
+	ErrExpectedFilenameAfterOut    = errors.New("expected filename after >")
+	ErrExpectedFilenameAfterAppend = errors.New("expected filename after >>")
+	ErrExpectedFilenameAfterIn     = errors.New("expected filename after <")
+	ErrNoCommand                   = errors.New("no command found")
+	ErrEmptyPipeline               = errors.New("empty pipeline")
+	ErrNoTokens                    = errors.New("no tokens to parse")
+)
+
+// Command represents a single command with its arguments and redirections.
 type Command struct {
-	Args        []string
-	InputFile   string
-	OutputFile  string
-	AppendMode  bool
-	Background  bool
+	Args       []string
+	InputFile  string
+	OutputFile string
+	AppendMode bool
+	Background bool
 }
 
+// Pipeline represents a sequence of commands connected by pipes.
 type Pipeline struct {
 	Commands []*Command
 }
 
+// Parser parses tokens into command structures.
 type Parser struct {
 	lexer        *Lexer
 	currentToken Token
 	peekToken    Token
 }
 
+// NewParser creates a new parser with the given lexer.
 func NewParser(lexer *Lexer) *Parser {
-	p := &Parser{lexer: lexer}
-	p.nextToken()
-	p.nextToken()
-	return p
+	parser := &Parser{
+		lexer:        lexer,
+		currentToken: Token{Type: EOF, Value: ""},
+		peekToken:    Token{Type: EOF, Value: ""},
+	}
+	parser.nextToken()
+	parser.nextToken()
+
+	return parser
 }
 
-func (p *Parser) nextToken() {
-	p.currentToken = p.peekToken
-	p.peekToken = p.lexer.NextToken()
-}
-
-func (p *Parser) ParseCommandLine() ([]*Pipeline, error) {
+// ParseCommandLine parses a complete command line into pipelines.
+func (parser *Parser) ParseCommandLine() ([]*Pipeline, error) {
 	var pipelines []*Pipeline
-	
-	for p.currentToken.Type != EOF {
-		pipeline, err := p.parsePipeline()
+
+	for parser.currentToken.Type != EOF {
+		pipeline, err := parser.parsePipeline()
 		if err != nil {
+			if errors.Is(err, ErrEmptyPipeline) {
+				// Skip empty pipelines, continue parsing
+				if parser.currentToken.Type == Semicolon {
+					parser.nextToken()
+				}
+
+				continue
+			}
+
 			return nil, err
 		}
+
 		if pipeline != nil {
 			pipelines = append(pipelines, pipeline)
 		}
-		
-		if p.currentToken.Type == SEMICOLON {
-			p.nextToken()
+
+		if parser.currentToken.Type == Semicolon {
+			parser.nextToken()
 		}
 	}
-	
+
 	return pipelines, nil
 }
 
-func (p *Parser) parsePipeline() (*Pipeline, error) {
-	pipeline := &Pipeline{}
-	
-	cmd, err := p.parseCommand()
+func (parser *Parser) nextToken() {
+	parser.currentToken = parser.peekToken
+	parser.peekToken = parser.lexer.NextToken()
+}
+
+func (parser *Parser) parsePipeline() (*Pipeline, error) {
+	pipeline := &Pipeline{
+		Commands: []*Command{},
+	}
+
+	cmd, err := parser.parseCommand()
 	if err != nil {
+		if errors.Is(err, ErrNoTokens) {
+			return nil, ErrEmptyPipeline // Use sentinel error instead of nil
+		}
+
 		return nil, err
 	}
+
 	if cmd == nil {
-		return nil, nil
+		return nil, ErrEmptyPipeline // Use sentinel error instead of nil
 	}
-	
+
 	pipeline.Commands = append(pipeline.Commands, cmd)
-	
-	for p.currentToken.Type == PIPE {
-		p.nextToken()
-		cmd, err := p.parseCommand()
+
+	for parser.currentToken.Type == Pipe {
+		parser.nextToken()
+
+		cmd, err := parser.parseCommand()
 		if err != nil {
+			if errors.Is(err, ErrNoTokens) {
+				return nil, ErrExpectedCommandAfterPipe
+			}
+
 			return nil, err
 		}
+
 		if cmd == nil {
-			return nil, fmt.Errorf("expected command after pipe")
+			return nil, ErrExpectedCommandAfterPipe
 		}
+
 		pipeline.Commands = append(pipeline.Commands, cmd)
 	}
-	
+
 	return pipeline, nil
 }
 
-func (p *Parser) parseCommand() (*Command, error) {
-	if p.currentToken.Type != WORD {
-		return nil, nil
+func (parser *Parser) parseCommand() (*Command, error) {
+	if parser.currentToken.Type != Word {
+		return nil, ErrNoTokens
 	}
-	
-	cmd := &Command{}
-	
-	for p.currentToken.Type == WORD || p.currentToken.Type == REDIRECT_OUT || 
-		p.currentToken.Type == REDIRECT_IN || p.currentToken.Type == REDIRECT_APPEND {
-		
-		switch p.currentToken.Type {
-		case WORD:
-			cmd.Args = append(cmd.Args, p.currentToken.Value)
-			p.nextToken()
-		case REDIRECT_OUT:
-			p.nextToken()
-			if p.currentToken.Type != WORD {
-				return nil, fmt.Errorf("expected filename after >")
-			}
-			cmd.OutputFile = p.currentToken.Value
-			p.nextToken()
-		case REDIRECT_APPEND:
-			p.nextToken()
-			if p.currentToken.Type != WORD {
-				return nil, fmt.Errorf("expected filename after >>")
-			}
-			cmd.OutputFile = p.currentToken.Value
-			cmd.AppendMode = true
-			p.nextToken()
-		case REDIRECT_IN:
-			p.nextToken()
-			if p.currentToken.Type != WORD {
-				return nil, fmt.Errorf("expected filename after <")
-			}
-			cmd.InputFile = p.currentToken.Value
-			p.nextToken()
-		}
+
+	cmd := &Command{
+		Args:       []string{},
+		InputFile:  "",
+		OutputFile: "",
+		AppendMode: false,
+		Background: false,
 	}
-	
-	if p.currentToken.Type == BACKGROUND {
+
+	err := parser.processCommandTokens(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	if parser.currentToken.Type == Background {
 		cmd.Background = true
-		p.nextToken()
+		parser.nextToken()
 	}
-	
+
 	if len(cmd.Args) == 0 {
-		return nil, nil
+		return nil, ErrNoCommand
 	}
-	
+
 	return cmd, nil
 }
 
-func (p *Parser) expandVariables(arg string) string {
-	// Simple variable expansion - just handle $HOME for now
-	if arg == "$HOME" {
-		if home := os.Getenv("HOME"); home != "" {
-			return home
+func (parser *Parser) processCommandTokens(cmd *Command) error {
+	for parser.isCommandToken() {
+		switch parser.currentToken.Type {
+		case Word:
+			cmd.Args = append(cmd.Args, parser.currentToken.Value)
+			parser.nextToken()
+		case RedirectOut:
+			err := parser.handleOutputRedirect(cmd, false)
+			if err != nil {
+				return err
+			}
+		case RedirectAppend:
+			err := parser.handleOutputRedirect(cmd, true)
+			if err != nil {
+				return err
+			}
+		case RedirectIn:
+			err := parser.handleInputRedirect(cmd)
+			if err != nil {
+				return err
+			}
+		case Pipe, Background, Semicolon, EOF:
+			return nil
 		}
 	}
-	return arg
+
+	return nil
+}
+
+func (parser *Parser) isCommandToken() bool {
+	return parser.currentToken.Type == Word ||
+		parser.currentToken.Type == RedirectOut ||
+		parser.currentToken.Type == RedirectIn ||
+		parser.currentToken.Type == RedirectAppend
+}
+
+func (parser *Parser) handleOutputRedirect(cmd *Command, appendMode bool) error {
+	parser.nextToken()
+	if parser.currentToken.Type != Word {
+		if appendMode {
+			return ErrExpectedFilenameAfterAppend
+		}
+
+		return ErrExpectedFilenameAfterOut
+	}
+
+	cmd.OutputFile = parser.currentToken.Value
+	cmd.AppendMode = appendMode
+	parser.nextToken()
+
+	return nil
+}
+
+func (parser *Parser) handleInputRedirect(cmd *Command) error {
+	parser.nextToken()
+	if parser.currentToken.Type != Word {
+		return ErrExpectedFilenameAfterIn
+	}
+
+	cmd.InputFile = parser.currentToken.Value
+	parser.nextToken()
+
+	return nil
 }
