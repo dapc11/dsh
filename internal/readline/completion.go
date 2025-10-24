@@ -14,7 +14,9 @@ type Completion struct {
 
 // NewCompletion creates a new completion instance.
 func NewCompletion() *Completion {
-	c := &Completion{}
+	c := &Completion{
+		commands: make([]string, 0),
+	}
 	c.loadCommands()
 	return c
 }
@@ -191,34 +193,6 @@ func (c *Completion) commonPrefixItems(matches []CompletionItem, current string)
 	for _, match := range matches[1:] {
 		for i := 0; i < len(prefix) && i < len(match.Text); i++ {
 			if prefix[i] != match.Text[i] {
-				prefix = prefix[:i]
-				break
-			}
-		}
-	}
-
-	if len(prefix) > len(current) {
-		return prefix[len(current):]
-	}
-
-	return ""
-}
-
-// commonPrefix finds the common prefix of matches.
-func (c *Completion) commonPrefix(matches []string, current string) string {
-	if len(matches) == 0 {
-		return ""
-	}
-
-	if len(matches) == 1 {
-		return matches[0][len(current):]
-	}
-
-	// Find common prefix
-	prefix := matches[0]
-	for _, match := range matches[1:] {
-		for i := 0; i < len(prefix) && i < len(match); i++ {
-			if prefix[i] != match[i] {
 				prefix = prefix[:i]
 				break
 			}

@@ -62,6 +62,7 @@ func New(prompt string) (*Readline, error) {
 		menuDisplayed:  false,
 		menuPage:       0,
 		menuMaxRows:    10,
+		menuLinesDrawn: 0,
 	}, nil
 }
 

@@ -7,7 +7,9 @@ import (
 	"unsafe"
 )
 
+// Terminal constants for ioctl operations.
 const (
+	// TIOCGWINSZ is the ioctl command to get terminal window size.
 	TIOCGWINSZ = 0x5413
 )
 

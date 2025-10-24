@@ -672,38 +672,6 @@ func (r *Readline) showCompletionMenu() {
 	r.menuLinesDrawn = maxRows + 1 // menu rows + pagination line
 }
 
-// applyCompletion applies a completion option.
-func (r *Readline) applyCompletion(match string) {
-	// Restore base and apply new completion
-	r.buffer = []rune(r.completionBase)
-
-	// Find the part to complete
-	words := strings.Fields(r.completionBase)
-	if len(words) == 0 {
-		return
-	}
-
-	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
-		// Completing command
-		r.buffer = []rune(match)
-	} else {
-		// Completing file
-		lastWord := ""
-		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
-			lastWord = words[len(words)-1]
-		}
-
-		if strings.Contains(lastWord, "/") {
-			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + match)
-		} else {
-			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + match)
-		}
-	}
-
-	r.cursor = len(r.buffer)
-	r.redraw()
-}
-
 // navigateMenu moves selection up/down in completion menu.
 func (r *Readline) navigateMenu(direction int) {
 	if !r.menuMode || len(r.completionList) == 0 {
