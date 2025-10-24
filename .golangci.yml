@@ -9,6 +9,7 @@ linters:
     - nonamedreturns   # Intentionally excluded
     - tagliatelle      # Evaluated, not worth it
     - testpackage      # Intentionally excluded
+    - varnamelen       # Intentionally excluded
     - wsl              # Intentionally excluded
     - wsl_v5           # Intentionally excluded
 

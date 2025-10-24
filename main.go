@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -11,16 +10,25 @@ import (
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	readline, err := NewReadline("dsh> ")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "dsh: failed to initialize readline: %v\n", err)
+		os.Exit(1)
+	}
 
 	for {
-		_, _ = fmt.Fprint(os.Stdout, "dsh> ")
+		line, err := readline.ReadLine()
+		if err != nil {
+			if errors.Is(err, ErrEOF) {
+				// Ctrl+D pressed on empty line - exit gracefully
 
-		if !scanner.Scan() {
+				break
+			}
+			_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+
 			break
 		}
 
-		line := scanner.Text()
 		if line == "" {
 			continue
 		}
