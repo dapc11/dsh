@@ -1,17 +1,27 @@
-package main
+// Package parser converts tokens into command structures for execution.
+package parser
 
 import (
 	"errors"
+
+	"dsh/internal/lexer"
 )
 
 var (
-	ErrExpectedCommandAfterPipe    = errors.New("expected command after pipe")
-	ErrExpectedFilenameAfterOut    = errors.New("expected filename after >")
+	// ErrExpectedCommandAfterPipe indicates missing command after pipe operator.
+	ErrExpectedCommandAfterPipe = errors.New("expected command after pipe")
+	// ErrExpectedFilenameAfterOut indicates missing filename after > operator.
+	ErrExpectedFilenameAfterOut = errors.New("expected filename after >")
+	// ErrExpectedFilenameAfterAppend indicates missing filename after >> operator.
 	ErrExpectedFilenameAfterAppend = errors.New("expected filename after >>")
-	ErrExpectedFilenameAfterIn     = errors.New("expected filename after <")
-	ErrNoCommand                   = errors.New("no command found")
-	ErrEmptyPipeline               = errors.New("empty pipeline")
-	ErrNoTokens                    = errors.New("no tokens to parse")
+	// ErrExpectedFilenameAfterIn indicates missing filename after < operator.
+	ErrExpectedFilenameAfterIn = errors.New("expected filename after <")
+	// ErrNoCommand indicates no command was found in input.
+	ErrNoCommand = errors.New("no command found")
+	// ErrEmptyPipeline indicates an empty pipeline.
+	ErrEmptyPipeline = errors.New("empty pipeline")
+	// ErrNoTokens indicates no tokens to parse.
+	ErrNoTokens = errors.New("no tokens to parse")
 )
 
 // Command represents a single command with its arguments and redirections.
@@ -30,17 +40,17 @@ type Pipeline struct {
 
 // Parser parses tokens into command structures.
 type Parser struct {
-	lexer        *Lexer
-	currentToken Token
-	peekToken    Token
+	lexer        *lexer.Lexer
+	currentToken lexer.Token
+	peekToken    lexer.Token
 }
 
-// NewParser creates a new parser with the given lexer.
-func NewParser(lexer *Lexer) *Parser {
+// New creates a new parser with the given lexer.
+func New(l *lexer.Lexer) *Parser {
 	parser := &Parser{
-		lexer:        lexer,
-		currentToken: Token{Type: EOF, Value: ""},
-		peekToken:    Token{Type: EOF, Value: ""},
+		lexer:        l,
+		currentToken: lexer.Token{Type: lexer.EOF, Value: ""},
+		peekToken:    lexer.Token{Type: lexer.EOF, Value: ""},
 	}
 	parser.nextToken()
 	parser.nextToken()
@@ -52,12 +62,12 @@ func NewParser(lexer *Lexer) *Parser {
 func (parser *Parser) ParseCommandLine() ([]*Pipeline, error) {
 	var pipelines []*Pipeline
 
-	for parser.currentToken.Type != EOF {
+	for parser.currentToken.Type != lexer.EOF {
 		pipeline, err := parser.parsePipeline()
 		if err != nil {
 			if errors.Is(err, ErrEmptyPipeline) {
 				// Skip empty pipelines, continue parsing
-				if parser.currentToken.Type == Semicolon {
+				if parser.currentToken.Type == lexer.Semicolon {
 					parser.nextToken()
 				}
 
@@ -71,7 +81,7 @@ func (parser *Parser) ParseCommandLine() ([]*Pipeline, error) {
 			pipelines = append(pipelines, pipeline)
 		}
 
-		if parser.currentToken.Type == Semicolon {
+		if parser.currentToken.Type == lexer.Semicolon {
 			parser.nextToken()
 		}
 	}
@@ -104,7 +114,7 @@ func (parser *Parser) parsePipeline() (*Pipeline, error) {
 
 	pipeline.Commands = append(pipeline.Commands, cmd)
 
-	for parser.currentToken.Type == Pipe {
+	for parser.currentToken.Type == lexer.Pipe {
 		parser.nextToken()
 
 		cmd, err := parser.parseCommand()
@@ -127,7 +137,7 @@ func (parser *Parser) parsePipeline() (*Pipeline, error) {
 }
 
 func (parser *Parser) parseCommand() (*Command, error) {
-	if parser.currentToken.Type != Word {
+	if parser.currentToken.Type != lexer.Word {
 		return nil, ErrNoTokens
 	}
 
@@ -144,7 +154,7 @@ func (parser *Parser) parseCommand() (*Command, error) {
 		return nil, err
 	}
 
-	if parser.currentToken.Type == Background {
+	if parser.currentToken.Type == lexer.Background {
 		cmd.Background = true
 		parser.nextToken()
 	}
@@ -159,25 +169,25 @@ func (parser *Parser) parseCommand() (*Command, error) {
 func (parser *Parser) processCommandTokens(cmd *Command) error {
 	for parser.isCommandToken() {
 		switch parser.currentToken.Type {
-		case Word:
+		case lexer.Word:
 			cmd.Args = append(cmd.Args, parser.currentToken.Value)
 			parser.nextToken()
-		case RedirectOut:
+		case lexer.RedirectOut:
 			err := parser.handleOutputRedirect(cmd, false)
 			if err != nil {
 				return err
 			}
-		case RedirectAppend:
+		case lexer.RedirectAppend:
 			err := parser.handleOutputRedirect(cmd, true)
 			if err != nil {
 				return err
 			}
-		case RedirectIn:
+		case lexer.RedirectIn:
 			err := parser.handleInputRedirect(cmd)
 			if err != nil {
 				return err
 			}
-		case Pipe, Background, Semicolon, EOF:
+		case lexer.Pipe, lexer.Background, lexer.Semicolon, lexer.EOF:
 			return nil
 		}
 	}
@@ -186,15 +196,15 @@ func (parser *Parser) processCommandTokens(cmd *Command) error {
 }
 
 func (parser *Parser) isCommandToken() bool {
-	return parser.currentToken.Type == Word ||
-		parser.currentToken.Type == RedirectOut ||
-		parser.currentToken.Type == RedirectIn ||
-		parser.currentToken.Type == RedirectAppend
+	return parser.currentToken.Type == lexer.Word ||
+		parser.currentToken.Type == lexer.RedirectOut ||
+		parser.currentToken.Type == lexer.RedirectIn ||
+		parser.currentToken.Type == lexer.RedirectAppend
 }
 
 func (parser *Parser) handleOutputRedirect(cmd *Command, appendMode bool) error {
 	parser.nextToken()
-	if parser.currentToken.Type != Word {
+	if parser.currentToken.Type != lexer.Word {
 		if appendMode {
 			return ErrExpectedFilenameAfterAppend
 		}
@@ -211,7 +221,7 @@ func (parser *Parser) handleOutputRedirect(cmd *Command, appendMode bool) error 
 
 func (parser *Parser) handleInputRedirect(cmd *Command) error {
 	parser.nextToken()
-	if parser.currentToken.Type != Word {
+	if parser.currentToken.Type != lexer.Word {
 		return ErrExpectedFilenameAfterIn
 	}
 

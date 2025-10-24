@@ -1,5 +1,5 @@
-// Package main implements Daniel's Shell (dsh) - a minimal POSIX-compatible shell.
-package main
+// Package lexer provides tokenization of shell input with quote and escape handling.
+package lexer
 
 import (
 	"errors"
@@ -10,13 +10,21 @@ import (
 type TokenType int
 
 const (
+	// Word represents a command word or argument.
 	Word TokenType = iota
+	// Pipe represents the pipe operator |.
 	Pipe
+	// RedirectOut represents the output redirection operator >.
 	RedirectOut
+	// RedirectIn represents the input redirection operator <.
 	RedirectIn
+	// RedirectAppend represents the append redirection operator >>.
 	RedirectAppend
+	// Background represents the background operator &.
 	Background
+	// Semicolon represents the command separator ;.
 	Semicolon
+	// EOF represents end of file.
 	EOF
 )
 
@@ -34,12 +42,14 @@ type Lexer struct {
 }
 
 var (
-	ErrUnexpectedEOF      = errors.New("unexpected EOF in quoted string")
+	// ErrUnexpectedEOF indicates unexpected end of file in quoted string.
+	ErrUnexpectedEOF = errors.New("unexpected EOF in quoted string")
+	// ErrUnterminatedString indicates an unterminated quoted string.
 	ErrUnterminatedString = errors.New("unterminated quoted string")
 )
 
-// NewLexer creates a new lexer for the given input.
-func NewLexer(input string) *Lexer {
+// New creates a new lexer for the given input.
+func New(input string) *Lexer {
 	lexer := &Lexer{
 		input:    input,
 		position: 0,
