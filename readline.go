@@ -36,6 +36,7 @@ type Terminal struct {
 const (
 	KeyCtrlA     = 1
 	KeyCtrlB     = 2
+	KeyCtrlC     = 3
 	KeyCtrlD     = 4
 	KeyCtrlE     = 5
 	KeyCtrlF     = 6
@@ -46,6 +47,7 @@ const (
 	KeyCtrlU     = 21
 	KeyCtrlW     = 23
 	KeyCtrlY     = 25
+	KeyCtrlZ     = 26
 	KeyEscape    = 27
 	KeyBackspace = 127
 	KeyDelete    = 127
@@ -141,6 +143,11 @@ func (r *Readline) handleKey(ch byte) bool {
 	case KeyCtrlB:
 		r.resetYank()
 		r.moveCursorLeft()
+	case KeyCtrlC:
+		r.resetYank()
+		r.clearLine()
+		_, _ = fmt.Print("^C\r\n") //nolint:forbidigo
+		r.displayPrompt()
 	case KeyCtrlF:
 		r.resetYank()
 		r.moveCursorRight()
@@ -170,6 +177,11 @@ func (r *Readline) handleKey(ch byte) bool {
 	case KeyCtrlN:
 		r.resetYank()
 		r.historyNext()
+	case KeyCtrlZ:
+		r.resetYank()
+		r.clearLine()
+		_, _ = fmt.Print("^Z\r\n") //nolint:forbidigo
+		r.displayPrompt()
 	case KeyBackspace:
 		r.resetYank()
 		r.backspace()
@@ -320,6 +332,11 @@ func (r *Readline) moveCursorToEnd() {
 	for r.cursor < len(r.buffer) {
 		r.moveCursorRight()
 	}
+}
+
+func (r *Readline) clearLine() {
+	r.buffer = r.buffer[:0]
+	r.cursor = 0
 }
 
 func (r *Readline) resetYank() {
