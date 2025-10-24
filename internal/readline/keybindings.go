@@ -2,7 +2,6 @@ package readline
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Key codes for special keys.
@@ -207,8 +206,9 @@ func (r *Readline) clearLine() {
 }
 
 func (r *Readline) redraw() {
-	_, _ = fmt.Print("\r" + strings.Repeat(" ", len(r.prompt)+len(r.buffer)+10) + "\r") //nolint:forbidigo
-	_, _ = fmt.Print(r.prompt + string(r.buffer))                                       //nolint:forbidigo
+	// Clear entire line with sufficient space
+	_, _ = fmt.Print("\r\033[K")                  //nolint:forbidigo // Clear to end of line
+	_, _ = fmt.Print(r.prompt + string(r.buffer)) //nolint:forbidigo
 	r.setCursorPosition()
 }
 
