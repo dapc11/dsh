@@ -21,6 +21,7 @@ const (
 	KeyCtrlY     = 25
 	KeyCtrlZ     = 26
 	KeyEscape    = 27
+	KeyTab       = 9
 	KeyBackspace = 127
 	KeyDelete    = 127
 )
@@ -45,7 +46,11 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.displayPrompt()
 	case KeyCtrlF:
 		r.killRing.ResetYank()
-		r.moveCursorRight()
+		if r.suggestion != "" {
+			r.acceptSuggestion()
+		} else {
+			r.moveCursorRight()
+		}
 	case KeyCtrlD:
 		r.killRing.ResetYank()
 		if len(r.buffer) == 0 {
@@ -77,9 +82,14 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.clearLine()
 		_, _ = fmt.Print("^Z\r\n") //nolint:forbidigo
 		r.displayPrompt()
+	case KeyTab:
+		r.killRing.ResetYank()
+		r.acceptSuggestion()
 	case KeyBackspace:
 		r.killRing.ResetYank()
 		r.backspace()
+		r.searchPrefix = ""
+		r.updateSuggestion()
 	case KeyEscape:
 		err := r.handleEscapeSequence()
 		if err != nil {
@@ -89,6 +99,8 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		if ch >= 32 && ch < 127 {
 			r.killRing.ResetYank()
 			r.insertChar(rune(ch))
+			r.searchPrefix = "" // Reset search prefix on new input
+			r.updateSuggestion()
 		}
 	}
 
@@ -207,8 +219,16 @@ func (r *Readline) clearLine() {
 
 func (r *Readline) redraw() {
 	// Clear entire line with sufficient space
-	_, _ = fmt.Print("\r\033[K")                  //nolint:forbidigo // Clear to end of line
+	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo // Clear to end of line
+
+	// Display prompt and buffer
 	_, _ = fmt.Print(r.prompt + string(r.buffer)) //nolint:forbidigo
+
+	// Display autosuggestion in gray if available
+	if r.suggestion != "" {
+		_, _ = fmt.Print("\033[90m" + r.suggestion + "\033[0m") //nolint:forbidigo // Gray text
+	}
+
 	r.setCursorPosition()
 }
 
@@ -392,19 +412,54 @@ func (r *Readline) moveWordBackward() {
 
 // History operations.
 func (r *Readline) historyPrevious() {
-	line := r.history.Previous()
+	prefix := r.searchPrefix
+	if prefix == "" {
+		prefix = string(r.buffer)
+	}
+
+	line := r.history.PreviousWithPrefix(prefix)
 	if line != "" {
+		r.searchPrefix = prefix
 		r.setBufferFromHistory(line)
 	}
 }
 
 func (r *Readline) historyNext() {
-	line := r.history.Next()
+	prefix := r.searchPrefix
+	if prefix == "" {
+		prefix = string(r.buffer)
+	}
+
+	line := r.history.NextWithPrefix(prefix)
+	r.searchPrefix = prefix
 	r.setBufferFromHistory(line)
 }
 
 func (r *Readline) setBufferFromHistory(line string) {
 	r.buffer = []rune(line)
 	r.cursor = len(r.buffer)
+	r.suggestion = ""
 	r.redraw()
+}
+
+// updateSuggestion updates the autosuggestion based on current input.
+func (r *Readline) updateSuggestion() {
+	if len(r.buffer) == 0 {
+		r.suggestion = ""
+		return
+	}
+
+	currentInput := string(r.buffer)
+	r.suggestion = r.history.GetSuggestion(currentInput)
+}
+
+// acceptSuggestion accepts the current autosuggestion.
+func (r *Readline) acceptSuggestion() {
+	if r.suggestion != "" {
+		r.buffer = append(r.buffer, []rune(r.suggestion)...)
+		r.cursor = len(r.buffer)
+		r.suggestion = ""
+		r.updateSuggestion()
+		r.redraw()
+	}
 }

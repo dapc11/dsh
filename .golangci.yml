@@ -12,6 +12,7 @@ linters:
     - varnamelen       # Intentionally excluded
     - wsl              # Intentionally excluded
     - wsl_v5           # Intentionally excluded
+    - nlreturn         # Intentionally excluded
 
   settings:
     depguard:

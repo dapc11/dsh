@@ -141,6 +141,43 @@ func (h *History) ResetPosition() {
 	h.pos = len(h.items)
 }
 
+// PreviousWithPrefix finds previous history item starting with prefix.
+func (h *History) PreviousWithPrefix(prefix string) string {
+	if prefix == "" {
+		return h.Previous()
+	}
+
+	for i := h.pos - 1; i >= 0; i-- {
+		if strings.HasPrefix(h.items[i], prefix) {
+			h.pos = i
+
+			return h.items[i]
+		}
+	}
+
+	return ""
+}
+
+// NextWithPrefix finds next history item starting with prefix.
+func (h *History) NextWithPrefix(prefix string) string {
+	if prefix == "" {
+		return h.Next()
+	}
+
+	for i := h.pos + 1; i < len(h.items); i++ {
+		if strings.HasPrefix(h.items[i], prefix) {
+			h.pos = i
+
+			return h.items[i]
+		}
+	}
+
+	// If no match found, go to end
+	h.pos = len(h.items)
+
+	return ""
+}
+
 // load reads history from disk.
 func (h *History) load() {
 	file, err := os.Open(h.file)
