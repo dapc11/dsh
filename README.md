@@ -87,10 +87,11 @@ make build
 ```
 
 ### Architecture
-- **Lexer** (`lexer.go`) - Tokenizes input with quote and escape handling
-- **Parser** (`parser.go`) - Parses tokens into command structures
-- **Executor** (`main.go`) - Executes commands with I/O redirection
-- **Built-ins** - Integrated built-in command implementations
+- **Lexer** (`internal/lexer/`) - Tokenizes input with quote and escape handling
+- **Parser** (`internal/parser/`) - Parses tokens into command structures  
+- **Executor** (`internal/executor/`) - Executes commands with I/O redirection
+- **Built-ins** (`internal/builtins/`) - Built-in command implementations
+- **Readline** (`internal/readline/`) - Emacs-like line editing with history
 
 ## Documentation
 
