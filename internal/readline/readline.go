@@ -13,16 +13,25 @@ var (
 
 // Readline provides emacs-like line editing functionality.
 type Readline struct {
-	prompt       string
-	terminal     *Terminal
-	history      *History
-	killRing     *KillRing
-	buffer       []rune
-	cursor       int
-	suggestion   string
-	searchPrefix string
-	browseMode   bool
-	color        *Color
+	prompt         string
+	terminal       *Terminal
+	history        *History
+	killRing       *KillRing
+	buffer         []rune
+	cursor         int
+	suggestion     string
+	searchPrefix   string
+	browseMode     bool
+	color          *Color
+	completion     *Completion
+	completionList []CompletionItem
+	completionIdx  int
+	completionBase string
+	menuMode       bool
+	menuSelected   int
+	menuDisplayed  bool
+	menuPage       int
+	menuMaxRows    int
 }
 
 // New creates a new readline instance.
@@ -33,16 +42,25 @@ func New(prompt string) (*Readline, error) {
 	}
 
 	return &Readline{
-		prompt:       prompt,
-		terminal:     terminal,
-		history:      NewHistory(),
-		killRing:     NewKillRing(),
-		buffer:       make([]rune, 0, 256),
-		cursor:       0,
-		suggestion:   "",
-		searchPrefix: "",
-		browseMode:   false,
-		color:        NewColor(),
+		prompt:         prompt,
+		terminal:       terminal,
+		history:        NewHistory(),
+		killRing:       NewKillRing(),
+		buffer:         make([]rune, 0, 256),
+		cursor:         0,
+		suggestion:     "",
+		searchPrefix:   "",
+		browseMode:     false,
+		color:          NewColor(),
+		completion:     NewCompletion(),
+		completionList: nil,
+		completionIdx:  -1,
+		completionBase: "",
+		menuMode:       false,
+		menuSelected:   0,
+		menuDisplayed:  false,
+		menuPage:       0,
+		menuMaxRows:    10,
 	}, nil
 }
 

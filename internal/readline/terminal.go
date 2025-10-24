@@ -7,6 +7,10 @@ import (
 	"unsafe"
 )
 
+const (
+	TIOCGWINSZ = 0x5413
+)
+
 // Terminal handles raw terminal operations.
 type Terminal struct {
 	fd       int
@@ -73,4 +77,21 @@ func setTermios(fd int, termios *syscall.Termios) error {
 	}
 
 	return nil
+}
+
+// GetTerminalSize returns terminal width and height.
+func (t *Terminal) GetTerminalSize() (int, int) {
+	var ws struct {
+		Row    uint16
+		Col    uint16
+		Xpixel uint16
+		Ypixel uint16
+	}
+	
+	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(0), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
+	if errno != 0 {
+		return 80, 24 // Default fallback
+	}
+	
+	return int(ws.Col), int(ws.Row)
 }

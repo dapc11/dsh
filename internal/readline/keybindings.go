@@ -2,6 +2,8 @@ package readline
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 )
 
 // Key codes for special keys.
@@ -29,6 +31,10 @@ const (
 func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handling naturally requires many branches and statements
 	switch ch {
 	case '\r', '\n':
+		if r.menuMode {
+			r.acceptMenuSelection()
+			return true
+		}
 		return false // Signal completion
 	case KeyCtrlA:
 		r.killRing.ResetYank()
@@ -84,7 +90,14 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.displayPrompt()
 	case KeyTab:
 		r.killRing.ResetYank()
-		r.acceptSuggestion()
+		if r.menuMode {
+			// Navigate in existing menu
+			r.menuSelected = (r.menuSelected + 1) % len(r.completionList)
+			r.showCompletionMenu()
+		} else {
+			// Start new completion
+			r.performCompletion()
+		}
 	case KeyBackspace:
 		r.killRing.ResetYank()
 		r.backspace()
@@ -92,16 +105,26 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.browseMode = false // Exit browse mode when editing
 		r.updateSuggestion()
 	case KeyEscape:
-		err := r.handleEscapeSequence()
-		if err != nil {
-			return true // Continue on error
+		if r.menuMode {
+			r.clearCompletionMenu()
+			r.resetCompletion()
+			r.redraw()
+		} else {
+			err := r.handleEscapeSequence()
+			if err != nil {
+				return true // Continue on error
+			}
 		}
 	default:
 		if ch >= 32 && ch < 127 {
 			r.killRing.ResetYank()
+			if r.menuMode {
+				r.clearCompletionMenu()
+			}
 			r.insertChar(rune(ch))
 			r.searchPrefix = ""  // Reset search prefix on new input
 			r.browseMode = false // Exit browse mode when typing
+			r.resetCompletion()  // Reset completion cycling
 			r.updateSuggestion()
 		}
 	}
@@ -127,13 +150,29 @@ func (r *Readline) handleEscapeSequence() error { //nolint:cyclop // Escape sequ
 
 		switch ch2 {
 		case 'A': // Up arrow
-			r.historyPrevious()
+			if r.menuMode {
+				r.navigateMenu(-1)
+			} else {
+				r.historyPrevious()
+			}
 		case 'B': // Down arrow
-			r.historyNext()
+			if r.menuMode {
+				r.navigateMenu(1)
+			} else {
+				r.historyNext()
+			}
 		case 'C': // Right arrow
-			r.moveCursorRight()
+			if r.menuMode {
+				r.navigateMenuHorizontal(1)
+			} else {
+				r.moveCursorRight()
+			}
 		case 'D': // Left arrow
-			r.moveCursorLeft()
+			if r.menuMode {
+				r.navigateMenuHorizontal(-1)
+			} else {
+				r.moveCursorLeft()
+			}
 		case '1':
 			ch3, err := r.readChar()
 			if err == nil && ch3 == ';' {
@@ -193,13 +232,12 @@ func (r *Readline) moveCursorToEnd() {
 func (r *Readline) insertChar(ch rune) {
 	if r.cursor == len(r.buffer) {
 		r.buffer = append(r.buffer, ch)
-		_, _ = fmt.Printf("%c", ch) //nolint:forbidigo
 	} else {
 		r.buffer = append(r.buffer[:r.cursor+1], r.buffer[r.cursor:]...)
 		r.buffer[r.cursor] = ch
-		r.redraw()
 	}
 	r.cursor++
+	r.redraw()
 }
 
 func (r *Readline) deleteChar() {
@@ -239,6 +277,8 @@ func (r *Readline) redraw() {
 	}
 
 	r.setCursorPosition()
+	
+	// Don't show menu here - it's handled by specific navigation functions
 }
 
 func (r *Readline) setCursorPosition() {
@@ -473,14 +513,8 @@ func (r *Readline) setBufferFromHistory(line string) {
 
 // updateSuggestion updates the autosuggestion based on current input.
 func (r *Readline) updateSuggestion() {
+	// Disable autosuggestions - use tab completion instead
 	r.suggestion = ""
-	
-	if len(r.buffer) == 0 {
-		return
-	}
-
-	currentInput := string(r.buffer)
-	r.suggestion = r.history.GetSuggestion(currentInput)
 }
 
 // acceptSuggestion accepts the current autosuggestion.
@@ -492,4 +526,276 @@ func (r *Readline) acceptSuggestion() {
 		r.updateSuggestion()
 		r.redraw()
 	}
+}
+
+// performCompletion performs tab completion with navigable menu.
+func (r *Readline) performCompletion() {
+	input := string(r.buffer)
+	
+	// Start new completion
+	matches, completion := r.completion.Complete(input, r.cursor)
+	
+	if len(matches) == 1 && completion != "" {
+		// Single match - apply directly
+		r.resetCompletion()
+		completionRunes := []rune(completion)
+		r.buffer = append(r.buffer, completionRunes...)
+		r.cursor = len(r.buffer)
+		r.redraw()
+	} else if len(matches) > 1 {
+		// Multiple matches - show menu
+		r.completionList = matches
+		r.completionBase = input
+		r.menuMode = true
+		r.menuSelected = 0
+		r.showCompletionMenu()
+	}
+}
+
+// showCompletionMenu displays the completion menu with pagination.
+func (r *Readline) showCompletionMenu() {
+	width, height := r.terminal.GetTerminalSize()
+	maxItemWidth := 0
+	
+	// Find max item width (text only, no color codes)
+	for _, item := range r.completionList {
+		if len(item.Text) > maxItemWidth {
+			maxItemWidth = len(item.Text)
+		}
+	}
+	
+	itemWidth := maxItemWidth + 2
+	cols := width / itemWidth
+	if cols < 1 {
+		cols = 1
+	}
+	
+	// Calculate available rows (leave space for prompt and pagination info)
+	availableRows := height - 5
+	if availableRows < 3 {
+		availableRows = 3
+	}
+	
+	maxRows := availableRows
+	if maxRows > r.menuMaxRows {
+		maxRows = r.menuMaxRows
+	}
+	
+	itemsPerPage := maxRows * cols
+	totalPages := (len(r.completionList) + itemsPerPage - 1) / itemsPerPage
+	
+	// Adjust page if selection moved
+	selectedPage := r.menuSelected / itemsPerPage
+	if selectedPage != r.menuPage {
+		r.menuPage = selectedPage
+	}
+	
+	// Calculate items to show on current page
+	startIdx := r.menuPage * itemsPerPage
+	endIdx := startIdx + itemsPerPage
+	if endIdx > len(r.completionList) {
+		endIdx = len(r.completionList)
+	}
+	
+	pageItems := r.completionList[startIdx:endIdx]
+	rows := (len(pageItems) + cols - 1) / cols
+	
+	// Clear previous menu
+	if r.menuDisplayed {
+		clearLines := maxRows + 3 // menu + pagination info
+		for i := 0; i < clearLines; i++ {
+			_, _ = fmt.Print("\033[A\033[K") //nolint:forbidigo
+		}
+	}
+	
+	r.menuDisplayed = true
+	
+	// Show menu
+	_, _ = fmt.Print("\r\n") //nolint:forbidigo
+	
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			idx := row + col*rows
+			if idx >= len(pageItems) {
+				break
+			}
+			
+			globalIdx := startIdx + idx
+			item := pageItems[idx]
+			text := item.Text
+			displayText := text
+			
+			// Apply type-based coloring
+			switch item.Type {
+			case "builtin":
+				displayText = r.color.Colorize(text, Yellow)
+			case "command":
+				displayText = r.color.Colorize(text, Green)
+			case "directory":
+				displayText = r.color.Colorize(text, Blue)
+			case "file":
+				displayText = r.color.Colorize(text, Cyan)
+			}
+			
+			// Highlight selected item
+			if globalIdx == r.menuSelected {
+				displayText = "\033[7m" + displayText + "\033[0m"
+			}
+			
+			padding := itemWidth - len(text)
+			_, _ = fmt.Print(displayText + strings.Repeat(" ", padding)) //nolint:forbidigo
+		}
+		_, _ = fmt.Print("\r\n") //nolint:forbidigo
+	}
+	
+	// Show pagination info
+	if totalPages > 1 {
+		pageInfo := fmt.Sprintf("Page %d/%d (%d items)", r.menuPage+1, totalPages, len(r.completionList))
+		_, _ = fmt.Print(r.color.Colorize(pageInfo, Gray) + "\r\n") //nolint:forbidigo
+	}
+	
+	// Restore prompt
+	r.displayPrompt()
+	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
+	r.setCursorPosition()
+}
+
+// applyCompletion applies a completion option.
+func (r *Readline) applyCompletion(match string) {
+	// Restore base and apply new completion
+	r.buffer = []rune(r.completionBase)
+	
+	// Find the part to complete
+	words := strings.Fields(r.completionBase)
+	if len(words) == 0 {
+		return
+	}
+	
+	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
+		// Completing command
+		r.buffer = []rune(match)
+	} else {
+		// Completing file
+		lastWord := ""
+		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
+			lastWord = words[len(words)-1]
+		}
+		
+		if strings.Contains(lastWord, "/") {
+			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + match)
+		} else {
+			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + match)
+		}
+	}
+	
+	r.cursor = len(r.buffer)
+	r.redraw()
+}
+
+// navigateMenu moves selection up/down in completion menu.
+func (r *Readline) navigateMenu(direction int) {
+	if !r.menuMode || len(r.completionList) == 0 {
+		return
+	}
+	
+	if direction > 0 {
+		r.menuSelected = (r.menuSelected + 1) % len(r.completionList)
+	} else {
+		r.menuSelected = (r.menuSelected - 1 + len(r.completionList)) % len(r.completionList)
+	}
+	
+	r.showCompletionMenu()
+}
+
+// navigateMenuHorizontal moves selection left/right in completion menu.
+func (r *Readline) navigateMenuHorizontal(direction int) {
+	if !r.menuMode || len(r.completionList) == 0 {
+		return
+	}
+	
+	width, _ := r.terminal.GetTerminalSize()
+	maxItemWidth := 0
+	for _, item := range r.completionList {
+		if len(item.Text) > maxItemWidth {
+			maxItemWidth = len(item.Text)
+		}
+	}
+	
+	itemWidth := maxItemWidth + 2
+	cols := width / itemWidth
+	if cols < 1 {
+		cols = 1
+	}
+	rows := (len(r.completionList) + cols - 1) / cols
+	
+	currentRow := r.menuSelected % rows
+	currentCol := r.menuSelected / rows
+	
+	if direction > 0 {
+		currentCol = (currentCol + 1) % cols
+	} else {
+		currentCol = (currentCol - 1 + cols) % cols
+	}
+	
+	newIdx := currentRow + currentCol*rows
+	if newIdx < len(r.completionList) {
+		r.menuSelected = newIdx
+		r.showCompletionMenu()
+	}
+}
+
+// acceptMenuSelection accepts the selected completion.
+func (r *Readline) acceptMenuSelection() {
+	if !r.menuMode || r.menuSelected >= len(r.completionList) {
+		return
+	}
+	
+	selected := r.completionList[r.menuSelected].Text
+	r.resetCompletion()
+	
+	// Apply the selected completion
+	words := strings.Fields(r.completionBase)
+	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
+		// Completing command
+		r.buffer = []rune(selected)
+	} else {
+		// Completing file
+		lastWord := ""
+		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
+			lastWord = words[len(words)-1]
+		}
+		
+		if strings.Contains(lastWord, "/") {
+			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+		} else {
+			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+		}
+	}
+	
+	r.cursor = len(r.buffer)
+	r.redraw()
+}
+
+// clearCompletionMenu clears the displayed completion menu.
+func (r *Readline) clearCompletionMenu() {
+	if !r.menuDisplayed {
+		return
+	}
+	
+	// Clear menu lines
+	clearLines := r.menuMaxRows + 3 // menu + pagination info
+	for i := 0; i < clearLines; i++ {
+		_, _ = fmt.Print("\033[A\033[K") //nolint:forbidigo
+	}
+}
+
+// resetCompletion clears completion state.
+func (r *Readline) resetCompletion() {
+	r.completionList = nil
+	r.completionIdx = -1
+	r.completionBase = ""
+	r.menuMode = false
+	r.menuSelected = 0
+	r.menuDisplayed = false
+	r.menuPage = 0
 }
