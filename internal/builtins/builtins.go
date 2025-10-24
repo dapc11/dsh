@@ -2,8 +2,12 @@
 package builtins
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 // BuiltinCommand represents a built-in shell command.
@@ -18,6 +22,7 @@ var builtinCommands = map[string]func([]string) bool{ //nolint:gochecknoglobals 
 	"pwd":  handlePWD,
 	"help": handleHelp,
 	"exit": handleExit,
+	"todo": handleTodo,
 }
 
 // IsBuiltin checks if a command is a built-in.
@@ -82,8 +87,81 @@ func handlePWD(_ []string) bool { //nolint:unparam // Always returns true as pwd
 
 func handleHelp(_ []string) bool {
 	_, _ = fmt.Fprintln(os.Stdout, "dsh - Daniel's Shell")
-	_, _ = fmt.Fprintln(os.Stdout, "Built-in commands: cd, exit, help, pwd")
-	_, _ = fmt.Fprintln(os.Stdout, "Features: quotes, pipes, I/O redirection, emacs-like editing")
+	_, _ = fmt.Fprintln(os.Stdout, "Built-in commands: cd, exit, help, pwd, todo")
+	_, _ = fmt.Fprintln(os.Stdout, "Features: quotes, pipes, I/O redirection, emacs-like editing, history, autosuggestions")
 
 	return true
+}
+
+func handleTodo(args []string) bool {
+	if len(args) < 2 {
+		// List todos
+		todos := loadTodos()
+		if len(todos) == 0 {
+			_, _ = fmt.Fprintln(os.Stdout, "No todos found.")
+		} else {
+			_, _ = fmt.Fprintln(os.Stdout, "DSH Todo List:")
+			for i, todo := range todos {
+				_, _ = fmt.Fprintf(os.Stdout, "%d. %s\n", i+1, todo)
+			}
+		}
+		return true
+	}
+
+	// Add new todo
+	todoText := strings.Join(args[1:], " ")
+	if err := addTodo(todoText); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "dsh: todo: %v\n", err)
+		return false
+	}
+
+	_, _ = fmt.Fprintf(os.Stdout, "Added todo: %s\n", todoText)
+	return true
+}
+
+func loadTodos() []string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil
+	}
+
+	todoFile := filepath.Join(homeDir, ".dsh_todos")
+	file, err := os.Open(todoFile)
+	if err != nil {
+		return nil // File doesn't exist yet
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	var todos []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			todos = append(todos, line)
+		}
+	}
+
+	return todos
+}
+
+func addTodo(todo string) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	todoFile := filepath.Join(homeDir, ".dsh_todos")
+	file, err := os.OpenFile(todoFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	_, err = fmt.Fprintf(file, "[%s] %s\n", timestamp, todo)
+	return err
 }
