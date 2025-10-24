@@ -75,7 +75,7 @@ type CompletionItem struct {
 }
 
 // Complete performs tab completion.
-func (c *Completion) Complete(input string, cursor int) ([]CompletionItem, string) {
+func (c *Completion) Complete(input string, _ int) ([]CompletionItem, string) {
 	if input == "" {
 		return nil, ""
 	}
@@ -109,14 +109,14 @@ func (c *Completion) Complete(input string, cursor int) ([]CompletionItem, strin
 func (c *Completion) completeCommand(prefix string) ([]CompletionItem, string) {
 	var matches []CompletionItem
 	builtins := []string{"cd", "pwd", "help", "exit", "todo"}
-	
+
 	// Add builtin matches
 	for _, cmd := range builtins {
 		if strings.HasPrefix(cmd, prefix) {
 			matches = append(matches, CompletionItem{Text: cmd, Type: "builtin"})
 		}
 	}
-	
+
 	// Add command matches
 	for _, cmd := range c.commands {
 		if strings.HasPrefix(cmd, prefix) {

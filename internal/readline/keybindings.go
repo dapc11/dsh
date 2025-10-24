@@ -91,9 +91,9 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 	case KeyTab:
 		r.killRing.ResetYank()
 		if r.menuMode {
-			// Navigate in existing menu
+			// Cycle to next option and apply it
 			r.menuSelected = (r.menuSelected + 1) % len(r.completionList)
-			r.showCompletionMenu()
+			r.applyCycleCompletion()
 		} else {
 			// Start new completion
 			r.performCompletion()
@@ -263,7 +263,7 @@ func (r *Readline) clearLine() {
 func (r *Readline) redraw() {
 	// Update suggestion before drawing
 	r.updateSuggestion()
-	
+
 	// Clear entire line with sufficient space
 	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo // Clear to end of line
 
@@ -277,7 +277,7 @@ func (r *Readline) redraw() {
 	}
 
 	r.setCursorPosition()
-	
+
 	// Don't show menu here - it's handled by specific navigation functions
 }
 
@@ -531,10 +531,10 @@ func (r *Readline) acceptSuggestion() {
 // performCompletion performs tab completion with navigable menu.
 func (r *Readline) performCompletion() {
 	input := string(r.buffer)
-	
+
 	// Start new completion
 	matches, completion := r.completion.Complete(input, r.cursor)
-	
+
 	if len(matches) == 1 && completion != "" {
 		// Single match - apply directly
 		r.resetCompletion()
@@ -556,50 +556,50 @@ func (r *Readline) performCompletion() {
 func (r *Readline) showCompletionMenu() {
 	width, height := r.terminal.GetTerminalSize()
 	maxItemWidth := 0
-	
+
 	// Find max item width (text only, no color codes)
 	for _, item := range r.completionList {
 		if len(item.Text) > maxItemWidth {
 			maxItemWidth = len(item.Text)
 		}
 	}
-	
+
 	itemWidth := maxItemWidth + 2
 	cols := width / itemWidth
 	if cols < 1 {
 		cols = 1
 	}
-	
+
 	// Calculate available rows (leave space for prompt and pagination info)
 	availableRows := height - 5
 	if availableRows < 3 {
 		availableRows = 3
 	}
-	
+
 	maxRows := availableRows
 	if maxRows > r.menuMaxRows {
 		maxRows = r.menuMaxRows
 	}
-	
+
 	itemsPerPage := maxRows * cols
 	totalPages := (len(r.completionList) + itemsPerPage - 1) / itemsPerPage
-	
+
 	// Adjust page if selection moved
 	selectedPage := r.menuSelected / itemsPerPage
 	if selectedPage != r.menuPage {
 		r.menuPage = selectedPage
 	}
-	
+
 	// Calculate items to show on current page
 	startIdx := r.menuPage * itemsPerPage
 	endIdx := startIdx + itemsPerPage
 	if endIdx > len(r.completionList) {
 		endIdx = len(r.completionList)
 	}
-	
+
 	pageItems := r.completionList[startIdx:endIdx]
 	rows := (len(pageItems) + cols - 1) / cols
-	
+
 	// Clear previous menu
 	if r.menuDisplayed {
 		clearLines := maxRows + 3 // menu + pagination info
@@ -607,24 +607,24 @@ func (r *Readline) showCompletionMenu() {
 			_, _ = fmt.Print("\033[A\033[K") //nolint:forbidigo
 		}
 	}
-	
+
 	r.menuDisplayed = true
-	
+
 	// Show menu
 	_, _ = fmt.Print("\r\n") //nolint:forbidigo
-	
+
 	for row := 0; row < rows; row++ {
 		for col := 0; col < cols; col++ {
 			idx := row + col*rows
 			if idx >= len(pageItems) {
 				break
 			}
-			
+
 			globalIdx := startIdx + idx
 			item := pageItems[idx]
 			text := item.Text
 			displayText := text
-			
+
 			// Apply type-based coloring
 			switch item.Type {
 			case "builtin":
@@ -636,24 +636,24 @@ func (r *Readline) showCompletionMenu() {
 			case "file":
 				displayText = r.color.Colorize(text, Cyan)
 			}
-			
+
 			// Highlight selected item
 			if globalIdx == r.menuSelected {
 				displayText = "\033[7m" + displayText + "\033[0m"
 			}
-			
+
 			padding := itemWidth - len(text)
 			_, _ = fmt.Print(displayText + strings.Repeat(" ", padding)) //nolint:forbidigo
 		}
 		_, _ = fmt.Print("\r\n") //nolint:forbidigo
 	}
-	
+
 	// Show pagination info
 	if totalPages > 1 {
 		pageInfo := fmt.Sprintf("Page %d/%d (%d items)", r.menuPage+1, totalPages, len(r.completionList))
 		_, _ = fmt.Print(r.color.Colorize(pageInfo, Gray) + "\r\n") //nolint:forbidigo
 	}
-	
+
 	// Restore prompt
 	r.displayPrompt()
 	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
@@ -664,13 +664,13 @@ func (r *Readline) showCompletionMenu() {
 func (r *Readline) applyCompletion(match string) {
 	// Restore base and apply new completion
 	r.buffer = []rune(r.completionBase)
-	
+
 	// Find the part to complete
 	words := strings.Fields(r.completionBase)
 	if len(words) == 0 {
 		return
 	}
-	
+
 	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
 		// Completing command
 		r.buffer = []rune(match)
@@ -680,14 +680,14 @@ func (r *Readline) applyCompletion(match string) {
 		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
 			lastWord = words[len(words)-1]
 		}
-		
+
 		if strings.Contains(lastWord, "/") {
 			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + match)
 		} else {
 			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + match)
 		}
 	}
-	
+
 	r.cursor = len(r.buffer)
 	r.redraw()
 }
@@ -697,13 +697,13 @@ func (r *Readline) navigateMenu(direction int) {
 	if !r.menuMode || len(r.completionList) == 0 {
 		return
 	}
-	
+
 	if direction > 0 {
 		r.menuSelected = (r.menuSelected + 1) % len(r.completionList)
 	} else {
 		r.menuSelected = (r.menuSelected - 1 + len(r.completionList)) % len(r.completionList)
 	}
-	
+
 	r.showCompletionMenu()
 }
 
@@ -712,7 +712,7 @@ func (r *Readline) navigateMenuHorizontal(direction int) {
 	if !r.menuMode || len(r.completionList) == 0 {
 		return
 	}
-	
+
 	width, _ := r.terminal.GetTerminalSize()
 	maxItemWidth := 0
 	for _, item := range r.completionList {
@@ -720,23 +720,23 @@ func (r *Readline) navigateMenuHorizontal(direction int) {
 			maxItemWidth = len(item.Text)
 		}
 	}
-	
+
 	itemWidth := maxItemWidth + 2
 	cols := width / itemWidth
 	if cols < 1 {
 		cols = 1
 	}
 	rows := (len(r.completionList) + cols - 1) / cols
-	
+
 	currentRow := r.menuSelected % rows
 	currentCol := r.menuSelected / rows
-	
+
 	if direction > 0 {
 		currentCol = (currentCol + 1) % cols
 	} else {
 		currentCol = (currentCol - 1 + cols) % cols
 	}
-	
+
 	newIdx := currentRow + currentCol*rows
 	if newIdx < len(r.completionList) {
 		r.menuSelected = newIdx
@@ -749,10 +749,10 @@ func (r *Readline) acceptMenuSelection() {
 	if !r.menuMode || r.menuSelected >= len(r.completionList) {
 		return
 	}
-	
+
 	selected := r.completionList[r.menuSelected].Text
 	r.resetCompletion()
-	
+
 	// Apply the selected completion
 	words := strings.Fields(r.completionBase)
 	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
@@ -764,16 +764,51 @@ func (r *Readline) acceptMenuSelection() {
 		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
 			lastWord = words[len(words)-1]
 		}
-		
+
 		if strings.Contains(lastWord, "/") {
 			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
 		} else {
 			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
 		}
 	}
-	
+
 	r.cursor = len(r.buffer)
 	r.redraw()
+}
+
+// applyCycleCompletion applies completion while keeping menu active for cycling.
+func (r *Readline) applyCycleCompletion() {
+	if !r.menuMode || r.menuSelected >= len(r.completionList) {
+		return
+	}
+
+	selected := r.completionList[r.menuSelected].Text
+
+	// Apply the selected completion but keep menu active
+	words := strings.Fields(r.completionBase)
+	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
+		// Completing command
+		r.buffer = []rune(selected)
+	} else {
+		// Completing file
+		lastWord := ""
+		if !strings.HasSuffix(r.completionBase, " ") && len(words) > 0 {
+			lastWord = words[len(words)-1]
+		}
+
+		if strings.Contains(lastWord, "/") {
+			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+		} else {
+			r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+		}
+	}
+
+	r.cursor = len(r.buffer)
+
+	// Clear current line and redraw buffer only
+	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo // Move to start and clear line
+	r.displayPrompt()
+	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
 }
 
 // clearCompletionMenu clears the displayed completion menu.
@@ -781,7 +816,7 @@ func (r *Readline) clearCompletionMenu() {
 	if !r.menuDisplayed {
 		return
 	}
-	
+
 	// Clear menu lines
 	clearLines := r.menuMaxRows + 3 // menu + pagination info
 	for i := 0; i < clearLines; i++ {
