@@ -1,0 +1,40 @@
+# DSH Phase 2 Feature Tests
+# Run with: ./dsh < test_phase2.dsh
+
+echo "=== DSH Phase 2 Feature Tests ==="
+
+# Test basic commands
+echo "Testing basic commands:"
+pwd
+help
+
+# Test quote handling
+echo "Testing quote handling:"
+echo "hello world"
+echo 'single quotes work'
+echo "quotes with spaces and symbols !@#"
+
+# Test I/O redirection
+echo "Testing I/O redirection:"
+echo "test content" > test.txt
+cat < test.txt
+echo "appended content" >> test.txt
+cat test.txt
+
+# Test built-in cd
+echo "Testing cd command:"
+pwd
+cd /tmp
+pwd
+cd
+
+# Test background processes
+echo "Testing background process:"
+sleep 1 &
+
+# Test command chaining
+echo "Testing command separation:"
+echo "first"; echo "second"
+
+echo "=== Phase 2 tests complete ==="
+exit
