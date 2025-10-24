@@ -47,8 +47,15 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.moveCursorLeft()
 	case KeyCtrlC:
 		r.killRing.ResetYank()
+		if r.menuMode {
+			r.clearCompletionMenu()
+			r.resetCompletion()
+		}
 		r.clearLine()
 		_, _ = fmt.Print("^C\r\n") //nolint:forbidigo
+		r.displayPrompt()
+		// Position cursor at end of prompt
+		_, _ = fmt.Print("\r") //nolint:forbidigo
 		r.displayPrompt()
 	case KeyCtrlF:
 		r.killRing.ResetYank()
@@ -532,6 +539,9 @@ func (r *Readline) acceptSuggestion() {
 func (r *Readline) performCompletion() {
 	input := string(r.buffer)
 
+	// Save cursor position for menu display
+	_, _ = fmt.Print("\0337") //nolint:forbidigo // Save cursor position
+
 	// Start new completion
 	matches, completion := r.completion.Complete(input, r.cursor)
 
@@ -654,10 +664,8 @@ func (r *Readline) showCompletionMenu() {
 		_, _ = fmt.Print(r.color.Colorize(pageInfo, Gray) + "\r\n") //nolint:forbidigo
 	}
 
-	// Restore prompt
-	r.displayPrompt()
-	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
-	r.setCursorPosition()
+	// Restore cursor to original position
+	_, _ = fmt.Print("\0338") //nolint:forbidigo // Restore cursor position
 
 	// Mark menu as displayed
 	r.menuDisplayed = true
@@ -824,9 +832,8 @@ func (r *Readline) clearCompletionMenu() {
 		return
 	}
 
-	// Move down to clear area, clear to end, move back up
-	_, _ = fmt.Print("\n\033[0J") //nolint:forbidigo // Move down, clear to end of display
-	_, _ = fmt.Print("\033[A")    //nolint:forbidigo // Move back up to command line
+	// Move to start of next line (where menu begins) and clear to end
+	_, _ = fmt.Print("\r\n\033[0J\033[A") //nolint:forbidigo // Move to next line, clear to end, move back up
 
 	r.menuDisplayed = false
 	r.menuLinesDrawn = 0
