@@ -19,13 +19,19 @@ A minimal, secure, POSIX-compatible shell implementation written in Go.
 - **Enhanced parsing** - Proper lexer/parser architecture
 - **Clean code standards** - 0 linting issues, comprehensive error handling
 
-### Phase 3 🚧 (Planned)
-- **Emacs-like line editing** - Readline functionality with key bindings
-  - Cursor movement (Ctrl+A/E, Ctrl+B/F, arrows)
+### Phase 3 🚧 (In Progress)
+- **Advanced History & Completion** - ZSH-inspired features
+  - Persistent history with shared sessions
+  - Substring search (like zsh-history-substring-search)
+  - Auto-suggestions based on history
+  - Tab completion for commands and files
+  - History expansion (!!, !n, !string)
+- **Enhanced Line Editing** - Extended readline functionality
+  - Cursor movement (Ctrl+A/E, Ctrl+B/F, arrows) ✅
   - Word movement (Ctrl+←/→)  
-  - Command history (↑/↓, Ctrl+P/N)
-  - Line editing (Ctrl+D/K/U/W, backspace)
-  - Screen control (Ctrl+L)
+  - Command history (↑/↓, Ctrl+P/N) ✅
+  - Line editing (Ctrl+D/K/U/W, backspace) ✅
+  - Screen control (Ctrl+L) ✅
 - Pipeline support (`|`)
 - Job control and signal handling
 - Variable expansion (`$VAR`, `${VAR}`)

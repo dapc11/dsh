@@ -1,32 +1,65 @@
 package readline
 
-// History manages command history.
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
+
+// History manages command history with persistent storage.
 type History struct {
-	items []string
-	pos   int
+	items    []string
+	pos      int
+	file     string
+	maxSize  int
+	modified bool
 }
 
-// NewHistory creates a new history manager.
+// NewHistory creates a new history manager with persistent storage.
 func NewHistory() *History {
-	return &History{
-		items: make([]string, 0, 100),
-		pos:   0,
+	homeDir, _ := os.UserHomeDir()
+	histFile := filepath.Join(homeDir, ".dsh_history")
+
+	h := &History{
+		items:    make([]string, 0, 1000),
+		pos:      0,
+		file:     histFile,
+		maxSize:  1000,
+		modified: false,
 	}
+
+	h.load()
+
+	return h
 }
 
-// Add adds a command to history.
+// Add adds a command to history and saves to disk.
 func (h *History) Add(line string) {
-	if len(h.items) == 0 || h.items[len(h.items)-1] != line {
-		h.items = append(h.items, line)
-		if len(h.items) > 100 {
-			h.items = h.items[1:]
-		}
+	line = strings.TrimSpace(line)
+	if line == "" || strings.HasPrefix(line, "#") {
+		return
 	}
-}
 
-// ResetPosition resets history position to end.
-func (h *History) ResetPosition() {
+	// Avoid consecutive duplicates
+	if len(h.items) > 0 && h.items[len(h.items)-1] == line {
+		return
+	}
+
+	h.items = append(h.items, line)
 	h.pos = len(h.items)
+	h.modified = true
+
+	// Trim history if too large
+	if len(h.items) > h.maxSize {
+		h.items = h.items[len(h.items)-h.maxSize:]
+		h.pos = len(h.items)
+	}
+
+	// Save immediately for shared sessions
+	h.save()
 }
 
 // Previous moves to previous history item.
@@ -50,4 +83,113 @@ func (h *History) Next() string {
 	}
 
 	return ""
+}
+
+// Search performs substring search in history (zsh-like).
+func (h *History) Search(query string) []string {
+	var matches []string
+	query = strings.ToLower(query)
+
+	// Search backwards through history
+	for i := len(h.items) - 1; i >= 0; i-- {
+		if strings.Contains(strings.ToLower(h.items[i]), query) {
+			matches = append(matches, h.items[i])
+			if len(matches) >= 10 { // Limit results
+				break
+			}
+		}
+	}
+
+	return matches
+}
+
+// GetSuggestion returns auto-suggestion based on current input.
+func (h *History) GetSuggestion(input string) string {
+	if input == "" {
+		return ""
+	}
+
+	input = strings.ToLower(input)
+
+	// Find most recent command starting with input
+	for i := len(h.items) - 1; i >= 0; i-- {
+		cmd := strings.ToLower(h.items[i])
+		if strings.HasPrefix(cmd, input) && len(h.items[i]) > len(input) {
+			return h.items[i][len(input):] // Return the suggestion part
+		}
+	}
+
+	return ""
+}
+
+// Reload refreshes history from disk (for shared sessions).
+func (h *History) Reload() {
+	currentPos := h.pos
+	h.items = h.items[:0] // Clear current items
+	h.load()
+
+	// Restore position if possible
+	if currentPos < len(h.items) {
+		h.pos = currentPos
+	} else {
+		h.pos = len(h.items)
+	}
+}
+
+// ResetPosition resets history position to end.
+func (h *History) ResetPosition() {
+	h.pos = len(h.items)
+}
+
+// load reads history from disk.
+func (h *History) load() {
+	file, err := os.Open(h.file)
+	if err != nil {
+		return // File doesn't exist yet
+	}
+	defer func() {
+		_ = file.Close() // Ignore close error on read-only file
+	}()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" && !strings.HasPrefix(line, "#") {
+			h.items = append(h.items, line)
+		}
+	}
+
+	h.pos = len(h.items)
+}
+
+// save writes history to disk.
+func (h *History) save() {
+	if !h.modified {
+		return
+	}
+
+	// Create directory if it doesn't exist
+	dir := filepath.Dir(h.file)
+	err := os.MkdirAll(dir, 0750)
+	if err != nil {
+		return
+	}
+
+	// Write with timestamp for shared sessions
+	file, err := os.OpenFile(h.file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		return
+	}
+	defer func() {
+		_ = file.Close() // Ignore close error after successful write
+	}()
+
+	// Only write the last item (newly added)
+	if len(h.items) > 0 {
+		lastItem := h.items[len(h.items)-1]
+		timestamp := time.Now().Format("2006-01-02 15:04:05")
+		_, _ = fmt.Fprintf(file, "# %s\n%s\n", timestamp, lastItem)
+	}
+
+	h.modified = false
 }
