@@ -223,15 +223,18 @@ func (r *Readline) clearLine() {
 }
 
 func (r *Readline) redraw() {
+	// Update suggestion before drawing
+	r.updateSuggestion()
+	
 	// Clear entire line with sufficient space
 	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo // Clear to end of line
 
 	// Display prompt and buffer
 	_, _ = fmt.Print(r.prompt + string(r.buffer)) //nolint:forbidigo
 
-	// Display autosuggestion in gray if available
+	// Display autosuggestion with simple text indicator
 	if r.suggestion != "" {
-		_, _ = fmt.Print("\033[90m" + r.suggestion + "\033[0m") //nolint:forbidigo // Gray text
+		_, _ = fmt.Print(" -> " + r.suggestion + " [TAB]") //nolint:forbidigo // Simple text suggestion
 	}
 
 	r.setCursorPosition()
@@ -472,8 +475,9 @@ func (r *Readline) setBufferFromHistory(line string) {
 
 // updateSuggestion updates the autosuggestion based on current input.
 func (r *Readline) updateSuggestion() {
+	r.suggestion = ""
+	
 	if len(r.buffer) == 0 {
-		r.suggestion = ""
 		return
 	}
 
