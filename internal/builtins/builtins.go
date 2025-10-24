@@ -150,13 +150,13 @@ func loadTodos() []string {
 func addTodo(todo string) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
 	todoFile := filepath.Join(homeDir, ".dsh_todos")
 	file, err := os.OpenFile(todoFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open todo file: %w", err)
 	}
 	defer func() {
 		_ = file.Close()
@@ -164,5 +164,8 @@ func addTodo(todo string) error {
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	_, err = fmt.Fprintf(file, "[%s] %s\n", timestamp, todo)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to write todo: %w", err)
+	}
+	return nil
 }

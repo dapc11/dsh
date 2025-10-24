@@ -734,28 +734,7 @@ func (r *Readline) acceptMenuSelection() {
 
 	// Apply the selected completion
 	words := strings.Fields(r.completionBase)
-	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
-		// Completing command
-		r.buffer = []rune(selected)
-	} else {
-		// Completing file - check for trailing space
-		if strings.HasSuffix(r.completionBase, " ") {
-			// Trailing space - append file to command
-			r.buffer = []rune(r.completionBase + selected)
-		} else {
-			// No trailing space - replace last word
-			lastWord := ""
-			if len(words) > 0 {
-				lastWord = words[len(words)-1]
-			}
-			if strings.Contains(lastWord, "/") {
-				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
-			} else {
-				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
-			}
-		}
-	}
-
+	r.buffer = r.applySelectedCompletion(selected, words)
 	r.cursor = len(r.buffer)
 
 	// Clear the menu before resetting completion
@@ -770,6 +749,30 @@ func (r *Readline) acceptMenuSelection() {
 	r.resetCompletion()
 }
 
+// applySelectedCompletion applies the selected completion to create new buffer.
+func (r *Readline) applySelectedCompletion(selected string, words []string) []rune {
+	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
+		// Completing command
+		return []rune(selected)
+	}
+
+	// Completing file - check for trailing space
+	if strings.HasSuffix(r.completionBase, " ") {
+		// Trailing space - append file to command
+		return []rune(r.completionBase + selected)
+	}
+
+	// No trailing space - replace last word
+	lastWord := ""
+	if len(words) > 0 {
+		lastWord = words[len(words)-1]
+	}
+	if strings.Contains(lastWord, "/") {
+		return []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+	}
+	return []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
+}
+
 // applyCycleCompletion applies completion while keeping menu active for cycling.
 func (r *Readline) applyCycleCompletion() {
 	if !r.menuMode || r.menuSelected >= len(r.completionList) {
@@ -780,28 +783,7 @@ func (r *Readline) applyCycleCompletion() {
 
 	// Apply the selected completion but keep menu active
 	words := strings.Fields(r.completionBase)
-	if len(words) == 1 && !strings.HasSuffix(r.completionBase, " ") {
-		// Completing command
-		r.buffer = []rune(selected)
-	} else {
-		// Completing file - check for trailing space
-		if strings.HasSuffix(r.completionBase, " ") {
-			// Trailing space - append file to command
-			r.buffer = []rune(r.completionBase + selected)
-		} else {
-			// No trailing space - replace last word
-			lastWord := ""
-			if len(words) > 0 {
-				lastWord = words[len(words)-1]
-			}
-			if strings.Contains(lastWord, "/") {
-				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
-			} else {
-				r.buffer = []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
-			}
-		}
-	}
-
+	r.buffer = r.applySelectedCompletion(selected, words)
 	r.cursor = len(r.buffer)
 
 	// Just redraw command line and menu - let it overwrite
