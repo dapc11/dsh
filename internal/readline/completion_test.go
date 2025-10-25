@@ -101,6 +101,31 @@ func TestCompletion_TrailingSpace(t *testing.T) {
 	}
 }
 
+func TestExpandTilde(t *testing.T) {
+	// Set test HOME
+	testHome := "/test/home"
+	t.Setenv("HOME", testHome)
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"~/file.txt", testHome + "/file.txt"},
+		{"~", testHome},
+		{"~/dir/file", testHome + "/dir/file"},
+		{"/absolute/path", "/absolute/path"},
+		{"relative/path", "relative/path"},
+		{"file.txt", "file.txt"},
+	}
+
+	for _, test := range tests {
+		result := expandTilde(test.input)
+		if result != test.expected {
+			t.Errorf("expandTilde(%q) = %q, want %q", test.input, result, test.expected)
+		}
+	}
+}
+
 func TestCompletion_Empty(t *testing.T) {
 	c := NewCompletion()
 

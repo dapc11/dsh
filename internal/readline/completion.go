@@ -2,6 +2,7 @@ package readline
 
 import (
 	"os"
+	"os/user"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -145,18 +146,21 @@ func (c *Completion) completeCommand(prefix string) ([]CompletionItem, string) {
 
 // completeFile completes file and directory names.
 func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
-	dir := "."
-	filename := prefix
+	// Expand tilde in prefix
+	expandedPrefix := expandTilde(prefix)
 
-	if strings.Contains(prefix, "/") {
+	dir := "."
+	filename := expandedPrefix
+
+	if strings.Contains(expandedPrefix, "/") {
 		// Handle trailing slash case - show all files in directory
-		if strings.HasSuffix(prefix, "/") {
-			dir = prefix
+		if strings.HasSuffix(expandedPrefix, "/") {
+			dir = expandedPrefix
 			filename = ""
 		} else {
 			// Partial path - get directory and filename to match
-			dir = filepath.Dir(prefix)
-			filename = filepath.Base(prefix)
+			dir = filepath.Dir(expandedPrefix)
+			filename = filepath.Base(expandedPrefix)
 		}
 	}
 
@@ -174,13 +178,25 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 		}
 
 		if strings.HasPrefix(name, filename) {
-			// For partial paths, we need to return the full path from the original prefix
+			// For tilde expansion, we need to preserve the original tilde in the display
 			var displayText string
 			if dir == "." {
 				displayText = name
 			} else {
-				// Replace the filename part with the matched name
-				displayText = filepath.Join(filepath.Dir(prefix), name)
+				// If we expanded a tilde, keep the tilde format in display
+				if strings.HasPrefix(prefix, "~") && expandedPrefix != prefix {
+					// Replace the expanded home directory back with tilde
+					homeDir := os.Getenv("HOME")
+					if homeDir != "" && strings.HasPrefix(dir, homeDir) {
+						tildeDir := strings.Replace(dir, homeDir, "~", 1)
+						displayText = filepath.Join(tildeDir, name)
+					} else {
+						displayText = filepath.Join(dir, name)
+					}
+				} else {
+					// Replace the filename part with the matched name
+					displayText = filepath.Join(filepath.Dir(expandedPrefix), name)
+				}
 			}
 
 			if entry.IsDir() {
@@ -227,6 +243,38 @@ func (c *Completion) commonPrefixItems(matches []CompletionItem, current string)
 	}
 
 	return ""
+}
+
+// expandTilde expands tilde (~) in paths according to POSIX rules.
+func expandTilde(path string) string {
+	if !strings.HasPrefix(path, "~") {
+		return path
+	}
+
+	// Handle ~ alone or ~/...
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		home := os.Getenv("HOME")
+		if home == "" {
+			return path // Return unchanged if HOME not set
+		}
+		return strings.Replace(path, "~", home, 1)
+	}
+
+	// Handle ~username or ~username/...
+	slashIndex := strings.Index(path, "/")
+	var username string
+	if slashIndex == -1 {
+		username = path[1:] // Everything after ~
+	} else {
+		username = path[1:slashIndex] // Between ~ and /
+	}
+
+	u, err := user.Lookup(username)
+	if err != nil {
+		return path // Return unchanged if user not found
+	}
+
+	return strings.Replace(path, "~"+username, u.HomeDir, 1)
 }
 
 // deduplicate removes duplicate strings.
