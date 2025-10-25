@@ -1,12 +1,13 @@
 package integration
 
 import (
+	"context"
 	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
-// TestExitStatusHandling tests that DSH properly propagates command exit status
+// TestExitStatusHandling tests that DSH properly propagates command exit status.
 func TestExitStatusHandling(t *testing.T) {
 	dshPath := filepath.Join("..", "..", "dsh")
 
@@ -23,7 +24,8 @@ func TestExitStatusHandling(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := exec.Command(dshPath, "-c", test.command)
+			ctx := context.Background()
+			cmd := exec.CommandContext(ctx, dshPath, "-c", test.command)
 			err := cmd.Run()
 
 			var actualStatus int
@@ -45,7 +47,7 @@ func TestExitStatusHandling(t *testing.T) {
 	}
 }
 
-// TestBuiltinExitStatus tests exit status for builtin commands
+// TestBuiltinExitStatus tests exit status for builtin commands.
 func TestBuiltinExitStatus(t *testing.T) {
 	dshPath := filepath.Join("..", "..", "dsh")
 
@@ -61,7 +63,8 @@ func TestBuiltinExitStatus(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := exec.Command(dshPath, "-c", test.command)
+			ctx := context.Background()
+			cmd := exec.CommandContext(ctx, dshPath, "-c", test.command)
 			err := cmd.Run()
 
 			var actualStatus int
@@ -83,7 +86,7 @@ func TestBuiltinExitStatus(t *testing.T) {
 	}
 }
 
-// TestCommandChainExitStatus tests exit status with command chaining
+// TestCommandChainExitStatus tests exit status with command chaining.
 func TestCommandChainExitStatus(t *testing.T) {
 	dshPath := filepath.Join("..", "..", "dsh")
 
@@ -115,7 +118,8 @@ func TestCommandChainExitStatus(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := exec.Command(dshPath, "-c", test.command)
+			ctx := context.Background()
+			cmd := exec.CommandContext(ctx, dshPath, "-c", test.command)
 			err := cmd.Run()
 
 			var actualStatus int

@@ -280,7 +280,7 @@ func (r *Readline) showCompletionMenu() { //nolint:cyclop,funlen // Complex UI r
 
 	// Display items in grid
 	_, _ = fmt.Print("\r\n") //nolint:forbidigo
-	for i := 0; i < maxRows; i++ {
+	for i := range maxRows {
 		for j := 0; j < cols; j++ {
 			idx := i*cols + j
 			if idx >= len(pageItems) {

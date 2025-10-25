@@ -83,7 +83,7 @@ func TestFileRedirection(t *testing.T) {
 		testFile := filepath.Join(tmpDir, "output.txt")
 
 		// Use absolute path to avoid cd issues
-		cmd := fmt.Sprintf("echo 'test output' > %s", testFile)
+		cmd := "echo 'test output' > " + testFile
 		output, err := runDSHCommand(t, cmd)
 		if err != nil {
 			t.Logf("Output redirection failed: %v, output: %q", err, output)

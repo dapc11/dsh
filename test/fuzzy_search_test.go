@@ -4,8 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"dsh/internal/readline"
 	"github.com/sahilm/fuzzy"
+
+	"dsh/internal/readline"
 )
 
 func TestCustomFzfCreation(t *testing.T) {

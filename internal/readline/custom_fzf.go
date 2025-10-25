@@ -126,7 +126,7 @@ func (f *CustomFzf) readKey() (int, error) {
 	if buf[0] == 27 { // ESC
 		n, err := os.Stdin.Read(buf[1:3])
 		if err != nil || n < 2 {
-			return 27, nil // Just escape
+			return 27, err // Return the error
 		}
 
 		if buf[1] == '[' {
@@ -175,7 +175,7 @@ func (f *CustomFzf) adjustOffset() {
 func (f *CustomFzf) drawInline() {
 	// Always clear exactly 6 lines (header + 5 matches) if we've drawn before
 	if f.lastDrawnLines > 0 {
-		for i := 0; i < 6; i++ {
+		for range 6 {
 			fmt.Print("\033[1A\033[2K")
 		}
 	}
@@ -225,7 +225,7 @@ func (f *CustomFzf) drawInline() {
 // clearInline clears the inline display
 func (f *CustomFzf) clearInline() {
 	if f.lastDrawnLines > 0 {
-		for i := 0; i < 6; i++ {
+		for range 6 {
 			fmt.Print("\033[1A\033[2K")
 		}
 	}

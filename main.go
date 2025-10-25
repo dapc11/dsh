@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mattn/go-isatty"
+
 	"dsh/internal/executor"
 	"dsh/internal/lexer"
 	"dsh/internal/parser"
 	"dsh/internal/readline"
-	"github.com/mattn/go-isatty"
 )
 
 func main() {
