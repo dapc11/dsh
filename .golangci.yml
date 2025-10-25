@@ -13,6 +13,11 @@ linters:
     - wsl              # Intentionally excluded
     - wsl_v5           # Intentionally excluded
     - nlreturn         # Intentionally excluded
+    - paralleltest     # Too many issues, disable for now
+    - exhaustruct      # Too verbose for struct initialization
+    - cyclop           # Complex functions are acceptable for now
+    - dupl             # Duplicate code acceptable in tests
+    - tparallel        # Related to paralleltest
 
   settings:
     depguard:

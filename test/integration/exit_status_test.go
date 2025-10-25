@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"errors"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -30,7 +31,8 @@ func TestExitStatusHandling(t *testing.T) {
 
 			var actualStatus int
 			if err != nil {
-				if exitError, ok := err.(*exec.ExitError); ok {
+				var exitError *exec.ExitError
+				if errors.As(err, &exitError) {
 					actualStatus = exitError.ExitCode()
 				} else {
 					t.Fatalf("Unexpected error type: %v", err)
@@ -69,7 +71,8 @@ func TestBuiltinExitStatus(t *testing.T) {
 
 			var actualStatus int
 			if err != nil {
-				if exitError, ok := err.(*exec.ExitError); ok {
+				var exitError *exec.ExitError
+				if errors.As(err, &exitError) {
 					actualStatus = exitError.ExitCode()
 				} else {
 					t.Fatalf("Unexpected error type: %v", err)
@@ -124,7 +127,8 @@ func TestCommandChainExitStatus(t *testing.T) {
 
 			var actualStatus int
 			if err != nil {
-				if exitError, ok := err.(*exec.ExitError); ok {
+				var exitError *exec.ExitError
+				if errors.As(err, &exitError) {
 					actualStatus = exitError.ExitCode()
 				} else {
 					t.Fatalf("Unexpected error type: %v", err)

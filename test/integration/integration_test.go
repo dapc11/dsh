@@ -14,7 +14,7 @@ import (
 
 var ErrCommandTimeout = errors.New("command timed out after 3 seconds")
 
-// runDSHCommand runs a single command in DSH with timeout
+// runDSHCommand runs a single command in DSH with timeout.
 func runDSHCommand(_ *testing.T, command string) (string, error) {
 	dshPath := filepath.Join("..", "..", "dsh")
 
@@ -31,7 +31,7 @@ func runDSHCommand(_ *testing.T, command string) (string, error) {
 	return strings.TrimSpace(string(output)), err
 }
 
-// TestCoreCommands tests essential shell functionality
+// TestCoreCommands tests essential shell functionality.
 func TestCoreCommands(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -60,7 +60,7 @@ func TestCoreCommands(t *testing.T) {
 	}
 }
 
-// TestCommandChaining tests semicolon command chaining
+// TestCommandChaining tests semicolon command chaining.
 func TestCommandChaining(t *testing.T) {
 	output, err := runDSHCommand(t, "echo first; echo second")
 	if err != nil {

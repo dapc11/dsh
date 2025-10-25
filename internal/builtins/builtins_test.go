@@ -32,6 +32,7 @@ func TestExecuteBuiltin_Pwd(t *testing.T) {
 }
 
 func TestExecuteBuiltin_Cd(t *testing.T) {
+	t.Parallel()
 	// Save current directory and restore after test
 	originalDir, err := os.Getwd()
 	if err != nil {

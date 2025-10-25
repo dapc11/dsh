@@ -2,8 +2,15 @@ package readline
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
+)
+
+const (
+	itemTypeBuiltin   = "builtin"
+	itemTypeCommand   = "command"
+	itemTypeDirectory = "directory"
 )
 
 func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handling naturally requires many branches and statements
@@ -61,7 +68,7 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.killRing.ResetYank()
 		// Clear current line before fuzzy search
 		r.moveCursorToStart()
-		fmt.Print("\033[K") // Clear line
+		_, _ = os.Stdout.WriteString("\033[K") // Clear line
 		if selected := r.FuzzyHistorySearchCustom(); selected != "" {
 			r.buffer = []rune(selected)
 			r.cursor = len(r.buffer)
@@ -296,11 +303,11 @@ func (r *Readline) showCompletionMenu() { //nolint:cyclop,funlen // Complex UI r
 				displayText = r.color.Colorize(text, "reverse")
 			} else {
 				switch item.Type {
-				case "builtin":
+				case itemTypeBuiltin:
 					displayText = r.color.Colorize(text, "cyan")
-				case "command":
+				case itemTypeCommand:
 					displayText = r.color.Colorize(text, "green")
-				case "directory":
+				case itemTypeDirectory:
 					displayText = r.color.Colorize(text, "blue")
 				default:
 					displayText = text
@@ -464,7 +471,7 @@ func (r *Readline) clearCompletionMenu() {
 	if r.menuLinesDrawn > 0 {
 		// Move up and clear the exact number of lines we drew
 		for i := 0; i < r.menuLinesDrawn; i++ {
-			fmt.Print("\033[1A\033[2K")
+			_, _ = os.Stdout.WriteString("\033[1A\033[2K")
 		}
 		r.menuLinesDrawn = 0
 	}

@@ -1,3 +1,4 @@
+// Package completion provides terminal-based completion menu rendering functionality.
 package completion
 
 import (

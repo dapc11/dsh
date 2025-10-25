@@ -19,24 +19,25 @@ var (
 	exitStatusMu   sync.RWMutex
 )
 
-// GetLastExitStatus returns the exit status of the last executed command
+// GetLastExitStatus returns the exit status of the last executed command.
 func GetLastExitStatus() int {
 	exitStatusMu.RLock()
 	defer exitStatusMu.RUnlock()
 	return lastExitStatus
 }
 
-// setExitStatus sets the exit status from a command execution
+// setExitStatus sets the exit status from a command execution.
 func setExitStatus(err error) {
 	exitStatusMu.Lock()
 	defer exitStatusMu.Unlock()
-	
+
 	if err == nil {
 		lastExitStatus = 0
 		return
 	}
 
-	if exitError, ok := err.(*exec.ExitError); ok {
+	var exitError *exec.ExitError
+	if errors.As(err, &exitError) {
 		if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
 			lastExitStatus = status.ExitStatus()
 			return

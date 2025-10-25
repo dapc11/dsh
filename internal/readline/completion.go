@@ -115,7 +115,7 @@ func (c *Completion) completeCommand(prefix string) ([]CompletionItem, string) {
 	// Add builtin matches
 	for _, cmd := range builtins {
 		if strings.HasPrefix(cmd, prefix) {
-			matches = append(matches, CompletionItem{Text: cmd, Type: "builtin"})
+			matches = append(matches, CompletionItem{Text: cmd, Type: itemTypeBuiltin})
 		}
 	}
 
@@ -131,7 +131,7 @@ func (c *Completion) completeCommand(prefix string) ([]CompletionItem, string) {
 				}
 			}
 			if !isBuiltin {
-				matches = append(matches, CompletionItem{Text: cmd, Type: "command"})
+				matches = append(matches, CompletionItem{Text: cmd, Type: itemTypeCommand})
 			}
 		}
 	}
@@ -184,7 +184,7 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 			}
 
 			if entry.IsDir() {
-				matches = append(matches, CompletionItem{Text: displayText + "/", Type: "directory"})
+				matches = append(matches, CompletionItem{Text: displayText + "/", Type: itemTypeDirectory})
 			} else {
 				matches = append(matches, CompletionItem{Text: displayText, Type: "file"})
 			}

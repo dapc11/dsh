@@ -29,7 +29,7 @@ func TestCompletion_Commands(t *testing.T) {
 	matches, _ = c.Complete("c", 0)
 	found = false
 	for _, match := range matches {
-		if match.Text == "cd" && match.Type == "builtin" {
+		if match.Text == "cd" && match.Type == itemTypeBuiltin {
 			found = true
 			break
 		}
@@ -92,7 +92,7 @@ func TestCompletion_TrailingSpace(t *testing.T) {
 	if len(matches) > 0 {
 		// Check that we're not getting command completions
 		for _, match := range matches {
-			if match.Type == "builtin" || match.Type == "command" {
+			if match.Type == itemTypeBuiltin || match.Type == itemTypeCommand {
 				t.Errorf("Expected file completion, got %s type", match.Type)
 			}
 		}

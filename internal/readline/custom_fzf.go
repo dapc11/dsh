@@ -11,8 +11,10 @@ import (
 )
 
 var (
+	// ErrNoSelection indicates no item was selected during fuzzy search.
 	ErrNoSelection = errors.New("no selection")
-	ErrCancelled   = errors.New("cancelled")
+	// ErrCancelled indicates the fuzzy search was cancelled by user.
+	ErrCancelled = errors.New("cancelled")
 )
 
 // CustomFzf implements a custom fzf-style interface
@@ -176,7 +178,7 @@ func (f *CustomFzf) drawInline() {
 	// Always clear exactly 6 lines (header + 5 matches) if we've drawn before
 	if f.lastDrawnLines > 0 {
 		for range 6 {
-			fmt.Print("\033[1A\033[2K")
+			_, _ = os.Stdout.WriteString("\033[1A\033[2K")
 		}
 	}
 
@@ -184,10 +186,10 @@ func (f *CustomFzf) drawInline() {
 
 	// Header line
 	if len(f.matches) == 0 {
-		fmt.Printf("🔍 %s (no matches)\r\n", f.query)
+		_, _ = fmt.Fprintf(os.Stdout, "🔍 %s (no matches)\r\n", f.query)
 		lines++
 	} else {
-		fmt.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
+		_, _ = fmt.Fprintf(os.Stdout, "🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
 		lines++
 
 		// Show max 5 matches
@@ -205,16 +207,16 @@ func (f *CustomFzf) drawInline() {
 			}
 
 			if i == f.selected {
-				fmt.Printf("\033[7m> %s\033[0m\r\n", cmd)
+				_, _ = fmt.Fprintf(os.Stdout, "\033[7m> %s\033[0m\r\n", cmd)
 			} else {
-				fmt.Printf("  %s\r\n", cmd)
+				_, _ = fmt.Fprintf(os.Stdout, "  %s\r\n", cmd)
 			}
 			lines++
 		}
 
 		// Fill remaining lines with empty lines to maintain consistent clearing
 		for i := lines; i < 6; i++ {
-			fmt.Print("\r\n")
+			_, _ = os.Stdout.WriteString("\r\n")
 			lines++
 		}
 	}
@@ -226,7 +228,7 @@ func (f *CustomFzf) drawInline() {
 func (f *CustomFzf) clearInline() {
 	if f.lastDrawnLines > 0 {
 		for range 6 {
-			fmt.Print("\033[1A\033[2K")
+			_, _ = os.Stdout.WriteString("\033[1A\033[2K")
 		}
 	}
 }
