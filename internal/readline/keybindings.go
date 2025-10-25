@@ -200,6 +200,12 @@ func (r *Readline) handleEscapeSequence() error { //nolint:gocognit,cyclop,funle
 
 // performCompletion performs tab completion with navigable menu.
 func (r *Readline) performCompletion() {
+	// Clear any existing completion menu first
+	if r.menuMode {
+		r.clearCompletionMenu()
+		r.resetCompletion()
+	}
+	
 	input := string(r.buffer)
 
 	// Save cursor position for menu display
