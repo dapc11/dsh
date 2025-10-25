@@ -174,9 +174,9 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawInline renders the interface inline below current position
 func (f *CustomFzf) drawInline() {
-	// Clear previous display
+	// Always clear exactly 6 lines (header + 5 matches) if we've drawn before
 	if f.lastDrawnLines > 0 {
-		for i := 0; i < f.lastDrawnLines; i++ {
+		for i := 0; i < 6; i++ {
 			fmt.Print("\033[1A\033[2K")
 		}
 	}
@@ -206,6 +206,12 @@ func (f *CustomFzf) drawInline() {
 			}
 			lines++
 		}
+		
+		// Fill remaining lines with empty lines to maintain consistent clearing
+		for i := lines; i < 6; i++ {
+			fmt.Print("\r\n")
+			lines++
+		}
 	}
 	
 	f.lastDrawnLines = lines
@@ -214,7 +220,7 @@ func (f *CustomFzf) drawInline() {
 // clearInline clears the inline display
 func (f *CustomFzf) clearInline() {
 	if f.lastDrawnLines > 0 {
-		for i := 0; i < f.lastDrawnLines; i++ {
+		for i := 0; i < 6; i++ {
 			fmt.Print("\033[1A\033[2K")
 		}
 	}
