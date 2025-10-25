@@ -64,13 +64,9 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 			r.cursor = len(r.buffer)
 			r.redraw()
 		}
-	case 19: // Ctrl-S (Ctrl-Shift-R) - backward fuzzy search
+	case 19: // Ctrl-S (Ctrl-Shift-R) - cycle backward through history
 		r.killRing.ResetYank()
-		if selected := r.FuzzyHistorySearchCustom(); selected != "" {
-			r.buffer = []rune(selected)
-			r.cursor = len(r.buffer)
-			r.redraw()
-		}
+		r.historyPrevious()
 	case KeyCtrlU:
 		r.killLine()
 	case KeyCtrlW:
