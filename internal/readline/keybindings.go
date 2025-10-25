@@ -59,7 +59,7 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.historyPrevious()
 	case KeyCtrlR:
 		r.killRing.ResetYank()
-		if selected := r.FuzzyHistorySearch(); selected != "" {
+		if selected := r.FuzzyHistorySearchCustom(); selected != "" {
 			r.buffer = []rune(selected)
 			r.cursor = len(r.buffer)
 			r.redraw()
