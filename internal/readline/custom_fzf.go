@@ -83,6 +83,11 @@ func (f *CustomFzf) Run() (string, error) {
 				f.selected = (f.selected + 1) % len(f.matches)
 				f.adjustOffset()
 			}
+		case 19: // Ctrl-S (Ctrl-Shift-R) - cycle to previous match
+			if len(f.matches) > 0 {
+				f.selected = (f.selected - 1 + len(f.matches)) % len(f.matches)
+				f.adjustOffset()
+			}
 		case 127: // Backspace
 			if len(f.query) > 0 {
 				f.query = f.query[:len(f.query)-1]
@@ -188,7 +193,7 @@ func (f *CustomFzf) draw() {
 	}
 	
 	// Header
-	fmt.Print("History Search (↑↓/Ctrl-P/N: navigate, Ctrl-R: cycle, Enter: select, Esc: cancel)\r\n")
+	fmt.Print("History Search (↑↓: navigate, Ctrl-R/S: cycle, Enter: select, Esc: cancel)\r\n")
 	
 	// Counter
 	fmt.Printf("%d/%d\r\n", len(f.matches), len(f.items))
