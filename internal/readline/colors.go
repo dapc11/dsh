@@ -62,7 +62,7 @@ func (c *Color) Colorize(text, colorName string) string {
 	if !c.enabled {
 		return text
 	}
-	
+
 	var colorCode string
 	switch colorName {
 	case "red":
@@ -84,7 +84,7 @@ func (c *Color) Colorize(text, colorName string) string {
 	default:
 		return text // Unknown color, return as-is
 	}
-	
+
 	return colorCode + text + Reset
 }
 

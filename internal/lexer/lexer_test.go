@@ -7,7 +7,7 @@ import (
 func TestLexer_SimpleCommand(t *testing.T) {
 	input := "echo hello"
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()
@@ -39,7 +39,7 @@ func TestLexer_SimpleCommand(t *testing.T) {
 func TestLexer_Redirection(t *testing.T) {
 	input := "cat < input.txt > output.txt"
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()
@@ -60,7 +60,7 @@ func TestLexer_Redirection(t *testing.T) {
 func TestLexer_Quotes(t *testing.T) {
 	input := `echo "hello world" 'single quotes'`
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()
@@ -86,7 +86,7 @@ func TestLexer_Quotes(t *testing.T) {
 func TestLexer_Background(t *testing.T) {
 	input := "sleep 5 &"
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()
@@ -107,7 +107,7 @@ func TestLexer_Background(t *testing.T) {
 func TestLexer_Semicolon(t *testing.T) {
 	input := "echo hello; echo world"
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()
@@ -128,7 +128,7 @@ func TestLexer_Semicolon(t *testing.T) {
 func TestLexer_Comments(t *testing.T) {
 	input := "echo hello # this is a comment"
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()
@@ -148,7 +148,7 @@ func TestLexer_Comments(t *testing.T) {
 func TestLexer_EmptyInput(t *testing.T) {
 	input := ""
 	lexer := New(input)
-	
+
 	token := lexer.NextToken()
 	if token.Type != EOF {
 		t.Errorf("Expected EOF for empty input, got %v", token.Type)
@@ -158,7 +158,7 @@ func TestLexer_EmptyInput(t *testing.T) {
 func TestLexer_WhitespaceOnly(t *testing.T) {
 	input := "   \t  \n  "
 	lexer := New(input)
-	
+
 	token := lexer.NextToken()
 	if token.Type != EOF {
 		t.Errorf("Expected EOF for whitespace-only input, got %v", token.Type)
@@ -168,7 +168,7 @@ func TestLexer_WhitespaceOnly(t *testing.T) {
 func TestLexer_AppendRedirection(t *testing.T) {
 	input := "echo hello >> output.txt"
 	lexer := New(input)
-	
+
 	tokens := []Token{}
 	for {
 		token := lexer.NextToken()

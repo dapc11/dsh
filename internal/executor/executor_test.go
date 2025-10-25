@@ -12,7 +12,7 @@ import (
 
 func TestExecutor_SimpleCommand(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args: []string{"echo", "hello", "world"},
 	}
@@ -25,7 +25,7 @@ func TestExecutor_SimpleCommand(t *testing.T) {
 
 func TestExecutor_NonExistentCommand(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args: []string{"nonexistentcommand12345"},
 	}
@@ -40,7 +40,7 @@ func TestExecutor_OutputRedirection(t *testing.T) {
 	executor := New()
 	tmpDir := t.TempDir()
 	outputFile := filepath.Join(tmpDir, "output.txt")
-	
+
 	cmd := &parser.Command{
 		Args:       []string{"echo", "hello", "world"},
 		OutputFile: outputFile,
@@ -67,14 +67,14 @@ func TestExecutor_InputRedirection(t *testing.T) {
 	executor := New()
 	tmpDir := t.TempDir()
 	inputFile := filepath.Join(tmpDir, "input.txt")
-	
+
 	// Create input file
 	inputContent := "test input content"
 	err := os.WriteFile(inputFile, []byte(inputContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create input file: %v", err)
 	}
-	
+
 	cmd := &parser.Command{
 		Args:      []string{"cat"},
 		InputFile: inputFile,
@@ -90,14 +90,14 @@ func TestExecutor_AppendRedirection(t *testing.T) {
 	executor := New()
 	tmpDir := t.TempDir()
 	outputFile := filepath.Join(tmpDir, "output.txt")
-	
+
 	// Create initial file content
 	initialContent := "initial content\n"
 	err := os.WriteFile(outputFile, []byte(initialContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create initial file: %v", err)
 	}
-	
+
 	cmd := &parser.Command{
 		Args:         []string{"echo", "appended content"},
 		OutputFile:   outputFile,
@@ -126,7 +126,7 @@ func TestExecutor_AppendRedirection(t *testing.T) {
 
 func TestExecutor_BackgroundCommand(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args:       []string{"sleep", "0.1"},
 		Background: true,
@@ -148,7 +148,7 @@ func TestExecutor_BackgroundCommand(t *testing.T) {
 
 func TestExecutor_EmptyCommand(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args: []string{},
 	}
@@ -161,7 +161,7 @@ func TestExecutor_EmptyCommand(t *testing.T) {
 
 func TestExecutor_CommandWithArguments(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args: []string{"echo", "-n", "no newline"},
 	}
@@ -174,7 +174,7 @@ func TestExecutor_CommandWithArguments(t *testing.T) {
 
 func TestExecutor_InvalidOutputFile(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args:       []string{"echo", "hello"},
 		OutputFile: "/invalid/path/that/does/not/exist/file.txt",
@@ -188,7 +188,7 @@ func TestExecutor_InvalidOutputFile(t *testing.T) {
 
 func TestExecutor_InvalidInputFile(t *testing.T) {
 	executor := New()
-	
+
 	cmd := &parser.Command{
 		Args:      []string{"cat"},
 		InputFile: "/nonexistent/file.txt",

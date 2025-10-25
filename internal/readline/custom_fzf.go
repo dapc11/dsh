@@ -11,14 +11,14 @@ import (
 
 // CustomFzf implements a custom fzf-style interface
 type CustomFzf struct {
-	items         []string
-	matches       []fuzzy.Match
-	query         string
-	selected      int
-	offset        int
-	width         int
-	height        int
-	oldState      *term.State
+	items          []string
+	matches        []fuzzy.Match
+	query          string
+	selected       int
+	offset         int
+	width          int
+	height         int
+	oldState       *term.State
 	lastDrawnLines int
 }
 
@@ -69,7 +69,7 @@ func (f *CustomFzf) Run() (string, error) {
 				f.selected--
 				f.adjustOffset()
 			}
-		case 14, 1001: // Ctrl-N or Down arrow - navigate down  
+		case 14, 1001: // Ctrl-N or Down arrow - navigate down
 			if f.selected < len(f.matches)-1 {
 				f.selected++
 				f.adjustOffset()
@@ -129,12 +129,12 @@ func (f *CustomFzf) readKey() (int, error) {
 		if err != nil || n < 2 {
 			return 27, nil // Just escape
 		}
-		
+
 		if buf[1] == '[' {
 			switch buf[2] {
 			case 'A': // Up arrow
 				return 1000, nil
-			case 'B': // Down arrow  
+			case 'B': // Down arrow
 				return 1001, nil
 			}
 		}
@@ -155,7 +155,7 @@ func (f *CustomFzf) updateMatches() {
 	} else {
 		f.matches = fuzzy.Find(f.query, f.items)
 	}
-	
+
 	// Reset selection
 	f.selected = 0
 	f.offset = 0
@@ -164,7 +164,7 @@ func (f *CustomFzf) updateMatches() {
 // adjustOffset adjusts scroll offset to keep selected item visible
 func (f *CustomFzf) adjustOffset() {
 	maxVisible := 5
-	
+
 	if f.selected < f.offset {
 		f.offset = f.selected
 	} else if f.selected >= f.offset+maxVisible {
@@ -180,9 +180,9 @@ func (f *CustomFzf) drawInline() {
 			fmt.Print("\033[1A\033[2K")
 		}
 	}
-	
+
 	lines := 0
-	
+
 	// Header line
 	if len(f.matches) == 0 {
 		fmt.Printf("🔍 %s (no matches)\r\n", f.query)
@@ -190,21 +190,21 @@ func (f *CustomFzf) drawInline() {
 	} else {
 		fmt.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
 		lines++
-		
+
 		// Show max 5 matches
 		maxVisible := 5
 		endIdx := f.offset + maxVisible
 		if endIdx > len(f.matches) {
 			endIdx = len(f.matches)
 		}
-		
+
 		for i := f.offset; i < endIdx; i++ {
 			// Truncate long commands to prevent wrapping
 			cmd := f.matches[i].Str
 			if len(cmd) > 70 {
 				cmd = cmd[:67] + "..."
 			}
-			
+
 			if i == f.selected {
 				fmt.Printf("\033[7m> %s\033[0m\r\n", cmd)
 			} else {
@@ -212,14 +212,14 @@ func (f *CustomFzf) drawInline() {
 			}
 			lines++
 		}
-		
+
 		// Fill remaining lines with empty lines to maintain consistent clearing
 		for i := lines; i < 6; i++ {
 			fmt.Print("\r\n")
 			lines++
 		}
 	}
-	
+
 	f.lastDrawnLines = lines
 }
 
@@ -241,7 +241,7 @@ func (r *Readline) FuzzyHistorySearchCustom() string {
 	// Get unique history items (most recent first)
 	items := make([]string, 0, len(r.history.items))
 	seen := make(map[string]bool)
-	
+
 	for i := len(r.history.items) - 1; i >= 0; i-- {
 		item := strings.TrimSpace(r.history.items[i])
 		if item != "" && !seen[item] {
@@ -259,6 +259,6 @@ func (r *Readline) FuzzyHistorySearchCustom() string {
 	if err != nil {
 		return ""
 	}
-	
+
 	return result
 }

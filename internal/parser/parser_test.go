@@ -10,7 +10,7 @@ func TestParser_SimpleCommand(t *testing.T) {
 	input := "echo hello world"
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -37,7 +37,7 @@ func TestParser_Redirection(t *testing.T) {
 	input := "cat < input.txt > output.txt"
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -60,7 +60,7 @@ func TestParser_Background(t *testing.T) {
 	input := "sleep 5 &"
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -80,7 +80,7 @@ func TestParser_MultipleCommands(t *testing.T) {
 	input := "echo hello; echo world"
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -102,7 +102,7 @@ func TestParser_AppendRedirection(t *testing.T) {
 	input := "echo hello >> output.txt"
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -125,7 +125,7 @@ func TestParser_EmptyInput(t *testing.T) {
 	input := ""
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -140,7 +140,7 @@ func TestParser_QuotedArguments(t *testing.T) {
 	input := `echo "hello world" 'single quotes'`
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
@@ -167,7 +167,7 @@ func TestParser_ComplexCommand(t *testing.T) {
 	input := "cat < input.txt | grep pattern > output.txt &"
 	l := lexer.New(input)
 	p := New(l)
-	
+
 	commands, err := p.Parse()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)

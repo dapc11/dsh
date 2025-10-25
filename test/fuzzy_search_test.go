@@ -138,7 +138,7 @@ func TestHistoryDeduplication(t *testing.T) {
 func TestOffsetCalculation(t *testing.T) {
 	// Test the offset calculation logic for scrolling
 	maxVisible := 5
-	
+
 	testCases := []struct {
 		selected       int
 		currentOffset  int

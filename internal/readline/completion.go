@@ -172,7 +172,7 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 		if strings.HasPrefix(name, ".") && !strings.HasPrefix(filename, ".") {
 			continue
 		}
-		
+
 		if strings.HasPrefix(name, filename) {
 			// For partial paths, we need to return the full path from the original prefix
 			var displayText string
@@ -182,7 +182,7 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 				// Replace the filename part with the matched name
 				displayText = filepath.Join(filepath.Dir(prefix), name)
 			}
-			
+
 			if entry.IsDir() {
 				matches = append(matches, CompletionItem{Text: displayText + "/", Type: "directory"})
 			} else {
@@ -225,7 +225,7 @@ func (c *Completion) commonPrefixItems(matches []CompletionItem, current string)
 	if len(prefix) > len(current) {
 		return prefix[len(current):]
 	}
-	
+
 	return ""
 }
 

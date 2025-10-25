@@ -26,14 +26,14 @@ func setExitStatus(err error) {
 		lastExitStatus = 0
 		return
 	}
-	
+
 	if exitError, ok := err.(*exec.ExitError); ok {
 		if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
 			lastExitStatus = status.ExitStatus()
 			return
 		}
 	}
-	
+
 	// Default to 1 for other errors
 	lastExitStatus = 1
 }
@@ -145,7 +145,7 @@ func startBackgroundProcess(execCmd *exec.Cmd) {
 func runForegroundProcess(execCmd *exec.Cmd) bool {
 	err := execCmd.Run()
 	setExitStatus(err)
-	
+
 	if err != nil {
 		var exitError *exec.ExitError
 		if !errors.As(err, &exitError) {

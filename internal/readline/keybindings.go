@@ -205,7 +205,7 @@ func (r *Readline) performCompletion() {
 		r.clearCompletionMenu()
 		r.resetCompletion()
 	}
-	
+
 	input := string(r.buffer)
 
 	// Save cursor position for menu display
@@ -461,17 +461,14 @@ func (r *Readline) navigateMenuHorizontal(direction int) {
 
 // clearCompletionMenu clears the displayed completion menu.
 func (r *Readline) clearCompletionMenu() {
-	// Always clear a reasonable number of lines to ensure menu is gone
-	for i := 0; i < 20; i++ {
-		fmt.Print("\r\n")
+	if r.menuLinesDrawn > 0 {
+		// Move up and clear the exact number of lines we drew
+		for i := 0; i < r.menuLinesDrawn; i++ {
+			fmt.Print("\033[1A\033[2K")
+		}
+		r.menuLinesDrawn = 0
 	}
-	// Move back up
-	for i := 0; i < 20; i++ {
-		fmt.Print("\033[1A\033[2K")
-	}
-	
 	r.menuDisplayed = false
-	r.menuLinesDrawn = 0
 }
 
 // resetCompletion clears completion state.

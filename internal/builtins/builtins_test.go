@@ -60,8 +60,8 @@ func TestExecuteBuiltin_Cd(t *testing.T) {
 
 	// Test cd to non-existent directory
 	result = ExecuteBuiltin([]string{"cd", "/nonexistent/directory"})
-	if !result {
-		t.Error("cd to invalid directory should still return true (error handled)")
+	if result {
+		t.Error("cd to invalid directory should return false")
 	}
 }
 
@@ -95,7 +95,7 @@ func TestExecuteBuiltin_EmptyArgs(t *testing.T) {
 
 func TestIsBuiltin(t *testing.T) {
 	builtins := []string{"cd", "pwd", "help", "exit", "todo"}
-	
+
 	for _, cmd := range builtins {
 		if !IsBuiltin(cmd) {
 			t.Errorf("IsBuiltin(%s) = false, want true", cmd)
@@ -145,7 +145,7 @@ func TestListTodos(t *testing.T) {
 	defer os.Unsetenv("HOME")
 
 	// Test with no todos file
-	todos := listTodos()
+	todos := loadTodos()
 	if todos != nil {
 		t.Error("Expected nil for non-existent todos file")
 	}
@@ -159,7 +159,7 @@ func TestListTodos(t *testing.T) {
 	}
 
 	// Test reading todos
-	todos = listTodos()
+	todos = loadTodos()
 	if len(todos) != 2 {
 		t.Errorf("Expected 2 todos, got %d", len(todos))
 	}

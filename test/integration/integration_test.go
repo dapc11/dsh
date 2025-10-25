@@ -14,17 +14,17 @@ import (
 // runDSHCommand runs a single command in DSH with timeout
 func runDSHCommand(t *testing.T, command string) (string, error) {
 	dshPath := filepath.Join("..", "..", "dsh")
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	
+
 	cmd := exec.CommandContext(ctx, dshPath, "-c", command)
 	output, err := cmd.CombinedOutput()
-	
+
 	if ctx.Err() == context.DeadlineExceeded {
 		return "", fmt.Errorf("command timed out after 3 seconds")
 	}
-	
+
 	return strings.TrimSpace(string(output)), err
 }
 
@@ -40,7 +40,7 @@ func TestCoreCommands(t *testing.T) {
 		{"pwd command", "pwd", "/"},
 		{"help command", "help", "Built-in commands"},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			output, err := runDSHCommand(t, test.command)
@@ -63,7 +63,7 @@ func TestCommandChaining(t *testing.T) {
 	if err != nil {
 		t.Logf("Command chaining failed: %v", err)
 	}
-	
+
 	if !strings.Contains(output, "first") {
 		t.Errorf("Command chaining missing 'first', got: %q", output)
 	}
@@ -75,17 +75,17 @@ func TestCommandChaining(t *testing.T) {
 // TestFileRedirection tests basic I/O redirection
 func TestFileRedirection(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	t.Run("output redirection", func(t *testing.T) {
 		testFile := filepath.Join(tmpDir, "output.txt")
-		
+
 		// Use absolute path to avoid cd issues
 		cmd := fmt.Sprintf("echo 'test output' > %s", testFile)
 		output, err := runDSHCommand(t, cmd)
 		if err != nil {
 			t.Logf("Output redirection failed: %v, output: %q", err, output)
 		}
-		
+
 		// Check if file was created and has correct content
 		if content, err := os.ReadFile(testFile); err != nil {
 			t.Logf("Could not read output file: %v", err)
@@ -106,7 +106,7 @@ func TestQuoteHandling(t *testing.T) {
 		{"single quotes", `echo 'single test'`, "single test"},
 		{"mixed content", `echo "test" and 'more'`, "test"},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			output, err := runDSHCommand(t, test.command)
@@ -123,18 +123,18 @@ func TestQuoteHandling(t *testing.T) {
 // TestErrorHandling tests error scenarios
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
-		name    string
-		command string
+		name        string
+		command     string
 		expectError bool
 	}{
 		{"invalid command", "nonexistentcommand123", true},
 		{"invalid file", "cat /nonexistent/file.txt", true},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			output, err := runDSHCommand(t, test.command)
-			
+
 			// For error cases, we expect either an error or empty output
 			if test.expectError {
 				if err == nil && output != "" {
@@ -148,7 +148,7 @@ func TestErrorHandling(t *testing.T) {
 // TestWorkflowIntegration tests realistic usage patterns
 func TestWorkflowIntegration(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	t.Run("file creation workflow", func(t *testing.T) {
 		// Create file with content
 		createFile := fmt.Sprintf("echo 'package main' > %s/main.go", tmpDir)
@@ -156,7 +156,7 @@ func TestWorkflowIntegration(t *testing.T) {
 		if err != nil {
 			t.Logf("File creation failed: %v", err)
 		}
-		
+
 		// Verify file exists
 		mainFile := filepath.Join(tmpDir, "main.go")
 		if content, err := os.ReadFile(mainFile); err != nil {
@@ -165,14 +165,14 @@ func TestWorkflowIntegration(t *testing.T) {
 			t.Errorf("File content incorrect, got: %q", string(content))
 		}
 	})
-	
+
 	t.Run("multiple commands workflow", func(t *testing.T) {
 		// Test multiple echo commands
 		output, err := runDSHCommand(t, "echo step1; echo step2; echo step3")
 		if err != nil {
 			t.Logf("Multi-command workflow failed: %v", err)
 		}
-		
+
 		steps := []string{"step1", "step2", "step3"}
 		for _, step := range steps {
 			if !strings.Contains(output, step) {

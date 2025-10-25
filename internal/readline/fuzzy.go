@@ -15,7 +15,7 @@ func (r *Readline) FuzzyHistorySearch() string {
 	// Get unique history items (most recent first)
 	items := make([]string, 0, len(r.history.items))
 	seen := make(map[string]bool)
-	
+
 	for i := len(r.history.items) - 1; i >= 0; i-- {
 		item := strings.TrimSpace(r.history.items[i])
 		if item != "" && !seen[item] {
@@ -37,16 +37,16 @@ func (r *Readline) FuzzyHistorySearch() string {
 		fuzzyfinder.WithPromptString("🔍 "),
 		fuzzyfinder.WithHeader("History Search - Press Ctrl-C to cancel"),
 	)
-	
+
 	if err != nil {
 		// User cancelled or error occurred
 		return ""
 	}
-	
+
 	return items[idx]
 }
 
-// FuzzyFileSearch opens fzf-style window for file search  
+// FuzzyFileSearch opens fzf-style window for file search
 func (r *Readline) FuzzyFileSearch() string {
 	// TODO: Implement Ctrl-T file search
 	return ""

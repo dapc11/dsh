@@ -149,7 +149,7 @@ func TestFuzzyHistorySearchCustom(t *testing.T) {
 func TestCommandTruncation(t *testing.T) {
 	// Test that long commands would be truncated in display
 	longCommand := "this is a very long command that exceeds seventy characters and should be truncated"
-	
+
 	if len(longCommand) <= 70 {
 		t.Fatal("Test command should be longer than 70 characters")
 	}

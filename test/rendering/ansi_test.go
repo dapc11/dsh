@@ -67,17 +67,17 @@ func TestANSISequenceGeneration(t *testing.T) {
 			case "bold":
 				actual = "\x1b[1m"
 			}
-			
+
 			// Validate against pattern
 			matched, err := regexp.MatchString(seq.Pattern, actual)
 			if err != nil {
 				t.Fatalf("Invalid regex pattern %q: %v", seq.Pattern, err)
 			}
-			
+
 			if !matched {
 				t.Errorf("Generated sequence %q doesn't match pattern %q", actual, seq.Pattern)
 			}
-			
+
 			t.Logf("✓ %s: %q matches %q", seq.Description, actual, seq.Pattern)
 		})
 	}
@@ -109,18 +109,18 @@ func TestRenderingOutput(t *testing.T) {
 		{
 			"color_output",
 			func() string { return "\x1b[32mgreen\x1b[0m" }, // green text
-			func(s string) bool { 
-				return strings.Contains(s, "\x1b[32m") && strings.Contains(s, "\x1b[0m") 
+			func(s string) bool {
+				return strings.Contains(s, "\x1b[32m") && strings.Contains(s, "\x1b[0m")
 			},
 		},
 	}
-	
+
 	for _, op := range operations {
 		t.Run(op.name, func(t *testing.T) {
 			output := op.simulate()
-			
+
 			t.Logf("Operation %s output: %q", op.name, output)
-			
+
 			if !op.check(output) {
 				t.Errorf("Operation %s failed validation", op.name)
 			} else {
@@ -135,23 +135,23 @@ func TestTabCompletionSequences(t *testing.T) {
 	// Simulate tab completion rendering
 	completionOutput := func() string {
 		var output strings.Builder
-		
+
 		// Save cursor position
 		output.WriteString("\x1b[s")
-		
+
 		// Move to next line and show options
 		output.WriteString("\n")
 		output.WriteString("echo  exit  help")
-		
+
 		// Restore cursor position
 		output.WriteString("\x1b[u")
-		
+
 		return output.String()
 	}
-	
+
 	output := completionOutput()
 	t.Logf("Tab completion output: %q", output)
-	
+
 	// Check for cursor save/restore
 	if !strings.Contains(output, "\x1b[s") {
 		t.Error("Tab completion should save cursor position")
@@ -159,7 +159,7 @@ func TestTabCompletionSequences(t *testing.T) {
 	if !strings.Contains(output, "\x1b[u") {
 		t.Error("Tab completion should restore cursor position")
 	}
-	
+
 	// Check for completion options
 	if !strings.Contains(output, "echo") {
 		t.Error("Tab completion should show 'echo' option")
@@ -178,16 +178,16 @@ func TestLineEditingSequences(t *testing.T) {
 		{"move_home", "\x1b[H", "Move to beginning of line"},
 		{"move_end", "\x1b[F", "Move to end of line"},
 	}
-	
+
 	for _, op := range operations {
 		t.Run(op.name, func(t *testing.T) {
 			t.Logf("Line editing %s: %q (%s)", op.name, op.sequence, op.desc)
-			
+
 			// Validate sequence format
 			if !strings.HasPrefix(op.sequence, "\x1b[") {
 				t.Errorf("Sequence should start with ESC[, got: %q", op.sequence)
 			}
-			
+
 			t.Logf("✓ Valid ANSI sequence for %s", op.name)
 		})
 	}
@@ -196,22 +196,22 @@ func TestLineEditingSequences(t *testing.T) {
 // TestRenderingDiagnostics provides diagnostic information for debugging
 func TestRenderingDiagnostics(t *testing.T) {
 	t.Log("=== RENDERING DIAGNOSTICS ===")
-	
+
 	// Test environment info
 	t.Logf("Terminal sequences supported:")
 	for _, seq := range expectedSequences {
 		t.Logf("  %s: %s", seq.Name, seq.Description)
 	}
-	
+
 	// Test sequence validation
 	testSequence := "\x1b[32mHello\x1b[0m World"
 	t.Logf("Sample colored output: %q", testSequence)
-	
+
 	// Extract ANSI sequences
 	ansiRegex := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 	sequences := ansiRegex.FindAllString(testSequence, -1)
 	t.Logf("Extracted sequences: %v", sequences)
-	
+
 	if len(sequences) != 2 {
 		t.Errorf("Expected 2 sequences, found %d", len(sequences))
 	}

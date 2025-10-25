@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"bufio"
 	"bytes"
 	"os"
 	"os/exec"
@@ -93,7 +92,7 @@ func TestShell_FileRedirection(t *testing.T) {
 // TestShell_BackgroundCommands tests background process execution.
 func TestShell_BackgroundCommands(t *testing.T) {
 	input := "sleep 0.1 &\necho done\nexit\n"
-	
+
 	start := time.Now()
 	output, err := runShellCommand(input)
 	duration := time.Since(start)
@@ -115,7 +114,7 @@ func TestShell_BackgroundCommands(t *testing.T) {
 // TestShell_MultipleCommands tests command chaining with semicolons.
 func TestShell_MultipleCommands(t *testing.T) {
 	input := "echo first; echo second; echo third\nexit\n"
-	
+
 	output, err := runShellCommand(input)
 	if err != nil {
 		t.Fatalf("Shell execution failed: %v", err)
@@ -171,18 +170,18 @@ func runShellCommand(input string) (string, error) {
 	defer os.Remove("../dsh_test")
 
 	// Run the shell with input
-	cmd := exec.Command("../dsh_test")
+	cmd := exec.Command("./dsh_test")
 	cmd.Dir = ".."
 	cmd.Stdin = strings.NewReader(input)
-	
+
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	err := cmd.Run()
-	
+
 	// Combine stdout and stderr for analysis
 	output := stdout.String() + stderr.String()
-	
+
 	return output, err
 }

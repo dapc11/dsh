@@ -8,13 +8,13 @@ type Item struct {
 
 // Menu handles the display and navigation of completion options.
 type Menu struct {
-	items       []Item
-	selected    int
-	displayed   bool
-	linesDrawn  int
-	maxRows     int
-	page        int
-	base        string
+	items      []Item
+	selected   int
+	displayed  bool
+	linesDrawn int
+	maxRows    int
+	page       int
+	base       string
 }
 
 // NewMenu creates a new completion menu.

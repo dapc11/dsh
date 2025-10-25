@@ -35,14 +35,14 @@ func IsBuiltin(name string) bool {
 // ExecuteBuiltin executes a built-in command.
 func ExecuteBuiltin(args []string) bool {
 	if len(args) == 0 {
-		return true
+		return false
 	}
 
 	if fn, exists := builtinCommands[args[0]]; exists {
 		return fn(args)
 	}
 
-	return true
+	return false
 }
 
 func handleExit(_ []string) bool {

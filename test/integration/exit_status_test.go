@@ -9,7 +9,7 @@ import (
 // TestExitStatusHandling tests that DSH properly propagates command exit status
 func TestExitStatusHandling(t *testing.T) {
 	dshPath := filepath.Join("..", "..", "dsh")
-	
+
 	tests := []struct {
 		name           string
 		command        string
@@ -20,12 +20,12 @@ func TestExitStatusHandling(t *testing.T) {
 		{"nonexistent command", "nonexistentcommand123", 1},
 		{"echo command", "echo hello", 0},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cmd := exec.Command(dshPath, "-c", test.command)
 			err := cmd.Run()
-			
+
 			var actualStatus int
 			if err != nil {
 				if exitError, ok := err.(*exec.ExitError); ok {
@@ -36,9 +36,9 @@ func TestExitStatusHandling(t *testing.T) {
 			} else {
 				actualStatus = 0
 			}
-			
+
 			if actualStatus != test.expectedStatus {
-				t.Errorf("Command %q: expected exit status %d, got %d", 
+				t.Errorf("Command %q: expected exit status %d, got %d",
 					test.command, test.expectedStatus, actualStatus)
 			}
 		})
@@ -48,7 +48,7 @@ func TestExitStatusHandling(t *testing.T) {
 // TestBuiltinExitStatus tests exit status for builtin commands
 func TestBuiltinExitStatus(t *testing.T) {
 	dshPath := filepath.Join("..", "..", "dsh")
-	
+
 	tests := []struct {
 		name           string
 		command        string
@@ -58,12 +58,12 @@ func TestBuiltinExitStatus(t *testing.T) {
 		{"help builtin", "help", 0},
 		{"echo builtin", "echo test", 0},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cmd := exec.Command(dshPath, "-c", test.command)
 			err := cmd.Run()
-			
+
 			var actualStatus int
 			if err != nil {
 				if exitError, ok := err.(*exec.ExitError); ok {
@@ -74,9 +74,9 @@ func TestBuiltinExitStatus(t *testing.T) {
 			} else {
 				actualStatus = 0
 			}
-			
+
 			if actualStatus != test.expectedStatus {
-				t.Errorf("Builtin %q: expected exit status %d, got %d", 
+				t.Errorf("Builtin %q: expected exit status %d, got %d",
 					test.command, test.expectedStatus, actualStatus)
 			}
 		})
@@ -86,7 +86,7 @@ func TestBuiltinExitStatus(t *testing.T) {
 // TestCommandChainExitStatus tests exit status with command chaining
 func TestCommandChainExitStatus(t *testing.T) {
 	dshPath := filepath.Join("..", "..", "dsh")
-	
+
 	tests := []struct {
 		name           string
 		command        string
@@ -94,30 +94,30 @@ func TestCommandChainExitStatus(t *testing.T) {
 		description    string
 	}{
 		{
-			"success then success", 
-			"true; true", 
-			0, 
+			"success then success",
+			"true; true",
+			0,
 			"Last command succeeds",
 		},
 		{
-			"success then failure", 
-			"true; false", 
-			1, 
+			"success then failure",
+			"true; false",
+			1,
 			"Last command fails",
 		},
 		{
-			"failure then success", 
-			"false; true", 
-			0, 
+			"failure then success",
+			"false; true",
+			0,
 			"Last command succeeds",
 		},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cmd := exec.Command(dshPath, "-c", test.command)
 			err := cmd.Run()
-			
+
 			var actualStatus int
 			if err != nil {
 				if exitError, ok := err.(*exec.ExitError); ok {
@@ -128,9 +128,9 @@ func TestCommandChainExitStatus(t *testing.T) {
 			} else {
 				actualStatus = 0
 			}
-			
+
 			if actualStatus != test.expectedStatus {
-				t.Errorf("Command chain %q: expected exit status %d, got %d (%s)", 
+				t.Errorf("Command chain %q: expected exit status %d, got %d (%s)",
 					test.command, test.expectedStatus, actualStatus, test.description)
 			}
 		})
