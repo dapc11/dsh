@@ -88,11 +88,6 @@ func (f *CustomFzf) Run() (string, error) {
 				f.selected = (f.selected + 1) % len(f.matches)
 				f.adjustOffset()
 			}
-		case 1002: // Ctrl-Shift-R - cycle to previous match
-			if len(f.matches) > 0 {
-				f.selected = (f.selected - 1 + len(f.matches)) % len(f.matches)
-				f.adjustOffset()
-			}
 		case 127: // Backspace
 			if len(f.query) > 0 {
 				f.query = f.query[:len(f.query)-1]
@@ -131,16 +126,16 @@ func (f *CustomFzf) updateSize() {
 
 // readKey reads a single key from stdin, handling escape sequences
 func (f *CustomFzf) readKey() (int, error) {
-	var buf [10]byte
+	var buf [3]byte
 	n, err := os.Stdin.Read(buf[:1])
 	if err != nil || n == 0 {
 		return 0, err
 	}
 
-	// Handle escape sequences
+	// Handle escape sequences (arrow keys)
 	if buf[0] == 27 { // ESC
-		n, err := os.Stdin.Read(buf[1:10])
-		if err != nil || n < 1 {
+		n, err := os.Stdin.Read(buf[1:3])
+		if err != nil || n < 2 {
 			return 27, nil // Just escape
 		}
 		
@@ -150,18 +145,7 @@ func (f *CustomFzf) readKey() (int, error) {
 				return 1000, nil
 			case 'B': // Down arrow  
 				return 1001, nil
-			case '1':
-				// Check for various Ctrl-Shift-R patterns
-				if n >= 4 && buf[3] == ';' {
-					if (buf[4] == '6' || buf[4] == '5') && buf[5] == 'R' {
-						return 1002, nil // Ctrl-Shift-R
-					}
-				}
 			}
-		}
-		// Check for other Ctrl-Shift-R patterns like ESC[18;2~
-		if buf[1] == '[' && buf[2] == '1' && buf[3] == '8' && buf[4] == ';' && buf[5] == '2' && buf[6] == '~' {
-			return 1002, nil // Another Ctrl-Shift-R pattern
 		}
 		return 27, nil // Unhandled escape sequence
 	}
