@@ -68,14 +68,19 @@ func (f *CustomFzf) Run() (string, error) {
 			return "", fmt.Errorf("no selection")
 		case 3, 27: // Ctrl-C or Escape
 			return "", fmt.Errorf("cancelled")
-		case 16: // Ctrl-P - up
+		case 16, 1000: // Ctrl-P or Up arrow - navigate up
 			if f.selected > 0 {
 				f.selected--
 				f.adjustOffset()
 			}
-		case 14: // Ctrl-N - down  
+		case 14, 1001: // Ctrl-N or Down arrow - navigate down  
 			if f.selected < len(f.matches)-1 {
 				f.selected++
+				f.adjustOffset()
+			}
+		case 18: // Ctrl-R - cycle to next match
+			if len(f.matches) > 0 {
+				f.selected = (f.selected + 1) % len(f.matches)
 				f.adjustOffset()
 			}
 		case 127: // Backspace
@@ -114,11 +119,33 @@ func (f *CustomFzf) updateSize() {
 	f.width, f.height, _ = term.GetSize(int(os.Stdin.Fd()))
 }
 
-// readKey reads a single key from stdin
-func (f *CustomFzf) readKey() (byte, error) {
-	var buf [1]byte
-	_, err := os.Stdin.Read(buf[:])
-	return buf[0], err
+// readKey reads a single key from stdin, handling escape sequences
+func (f *CustomFzf) readKey() (int, error) {
+	var buf [3]byte
+	n, err := os.Stdin.Read(buf[:1])
+	if err != nil || n == 0 {
+		return 0, err
+	}
+
+	// Handle escape sequences (arrow keys)
+	if buf[0] == 27 { // ESC
+		n, err := os.Stdin.Read(buf[1:3])
+		if err != nil || n < 2 {
+			return 27, nil // Just escape
+		}
+		
+		if buf[1] == '[' {
+			switch buf[2] {
+			case 'A': // Up arrow
+				return 1000, nil
+			case 'B': // Down arrow  
+				return 1001, nil
+			}
+		}
+		return 27, nil // Unhandled escape sequence
+	}
+
+	return int(buf[0]), nil
 }
 
 // updateMatches performs fuzzy search and updates matches
@@ -161,7 +188,7 @@ func (f *CustomFzf) draw() {
 	}
 	
 	// Header
-	fmt.Print("History Search (Ctrl-R/S: navigate, Enter: select, Esc: cancel)\r\n")
+	fmt.Print("History Search (↑↓/Ctrl-P/N: navigate, Ctrl-R: cycle, Enter: select, Esc: cancel)\r\n")
 	
 	// Counter
 	fmt.Printf("%d/%d\r\n", len(f.matches), len(f.items))
