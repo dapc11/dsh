@@ -174,11 +174,16 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawInline renders the interface inline below current position
 func (f *CustomFzf) drawInline() {
-	// Clear previous display by moving up and clearing
+	// Clear previous display by moving up and clearing (skip on first draw)
 	if f.lastDrawnLines > 0 {
+		// Move up to start of our previous display
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
+		// Clear each line
 		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[1A\033[2K")
+			fmt.Print("\033[2K\r\n") // Clear entire line and move down
 		}
+		// Move back up to start position
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
 	
 	lines := 0
@@ -209,9 +214,14 @@ func (f *CustomFzf) drawInline() {
 // clearInline clears the inline display
 func (f *CustomFzf) clearInline() {
 	if f.lastDrawnLines > 0 {
+		// Move up to start of our display
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
+		// Clear each line
 		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[1A\033[2K")
+			fmt.Print("\033[2K\r\n") // Clear entire line and move down
 		}
+		// Move back up to start position
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
 }
 
