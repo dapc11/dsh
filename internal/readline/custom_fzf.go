@@ -199,10 +199,16 @@ func (f *CustomFzf) drawInline() {
 		}
 		
 		for i := f.offset; i < endIdx; i++ {
+			// Truncate long commands to prevent wrapping
+			cmd := f.matches[i].Str
+			if len(cmd) > 70 {
+				cmd = cmd[:67] + "..."
+			}
+			
 			if i == f.selected {
-				fmt.Printf("\033[7m> %s\033[0m\r\n", f.matches[i].Str)
+				fmt.Printf("\033[7m> %s\033[0m\r\n", cmd)
 			} else {
-				fmt.Printf("  %s\r\n", f.matches[i].Str)
+				fmt.Printf("  %s\r\n", cmd)
 			}
 			lines++
 		}
