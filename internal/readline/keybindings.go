@@ -461,13 +461,15 @@ func (r *Readline) navigateMenuHorizontal(direction int) {
 
 // clearCompletionMenu clears the displayed completion menu.
 func (r *Readline) clearCompletionMenu() {
-	if !r.menuDisplayed {
-		return
+	// Always clear a reasonable number of lines to ensure menu is gone
+	for i := 0; i < 20; i++ {
+		fmt.Print("\r\n")
 	}
-
-	// Clear from current position to end of screen
-	_, _ = fmt.Print("\r\n\033[0J\033[A") //nolint:forbidigo // Move to next line, clear to end, move back up
-
+	// Move back up
+	for i := 0; i < 20; i++ {
+		fmt.Print("\033[1A\033[2K")
+	}
+	
 	r.menuDisplayed = false
 	r.menuLinesDrawn = 0
 }
