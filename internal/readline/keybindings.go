@@ -59,9 +59,15 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		r.historyPrevious()
 	case KeyCtrlR:
 		r.killRing.ResetYank()
+		// Clear current line before fuzzy search
+		r.moveCursorToStart()
+		fmt.Print("\033[K") // Clear line
 		if selected := r.FuzzyHistorySearchCustom(); selected != "" {
 			r.buffer = []rune(selected)
 			r.cursor = len(r.buffer)
+			r.redraw()
+		} else {
+			// Restore prompt if cancelled
 			r.redraw()
 		}
 	case KeyCtrlU:
