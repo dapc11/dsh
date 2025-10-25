@@ -43,11 +43,15 @@ func (h *History) Add(line string) {
 		return
 	}
 
-	// Avoid consecutive duplicates
-	if len(h.items) > 0 && h.items[len(h.items)-1] == line {
-		return
+	// Remove any existing occurrence of this command
+	for i := len(h.items) - 1; i >= 0; i-- {
+		if h.items[i] == line {
+			h.items = append(h.items[:i], h.items[i+1:]...)
+			break
+		}
 	}
 
+	// Add to end (most recent)
 	h.items = append(h.items, line)
 	h.pos = len(h.items)
 	h.modified = true
@@ -66,8 +70,12 @@ func (h *History) Add(line string) {
 func (h *History) Previous() string {
 	if h.pos > 0 {
 		h.pos--
-
 		return h.items[h.pos]
+	}
+	
+	// Return first item if we're at the beginning
+	if len(h.items) > 0 {
+		return h.items[0]
 	}
 
 	return ""

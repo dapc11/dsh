@@ -99,9 +99,13 @@ func TestAdjustOffset(t *testing.T) {
 }
 
 func TestFuzzyHistorySearchCustom(t *testing.T) {
-	r, err := New("test> ")
-	if err != nil {
-		t.Fatalf("Failed to create readline: %v", err)
+	// Create minimal readline without terminal for testing
+	r := &Readline{
+		prompt:   "test> ",
+		buffer:   make([]rune, 0, 256),
+		cursor:   0,
+		history:  &History{items: make([]string, 0, 1000), pos: 0, maxSize: 1000},
+		killRing: NewKillRing(),
 	}
 
 	// Add some history items
@@ -181,9 +185,13 @@ func TestCommandTruncation(t *testing.T) {
 }
 
 func TestEmptyHistory(t *testing.T) {
-	r, err := New("test> ")
-	if err != nil {
-		t.Fatalf("Failed to create readline: %v", err)
+	// Create minimal readline without terminal for testing
+	r := &Readline{
+		prompt:   "test> ",
+		buffer:   make([]rune, 0, 256),
+		cursor:   0,
+		history:  &History{items: make([]string, 0, 1000), pos: 0, maxSize: 1000},
+		killRing: NewKillRing(),
 	}
 
 	// Test with empty history
@@ -196,9 +204,13 @@ func TestEmptyHistory(t *testing.T) {
 }
 
 func TestDuplicateHistoryFiltering(t *testing.T) {
-	r, err := New("test> ")
-	if err != nil {
-		t.Fatalf("Failed to create readline: %v", err)
+	// Create minimal readline without terminal for testing
+	r := &Readline{
+		prompt:   "test> ",
+		buffer:   make([]rune, 0, 256),
+		cursor:   0,
+		history:  &History{items: make([]string, 0, 1000), pos: 0, maxSize: 1000},
+		killRing: NewKillRing(),
 	}
 
 	// Add duplicate items

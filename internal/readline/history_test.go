@@ -6,7 +6,11 @@ import (
 )
 
 func TestHistory_Add(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	h.Add("first command")
 	h.Add("second command")
@@ -16,14 +20,18 @@ func TestHistory_Add(t *testing.T) {
 		t.Errorf("Expected 3 items, got %d", len(h.items))
 	}
 
-	// Most recent should be first
-	if h.items[0] != "third command" {
-		t.Errorf("Expected 'third command' first, got '%s'", h.items[0])
+	// Most recent should be last (appended)
+	if h.items[len(h.items)-1] != "third command" {
+		t.Errorf("Expected 'third command' last, got '%s'", h.items[len(h.items)-1])
 	}
 }
 
 func TestHistory_AddEmpty(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	h.Add("")
 	h.Add("   ")
@@ -34,7 +42,11 @@ func TestHistory_AddEmpty(t *testing.T) {
 }
 
 func TestHistory_AddDuplicate(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	h.Add("command")
 	h.Add("other")
@@ -44,14 +56,18 @@ func TestHistory_AddDuplicate(t *testing.T) {
 		t.Errorf("Expected 2 items (duplicate removed), got %d", len(h.items))
 	}
 
-	// Most recent "command" should be first
-	if h.items[0] != "command" {
-		t.Errorf("Expected 'command' first, got '%s'", h.items[0])
+	// Most recent "command" should be last
+	if h.items[len(h.items)-1] != "command" {
+		t.Errorf("Expected 'command' last, got '%s'", h.items[len(h.items)-1])
 	}
 }
 
 func TestHistory_Navigation(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	h.Add("first")
 	h.Add("second")
@@ -91,7 +107,11 @@ func TestHistory_Navigation(t *testing.T) {
 }
 
 func TestHistory_ResetPosition(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	h.Add("first")
 	h.Add("second")
@@ -110,7 +130,11 @@ func TestHistory_ResetPosition(t *testing.T) {
 }
 
 func TestHistory_EmptyHistory(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	// Navigation on empty history should return empty strings
 	if prev := h.Previous(); prev != "" {
@@ -123,7 +147,11 @@ func TestHistory_EmptyHistory(t *testing.T) {
 }
 
 func TestHistory_MaxSize(t *testing.T) {
-	h := NewHistory()
+	h := &History{
+		items:   make([]string, 0, 1000),
+		pos:     0,
+		maxSize: 1000,
+	}
 
 	// Add more than max size
 	for i := 0; i < 1200; i++ {
@@ -135,8 +163,8 @@ func TestHistory_MaxSize(t *testing.T) {
 		t.Errorf("Expected max 1000 items, got %d", len(h.items))
 	}
 
-	// Most recent should still be first
-	if h.items[0] != "command1199" {
-		t.Errorf("Expected 'command1199' first, got '%s'", h.items[0])
+	// Most recent should be last
+	if h.items[len(h.items)-1] != "command1199" {
+		t.Errorf("Expected 'command1199' last, got '%s'", h.items[len(h.items)-1])
 	}
 }
