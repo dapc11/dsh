@@ -188,14 +188,11 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawCompact renders the interface using limited screen space
 func (f *CustomFzf) drawCompact(maxLines int) {
-	// Only move up if we've drawn before
+	// Clear previous display if any
 	if f.lastDrawnLines > 0 {
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
-		// Clear lines
 		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[K\r\n")
+			fmt.Print("\033[1A\033[K") // Move up and clear line
 		}
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
 	
 	lines := 0
@@ -209,7 +206,7 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 	lines++
 	
 	// Items (limited)
-	displayCount := maxLines - 1 // Reserve space for header
+	displayCount := maxLines - 1
 	if displayCount > len(f.matches) {
 		displayCount = len(f.matches)
 	}
@@ -234,11 +231,9 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 // clearCompact clears the compact display
 func (f *CustomFzf) clearCompact(maxLines int) {
 	if f.lastDrawnLines > 0 {
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
 		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[K\r\n")
+			fmt.Print("\033[1A\033[K") // Move up and clear line
 		}
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
 }
 
