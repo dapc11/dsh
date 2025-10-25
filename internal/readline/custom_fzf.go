@@ -174,55 +174,22 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawInline renders the interface inline below current position
 func (f *CustomFzf) drawInline() {
-	// Clear previous display by moving up and clearing (skip on first draw)
-	if f.lastDrawnLines > 0 {
-		// Move up to start of our previous display
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
-		// Clear each line
-		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[2K\r\n") // Clear entire line and move down
-		}
-		// Move back up to start position
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
+	// Clear current line and show current match
+	fmt.Print("\r\033[K")
+	
+	if len(f.matches) == 0 {
+		fmt.Printf("🔍 %s (no matches)", f.query)
+		return
 	}
 	
-	lines := 0
-	
-	// Header
-	fmt.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
-	lines++
-	
-	// Show max 8 items
-	maxVisible := 8
-	endIdx := f.offset + maxVisible
-	if endIdx > len(f.matches) {
-		endIdx = len(f.matches)
-	}
-	
-	for i := f.offset; i < endIdx; i++ {
-		if i == f.selected {
-			fmt.Printf("\033[7m> %s\033[0m\r\n", f.matches[i].Str)
-		} else {
-			fmt.Printf("  %s\r\n", f.matches[i].Str)
-		}
-		lines++
-	}
-	
-	f.lastDrawnLines = lines
+	// Show current selection
+	current := f.matches[f.selected].Str
+	fmt.Printf("🔍 %s (%d/%d) > %s", f.query, f.selected+1, len(f.matches), current)
 }
 
 // clearInline clears the inline display
 func (f *CustomFzf) clearInline() {
-	if f.lastDrawnLines > 0 {
-		// Move up to start of our display
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
-		// Clear each line
-		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[2K\r\n") // Clear entire line and move down
-		}
-		// Move back up to start position
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
-	}
+	fmt.Print("\r\033[K") // Clear current line
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
