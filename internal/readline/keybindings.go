@@ -379,7 +379,10 @@ func (r *Readline) applySelectedCompletion(selected string, words []string) []ru
 		lastWord = words[len(words)-1]
 	}
 	if strings.Contains(lastWord, "/") {
-		return []rune(r.completionBase[:len(r.completionBase)-len(filepath.Base(lastWord))] + selected)
+		// For paths, only replace the filename part, not the full path
+		baseName := filepath.Base(lastWord)
+		selectedBase := filepath.Base(selected)
+		return []rune(r.completionBase[:len(r.completionBase)-len(baseName)] + selectedBase)
 	}
 	return []rune(r.completionBase[:len(r.completionBase)-len(lastWord)] + selected)
 }
