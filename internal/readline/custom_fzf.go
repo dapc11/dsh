@@ -45,17 +45,15 @@ func (f *CustomFzf) Run() (string, error) {
 	}
 	defer f.exitRawMode()
 
+	// Use alternate screen buffer
+	fmt.Print("\033[?1049h")
+	defer fmt.Print("\033[?1049l")
+
 	// Get terminal size
 	f.updateSize()
-	
-	// Limit display to max 10 lines
-	maxLines := 10
-	if f.height < maxLines+3 {
-		maxLines = f.height - 3
-	}
 
 	for {
-		f.drawCompact(maxLines)
+		f.draw()
 
 		// Read key
 		key, err := f.readKey()
@@ -65,13 +63,11 @@ func (f *CustomFzf) Run() (string, error) {
 
 		switch key {
 		case 13: // Enter
-			f.clearCompact(maxLines)
 			if len(f.matches) > 0 && f.selected < len(f.matches) {
 				return f.matches[f.selected].Str, nil
 			}
 			return "", fmt.Errorf("no selection")
 		case 3, 27: // Ctrl-C or Escape
-			f.clearCompact(maxLines)
 			return "", fmt.Errorf("cancelled")
 		case 16, 1000: // Ctrl-P or Up arrow - navigate up
 			if f.selected > 0 {
@@ -172,7 +168,7 @@ func (f *CustomFzf) updateMatches() {
 
 // adjustOffset adjusts scroll offset to keep selected item visible
 func (f *CustomFzf) adjustOffset() {
-	maxVisible := 9 // Fixed for compact display
+	maxVisible := 10
 	
 	if f.selected < f.offset {
 		f.offset = f.selected
@@ -181,36 +177,20 @@ func (f *CustomFzf) adjustOffset() {
 	}
 }
 
-// drawCompact renders the interface using limited screen space
-func (f *CustomFzf) drawCompact(maxLines int) {
-	// Save cursor position
-	fmt.Print("\033[s")
-	
-	// Clear 12 lines above us
-	for i := 0; i < 12; i++ {
-		fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
-	}
-	
-	// Restore cursor position
-	fmt.Print("\033[u")
-	
-	lines := 0
+// draw renders the interface in alternate screen
+func (f *CustomFzf) draw() {
+	// Clear screen and go to top
+	fmt.Print("\033[2J\033[H")
 	
 	// Header
-	fmt.Print("🔍 ")
-	if f.query != "" {
-		fmt.Printf("'%s' ", f.query)
-	}
-	fmt.Printf("(%d/%d)\r\n", len(f.matches), len(f.items))
-	lines++
+	fmt.Print("🔍 History Search (↑↓: navigate, Ctrl-R: cycle, Enter: select, Esc: cancel)\r\n\r\n")
 	
-	// Items (limited)
-	displayCount := maxLines - 1
-	if displayCount > len(f.matches) {
-		displayCount = len(f.matches)
-	}
+	// Counter
+	fmt.Printf("Matches: %d/%d\r\n\r\n", len(f.matches), len(f.items))
 	
-	endIdx := f.offset + displayCount
+	// Show max 10 items
+	maxVisible := 10
+	endIdx := f.offset + maxVisible
 	if endIdx > len(f.matches) {
 		endIdx = len(f.matches)
 	}
@@ -221,24 +201,10 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 		} else {
 			fmt.Printf("  %s\r\n", f.matches[i].Str)
 		}
-		lines++
 	}
 	
-	f.lastDrawnLines = lines
-}
-
-// clearCompact clears the compact display
-func (f *CustomFzf) clearCompact(maxLines int) {
-	// Save cursor position
-	fmt.Print("\033[s")
-	
-	// Clear 12 lines above us
-	for i := 0; i < 12; i++ {
-		fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
-	}
-	
-	// Restore cursor position
-	fmt.Print("\033[u")
+	// Query at bottom
+	fmt.Printf("\r\n\r\nQuery: %s", f.query)
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
