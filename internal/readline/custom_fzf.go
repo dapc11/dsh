@@ -183,10 +183,16 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawCompact renders the interface using limited screen space
 func (f *CustomFzf) drawCompact(maxLines int) {
-	// Always clear 12 lines above us (more than we'll ever use)
+	// Save cursor position
+	fmt.Print("\033[s")
+	
+	// Clear 12 lines above us
 	for i := 0; i < 12; i++ {
 		fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
 	}
+	
+	// Restore cursor position
+	fmt.Print("\033[u")
 	
 	lines := 0
 	
@@ -223,10 +229,16 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 
 // clearCompact clears the compact display
 func (f *CustomFzf) clearCompact(maxLines int) {
+	// Save cursor position
+	fmt.Print("\033[s")
+	
 	// Clear 12 lines above us
 	for i := 0; i < 12; i++ {
 		fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
 	}
+	
+	// Restore cursor position
+	fmt.Print("\033[u")
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
