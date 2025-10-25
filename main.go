@@ -23,7 +23,8 @@ func main() {
 		if !success {
 			os.Exit(1)
 		}
-		return
+		// Exit with last command's exit status
+		os.Exit(executor.GetLastExitStatus())
 	}
 
 	// Interactive mode

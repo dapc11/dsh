@@ -13,15 +13,47 @@ import (
 	"dsh/internal/parser"
 )
 
+var lastExitStatus int
+
+// GetLastExitStatus returns the exit status of the last executed command
+func GetLastExitStatus() int {
+	return lastExitStatus
+}
+
+// setExitStatus sets the exit status from a command execution
+func setExitStatus(err error) {
+	if err == nil {
+		lastExitStatus = 0
+		return
+	}
+	
+	if exitError, ok := err.(*exec.ExitError); ok {
+		if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
+			lastExitStatus = status.ExitStatus()
+			return
+		}
+	}
+	
+	// Default to 1 for other errors
+	lastExitStatus = 1
+}
+
 // ExecuteCommand executes a single command.
 func ExecuteCommand(cmd *parser.Command) bool {
 	if len(cmd.Args) == 0 {
+		setExitStatus(nil) // Empty command succeeds
 		return true
 	}
 
 	// Handle built-in commands
 	if builtins.IsBuiltin(cmd.Args[0]) {
-		return builtins.ExecuteBuiltin(cmd.Args)
+		success := builtins.ExecuteBuiltin(cmd.Args)
+		if success {
+			setExitStatus(nil) // Builtin succeeded
+		} else {
+			lastExitStatus = 1 // Builtin failed (or exit command)
+		}
+		return success
 	}
 
 	// Execute external command
@@ -112,15 +144,15 @@ func startBackgroundProcess(execCmd *exec.Cmd) {
 
 func runForegroundProcess(execCmd *exec.Cmd) bool {
 	err := execCmd.Run()
+	setExitStatus(err)
+	
 	if err != nil {
 		var exitError *exec.ExitError
-		if errors.As(err, &exitError) {
-			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-				// Exit with the same status as the child process
-				os.Exit(status.ExitStatus())
-			}
+		if !errors.As(err, &exitError) {
+			// Not an exit error, print the error message
+			_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
 		}
-		_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+		// Command failed but shell continues
 	}
 
 	return true
