@@ -183,13 +183,12 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawCompact renders the interface using limited screen space
 func (f *CustomFzf) drawCompact(maxLines int) {
-	// Save cursor position on first draw
-	if f.lastDrawnLines == 0 {
-		fmt.Print("\033[s") // Save cursor position
-	} else {
-		// Restore cursor and clear from there
-		fmt.Print("\033[u") // Restore cursor position
-		fmt.Print("\033[J") // Clear from cursor to end of screen
+	// Clear previous display if any
+	if f.lastDrawnLines > 0 {
+		// Move up to start of our display
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
+		// Clear from cursor to end of screen
+		fmt.Print("\033[J")
 	}
 	
 	lines := 0
@@ -228,8 +227,8 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 // clearCompact clears the compact display
 func (f *CustomFzf) clearCompact(maxLines int) {
 	if f.lastDrawnLines > 0 {
-		fmt.Print("\033[u") // Restore cursor position
-		fmt.Print("\033[J") // Clear from cursor to end of screen
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
+		fmt.Print("\033[J")
 	}
 }
 
