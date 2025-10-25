@@ -88,7 +88,7 @@ func (f *CustomFzf) Run() (string, error) {
 				f.selected = (f.selected + 1) % len(f.matches)
 				f.adjustOffset()
 			}
-		case 19: // Ctrl-S (Ctrl-Shift-R) - cycle to previous match
+		case 19, 1002: // Ctrl-S or Ctrl-Shift-R - cycle to previous match
 			if len(f.matches) > 0 {
 				f.selected = (f.selected - 1 + len(f.matches)) % len(f.matches)
 				f.adjustOffset()
@@ -131,15 +131,15 @@ func (f *CustomFzf) updateSize() {
 
 // readKey reads a single key from stdin, handling escape sequences
 func (f *CustomFzf) readKey() (int, error) {
-	var buf [3]byte
+	var buf [6]byte
 	n, err := os.Stdin.Read(buf[:1])
 	if err != nil || n == 0 {
 		return 0, err
 	}
 
-	// Handle escape sequences (arrow keys)
+	// Handle escape sequences (arrow keys and Ctrl-Shift-R)
 	if buf[0] == 27 { // ESC
-		n, err := os.Stdin.Read(buf[1:3])
+		n, err := os.Stdin.Read(buf[1:6])
 		if err != nil || n < 2 {
 			return 27, nil // Just escape
 		}
@@ -150,6 +150,10 @@ func (f *CustomFzf) readKey() (int, error) {
 				return 1000, nil
 			case 'B': // Down arrow  
 				return 1001, nil
+			case '1':
+				if n >= 4 && buf[3] == ';' && buf[4] == '6' && buf[5] == 'R' {
+					return 1002, nil // Ctrl-Shift-R
+				}
 			}
 		}
 		return 27, nil // Unhandled escape sequence
