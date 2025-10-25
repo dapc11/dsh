@@ -183,23 +183,52 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawCompact renders the interface using limited screen space
 func (f *CustomFzf) drawCompact(maxLines int) {
-	// Clear previous display if any
-	if f.lastDrawnLines > 0 {
-		// Move up to start of our display
-		fmt.Printf("\033[%dA", f.lastDrawnLines)
-		// Clear from cursor to end of screen
-		fmt.Print("\033[J")
+	// On first draw, just draw normally
+	if f.lastDrawnLines == 0 {
+		lines := 0
+		
+		// Header
+		fmt.Print("🔍 ")
+		if f.query != "" {
+			fmt.Printf("'%s' ", f.query)
+		}
+		fmt.Printf("(%d/%d)\r\n", len(f.matches), len(f.items))
+		lines++
+		
+		// Items (limited)
+		displayCount := maxLines - 1
+		if displayCount > len(f.matches) {
+			displayCount = len(f.matches)
+		}
+		
+		endIdx := f.offset + displayCount
+		if endIdx > len(f.matches) {
+			endIdx = len(f.matches)
+		}
+		
+		for i := f.offset; i < endIdx; i++ {
+			if i == f.selected {
+				fmt.Printf("\033[7m> %s\033[0m\r\n", f.matches[i].Str)
+			} else {
+				fmt.Printf("  %s\r\n", f.matches[i].Str)
+			}
+			lines++
+		}
+		
+		f.lastDrawnLines = lines
+		return
 	}
 	
-	lines := 0
+	// For subsequent draws, move up and overwrite each line
+	fmt.Printf("\033[%dA", f.lastDrawnLines) // Move to start
 	
 	// Header
+	fmt.Print("\033[K") // Clear line
 	fmt.Print("🔍 ")
 	if f.query != "" {
 		fmt.Printf("'%s' ", f.query)
 	}
 	fmt.Printf("(%d/%d)\r\n", len(f.matches), len(f.items))
-	lines++
 	
 	// Items (limited)
 	displayCount := maxLines - 1
@@ -212,23 +241,33 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 		endIdx = len(f.matches)
 	}
 	
+	itemsDrawn := 0
 	for i := f.offset; i < endIdx; i++ {
+		fmt.Print("\033[K") // Clear line
 		if i == f.selected {
 			fmt.Printf("\033[7m> %s\033[0m\r\n", f.matches[i].Str)
 		} else {
 			fmt.Printf("  %s\r\n", f.matches[i].Str)
 		}
-		lines++
+		itemsDrawn++
 	}
 	
-	f.lastDrawnLines = lines
+	// Clear any remaining lines from previous draw
+	for i := itemsDrawn; i < f.lastDrawnLines-1; i++ {
+		fmt.Print("\033[K\r\n")
+	}
+	
+	f.lastDrawnLines = itemsDrawn + 1 // +1 for header
 }
 
 // clearCompact clears the compact display
 func (f *CustomFzf) clearCompact(maxLines int) {
 	if f.lastDrawnLines > 0 {
 		fmt.Printf("\033[%dA", f.lastDrawnLines)
-		fmt.Print("\033[J")
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[K\r\n")
+		}
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
 }
 
