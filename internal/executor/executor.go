@@ -7,21 +7,30 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 	"syscall"
 
 	"dsh/internal/builtins"
 	"dsh/internal/parser"
 )
 
-var lastExitStatus int
+var (
+	lastExitStatus int
+	exitStatusMu   sync.RWMutex
+)
 
 // GetLastExitStatus returns the exit status of the last executed command
 func GetLastExitStatus() int {
+	exitStatusMu.RLock()
+	defer exitStatusMu.RUnlock()
 	return lastExitStatus
 }
 
 // setExitStatus sets the exit status from a command execution
 func setExitStatus(err error) {
+	exitStatusMu.Lock()
+	defer exitStatusMu.Unlock()
+	
 	if err == nil {
 		lastExitStatus = 0
 		return
