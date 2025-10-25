@@ -45,15 +45,8 @@ func (f *CustomFzf) Run() (string, error) {
 	}
 	defer f.exitRawMode()
 
-	// Use alternate screen buffer
-	fmt.Print("\033[?1049h")
-	defer fmt.Print("\033[?1049l")
-
-	// Get terminal size
-	f.updateSize()
-
 	for {
-		f.draw()
+		f.drawInline()
 
 		// Read key
 		key, err := f.readKey()
@@ -63,11 +56,13 @@ func (f *CustomFzf) Run() (string, error) {
 
 		switch key {
 		case 13: // Enter
+			f.clearInline()
 			if len(f.matches) > 0 && f.selected < len(f.matches) {
 				return f.matches[f.selected].Str, nil
 			}
 			return "", fmt.Errorf("no selection")
 		case 3, 27: // Ctrl-C or Escape
+			f.clearInline()
 			return "", fmt.Errorf("cancelled")
 		case 16, 1000: // Ctrl-P or Up arrow - navigate up
 			if f.selected > 0 {
@@ -168,7 +163,7 @@ func (f *CustomFzf) updateMatches() {
 
 // adjustOffset adjusts scroll offset to keep selected item visible
 func (f *CustomFzf) adjustOffset() {
-	maxVisible := 10
+	maxVisible := 8
 	
 	if f.selected < f.offset {
 		f.offset = f.selected
@@ -177,19 +172,23 @@ func (f *CustomFzf) adjustOffset() {
 	}
 }
 
-// draw renders the interface in alternate screen
-func (f *CustomFzf) draw() {
-	// Clear screen and go to top
-	fmt.Print("\033[2J\033[H")
+// drawInline renders the interface inline below current position
+func (f *CustomFzf) drawInline() {
+	// Clear previous display by moving up and clearing
+	if f.lastDrawnLines > 0 {
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[1A\033[2K")
+		}
+	}
+	
+	lines := 0
 	
 	// Header
-	fmt.Print("🔍 History Search (↑↓: navigate, Ctrl-R: cycle, Enter: select, Esc: cancel)\r\n\r\n")
+	fmt.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
+	lines++
 	
-	// Counter
-	fmt.Printf("Matches: %d/%d\r\n\r\n", len(f.matches), len(f.items))
-	
-	// Show max 10 items
-	maxVisible := 10
+	// Show max 8 items
+	maxVisible := 8
 	endIdx := f.offset + maxVisible
 	if endIdx > len(f.matches) {
 		endIdx = len(f.matches)
@@ -201,10 +200,19 @@ func (f *CustomFzf) draw() {
 		} else {
 			fmt.Printf("  %s\r\n", f.matches[i].Str)
 		}
+		lines++
 	}
 	
-	// Query at bottom
-	fmt.Printf("\r\n\r\nQuery: %s", f.query)
+	f.lastDrawnLines = lines
+}
+
+// clearInline clears the inline display
+func (f *CustomFzf) clearInline() {
+	if f.lastDrawnLines > 0 {
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[1A\033[2K")
+		}
+	}
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
