@@ -11,14 +11,15 @@ import (
 
 // CustomFzf implements a custom fzf-style interface
 type CustomFzf struct {
-	items    []string
-	matches  []fuzzy.Match
-	query    string
-	selected int
-	offset   int
-	width    int
-	height   int
-	oldState *term.State
+	items         []string
+	matches       []fuzzy.Match
+	query         string
+	selected      int
+	offset        int
+	width         int
+	height        int
+	oldState      *term.State
+	lastDrawnLines int
 }
 
 // NewCustomFzf creates a new custom fzf interface
@@ -44,15 +45,17 @@ func (f *CustomFzf) Run() (string, error) {
 	}
 	defer f.exitRawMode()
 
-	// Enter alternate screen
-	fmt.Print("\033[?1049h")
-	defer fmt.Print("\033[?1049l")
-
 	// Get terminal size
 	f.updateSize()
+	
+	// Limit display to max 10 lines
+	maxLines := 10
+	if f.height < maxLines+3 {
+		maxLines = f.height - 3
+	}
 
 	for {
-		f.draw()
+		f.drawCompact(maxLines)
 
 		// Read key
 		key, err := f.readKey()
@@ -62,11 +65,13 @@ func (f *CustomFzf) Run() (string, error) {
 
 		switch key {
 		case 13: // Enter
+			f.clearCompact(maxLines)
 			if len(f.matches) > 0 && f.selected < len(f.matches) {
 				return f.matches[f.selected].Str, nil
 			}
 			return "", fmt.Errorf("no selection")
 		case 3, 27: // Ctrl-C or Escape
+			f.clearCompact(maxLines)
 			return "", fmt.Errorf("cancelled")
 		case 16, 1000: // Ctrl-P or Up arrow - navigate up
 			if f.selected > 0 {
@@ -172,7 +177,7 @@ func (f *CustomFzf) updateMatches() {
 
 // adjustOffset adjusts scroll offset to keep selected item visible
 func (f *CustomFzf) adjustOffset() {
-	maxVisible := f.height - 4 // Leave space for prompt, header, counter
+	maxVisible := 9 // Fixed for compact display
 	
 	if f.selected < f.offset {
 		f.offset = f.selected
@@ -181,25 +186,34 @@ func (f *CustomFzf) adjustOffset() {
 	}
 }
 
-// draw renders the interface
-func (f *CustomFzf) draw() {
-	// Clear screen and reset cursor
-	fmt.Print("\033[2J\033[H")
+// drawCompact renders the interface using limited screen space
+func (f *CustomFzf) drawCompact(maxLines int) {
+	// Move cursor up to clear previous display
+	fmt.Printf("\033[%dA", f.lastDrawnLines)
 	
-	// Calculate visible area
-	maxVisible := f.height - 3 // Header + counter + prompt
-	if maxVisible < 1 {
-		maxVisible = 1
+	// Clear lines
+	for i := 0; i < f.lastDrawnLines; i++ {
+		fmt.Print("\033[K\r\n")
 	}
+	fmt.Printf("\033[%dA", f.lastDrawnLines)
+	
+	lines := 0
 	
 	// Header
-	fmt.Print("History Search (↑↓: navigate, Ctrl-R/S: cycle, Enter: select, Esc: cancel)\r\n")
+	fmt.Print("🔍 ")
+	if f.query != "" {
+		fmt.Printf("'%s' ", f.query)
+	}
+	fmt.Printf("(%d/%d)\r\n", len(f.matches), len(f.items))
+	lines++
 	
-	// Counter
-	fmt.Printf("%d/%d\r\n", len(f.matches), len(f.items))
+	// Items (limited)
+	displayCount := maxLines - 1 // Reserve space for header
+	if displayCount > len(f.matches) {
+		displayCount = len(f.matches)
+	}
 	
-	// Items
-	endIdx := f.offset + maxVisible
+	endIdx := f.offset + displayCount
 	if endIdx > len(f.matches) {
 		endIdx = len(f.matches)
 	}
@@ -210,15 +224,19 @@ func (f *CustomFzf) draw() {
 		} else {
 			fmt.Printf("  %s\r\n", f.matches[i].Str)
 		}
+		lines++
 	}
 	
-	// Fill remaining lines
-	for i := endIdx - f.offset; i < maxVisible; i++ {
-		fmt.Print("\r\n")
+	f.lastDrawnLines = lines
+}
+
+// clearCompact clears the compact display
+func (f *CustomFzf) clearCompact(maxLines int) {
+	fmt.Printf("\033[%dA", f.lastDrawnLines)
+	for i := 0; i < f.lastDrawnLines; i++ {
+		fmt.Print("\033[K\r\n")
 	}
-	
-	// Prompt at bottom
-	fmt.Printf("> %s", f.query)
+	fmt.Printf("\033[%dA", f.lastDrawnLines)
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
