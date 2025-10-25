@@ -77,23 +77,23 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 			// Start new completion
 			r.performCompletion()
 		}
+	case KeyEscape:
+		// Always try to handle escape sequences first (including shift-tab)
+		err := r.handleEscapeSequence()
+		if err != nil {
+			// If escape sequence handling fails and we're in menu mode, exit menu
+			if r.menuMode {
+				r.clearCompletionMenu()
+				r.resetCompletion()
+				r.redraw()
+			}
+		}
 	case KeyBackspace:
 		r.killRing.ResetYank()
 		r.backspace()
 		r.searchPrefix = ""
 		r.browseMode = false // Exit browse mode when editing
 		r.updateSuggestion()
-	case KeyEscape:
-		if r.menuMode {
-			r.clearCompletionMenu()
-			r.resetCompletion()
-			r.redraw()
-		} else {
-			err := r.handleEscapeSequence()
-			if err != nil {
-				return true // Continue on error
-			}
-		}
 	default:
 		if ch >= 32 && ch < 127 {
 			r.killRing.ResetYank()
@@ -150,6 +150,11 @@ func (r *Readline) handleEscapeSequence() error { //nolint:gocognit,cyclop,funle
 				r.navigateMenuHorizontal(-1)
 			} else {
 				r.moveCursorLeft()
+			}
+		case 'Z': // Shift-Tab (ESC[Z)
+			if r.menuMode {
+				// Navigate backward through completion menu
+				r.navigateMenu(-1)
 			}
 		case '1':
 			ch3, err := r.readChar()
@@ -283,6 +288,7 @@ func (r *Readline) showCompletionMenu() { //nolint:cyclop,funlen // Complex UI r
 				}
 			}
 
+			// Calculate padding based on original text length (not colored text)
 			padding := itemWidth - len(text)
 			_, _ = fmt.Print(displayText + strings.Repeat(" ", padding)) //nolint:forbidigo
 		}

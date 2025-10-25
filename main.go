@@ -3,6 +3,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -13,6 +14,19 @@ import (
 )
 
 func main() {
+	var commandFlag = flag.String("c", "", "execute command and exit")
+	flag.Parse()
+
+	// If -c flag is provided, execute command and exit
+	if *commandFlag != "" {
+		success := processCommandLine(*commandFlag)
+		if !success {
+			os.Exit(1)
+		}
+		return
+	}
+
+	// Interactive mode
 	rl, err := readline.New("dsh> ")
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "dsh: failed to initialize readline: %v\n", err)

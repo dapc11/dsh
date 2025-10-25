@@ -54,14 +54,38 @@ const (
 	Gray       = "\033[90m"
 	BrightRed  = "\033[91m"
 	BrightBlue = "\033[94m"
+	Reverse    = "\033[7m"
 )
 
-// Colorize applies color if supported.
-func (c *Color) Colorize(text, color string) string {
+// Colorize applies color by name if supported.
+func (c *Color) Colorize(text, colorName string) string {
 	if !c.enabled {
 		return text
 	}
-	return color + text + Reset
+	
+	var colorCode string
+	switch colorName {
+	case "red":
+		colorCode = Red
+	case "green":
+		colorCode = Green
+	case "yellow":
+		colorCode = Yellow
+	case "blue":
+		colorCode = Blue
+	case "magenta":
+		colorCode = Magenta
+	case "cyan":
+		colorCode = Cyan
+	case "gray":
+		colorCode = Gray
+	case "reverse":
+		colorCode = Reverse
+	default:
+		return text // Unknown color, return as-is
+	}
+	
+	return colorCode + text + Reset
 }
 
 // Hex converts hex color to ANSI 256-color.

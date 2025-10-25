@@ -1,6 +1,6 @@
 BINARY_NAME=dsh
 
-.PHONY: build test coverage lint fmt clean check deps install
+.PHONY: build test test-unit test-integration test-rendering coverage lint fmt clean check deps install
 
 build:
 	go build -o $(BINARY_NAME) .
@@ -9,8 +9,20 @@ clean:
 	go clean
 	rm -f $(BINARY_NAME) coverage.out coverage.html
 
-test:
+# Run all tests
+test: test-unit test-integration test-rendering
+
+# Run unit tests only
+test-unit:
 	go test -v -race ./internal/...
+
+# Run integration tests (requires built binary)
+test-integration: build
+	go test -v ./test/integration/...
+
+# Run rendering tests with diagnostic output
+test-rendering: build
+	go test -v ./test/rendering/...
 
 # Run tests with coverage report
 coverage:
