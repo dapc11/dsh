@@ -16,7 +16,7 @@ func TestExecutor_SimpleCommand(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if !success {
+	if err != nil {
 		t.Error("Expected command to succeed")
 	}
 }
@@ -29,8 +29,8 @@ func TestExecutor_NonExistentCommand(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if err == nil {
-		t.Error("Expected error for non-existent command")
+	if success {
+		t.Error("Expected command to fail for non-existent command")
 	}
 }
 
@@ -45,13 +45,13 @@ func TestExecutor_OutputRedirection(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if !success {
+	if err != nil {
 		t.Error("Expected command to succeed")
 	}
 
 	// Check if file was created and contains expected content
 	content, err := os.ReadFile(outputFile)
-	if !success {
+	if err != nil {
 		t.Errorf("Failed to read output file: %v", err)
 	}
 
@@ -69,7 +69,7 @@ func TestExecutor_InputRedirection(t *testing.T) {
 	// Create input file
 	inputContent := "test input content"
 	err := os.WriteFile(inputFile, []byte(inputContent), 0644)
-	if !success {
+	if err != nil {
 		t.Fatalf("Failed to create input file: %v", err)
 	}
 
@@ -78,8 +78,8 @@ func TestExecutor_InputRedirection(t *testing.T) {
 		InputFile: inputFile,
 	}
 
-	err = ExecuteCommand(cmd)
-	if !success {
+	success := ExecuteCommand(cmd)
+	if err != nil {
 		t.Error("Expected command to succeed")
 	}
 }
@@ -92,7 +92,7 @@ func TestExecutor_AppendRedirection(t *testing.T) {
 	// Create initial file content
 	initialContent := "initial content\n"
 	err := os.WriteFile(outputFile, []byte(initialContent), 0644)
-	if !success {
+	if err != nil {
 		t.Fatalf("Failed to create initial file: %v", err)
 	}
 
@@ -102,14 +102,14 @@ func TestExecutor_AppendRedirection(t *testing.T) {
 		AppendMode: true,
 	}
 
-	err = ExecuteCommand(cmd)
-	if !success {
+	success = ExecuteCommand(cmd)
+	if err != nil {
 		t.Error("Expected command to succeed")
 	}
 
 	// Check if content was appended
 	content, err := os.ReadFile(outputFile)
-	if !success {
+	if err != nil {
 		t.Errorf("Failed to read output file: %v", err)
 	}
 
@@ -134,7 +134,7 @@ func TestExecutor_BackgroundCommand(t *testing.T) {
 	success := ExecuteCommand(cmd)
 	duration := time.Since(start)
 
-	if !success {
+	if err != nil {
 		t.Error("Expected command to succeed")
 	}
 
@@ -152,7 +152,7 @@ func TestExecutor_EmptyCommand(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if err == nil {
+	if success {
 		t.Error("Expected error for empty command")
 	}
 }
@@ -165,7 +165,7 @@ func TestExecutor_CommandWithArguments(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if !success {
+	if err != nil {
 		t.Error("Expected command to succeed")
 	}
 }
@@ -179,7 +179,7 @@ func TestExecutor_InvalidOutputFile(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if err == nil {
+	if success {
 		t.Error("Expected error for invalid output file path")
 	}
 }
@@ -193,7 +193,7 @@ func TestExecutor_InvalidInputFile(t *testing.T) {
 	}
 
 	success := ExecuteCommand(cmd)
-	if err == nil {
+	if success {
 		t.Error("Expected error for non-existent input file")
 	}
 }

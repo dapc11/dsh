@@ -52,7 +52,7 @@ func TestParser_Redirection(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	cmd := commands[0]
+	pipeline := commands[0]; cmd := pipeline.Commands[0]
 	if cmd.InputFile != "input.txt" {
 		t.Errorf("Expected input file 'input.txt', got '%s'", cmd.InputFile)
 	}
@@ -75,7 +75,7 @@ func TestParser_Background(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	cmd := commands[0]
+	pipeline := commands[0]; cmd := pipeline.Commands[0]
 	if !cmd.Background {
 		t.Error("Expected background command")
 	}
@@ -95,11 +95,11 @@ func TestParser_MultipleCommands(t *testing.T) {
 		t.Errorf("Expected 2 commands, got %d", len(commands))
 	}
 
-	if commands[0].Args[1] != "hello" {
-		t.Errorf("First command: expected 'hello', got '%s'", commands[0].Args[1])
+	if commands[0].Commands[0].Args[1] != "hello" {
+		t.Errorf("First command: expected 'hello', got '%s'", commands[0].Commands[0].Args[1])
 	}
-	if commands[1].Args[1] != "world" {
-		t.Errorf("Second command: expected 'world', got '%s'", commands[1].Args[1])
+	if commands[1].Commands[0].Args[1] != "world" {
+		t.Errorf("Second command: expected 'world', got '%s'", commands[1].Commands[0].Args[1])
 	}
 }
 
@@ -117,11 +117,11 @@ func TestParser_AppendRedirection(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	cmd := commands[0]
+	pipeline := commands[0]; cmd := pipeline.Commands[0]
 	if cmd.OutputFile != "output.txt" {
 		t.Errorf("Expected output file 'output.txt', got '%s'", cmd.OutputFile)
 	}
-	if !cmd.AppendOutput {
+	if !cmd.AppendMode {
 		t.Error("Expected append output mode")
 	}
 }
@@ -155,7 +155,7 @@ func TestParser_QuotedArguments(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	cmd := commands[0]
+	pipeline := commands[0]; cmd := pipeline.Commands[0]
 	if len(cmd.Args) != 3 {
 		t.Errorf("Expected 3 args, got %d", len(cmd.Args))
 	}
