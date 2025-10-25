@@ -152,7 +152,8 @@ func runForegroundProcess(execCmd *exec.Cmd) bool {
 			// Not an exit error, print the error message
 			_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
 		}
-		// Command failed but shell continues
+		// Command failed
+		return false
 	}
 
 	return true
