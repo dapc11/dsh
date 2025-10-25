@@ -131,16 +131,16 @@ func (f *CustomFzf) updateSize() {
 
 // readKey reads a single key from stdin, handling escape sequences
 func (f *CustomFzf) readKey() (int, error) {
-	var buf [6]byte
+	var buf [10]byte
 	n, err := os.Stdin.Read(buf[:1])
 	if err != nil || n == 0 {
 		return 0, err
 	}
 
-	// Handle escape sequences (arrow keys and Ctrl-Shift-R)
+	// Handle escape sequences
 	if buf[0] == 27 { // ESC
-		n, err := os.Stdin.Read(buf[1:6])
-		if err != nil || n < 2 {
+		n, err := os.Stdin.Read(buf[1:10])
+		if err != nil || n < 1 {
 			return 27, nil // Just escape
 		}
 		
@@ -151,10 +151,17 @@ func (f *CustomFzf) readKey() (int, error) {
 			case 'B': // Down arrow  
 				return 1001, nil
 			case '1':
-				if n >= 4 && buf[3] == ';' && buf[4] == '6' && buf[5] == 'R' {
-					return 1002, nil // Ctrl-Shift-R
+				// Check for various Ctrl-Shift-R patterns
+				if n >= 4 && buf[3] == ';' {
+					if (buf[4] == '6' || buf[4] == '5') && buf[5] == 'R' {
+						return 1002, nil // Ctrl-Shift-R
+					}
 				}
 			}
+		}
+		// Check for other Ctrl-Shift-R patterns like ESC[18;2~
+		if buf[1] == '[' && buf[2] == '1' && buf[3] == '8' && buf[4] == ';' && buf[5] == '2' && buf[6] == '~' {
+			return 1002, nil // Another Ctrl-Shift-R pattern
 		}
 		return 27, nil // Unhandled escape sequence
 	}
