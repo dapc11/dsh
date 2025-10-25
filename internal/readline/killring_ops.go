@@ -83,6 +83,7 @@ func (r *Readline) yank() {
 	}
 
 	r.cursor += len(yankRunes)
+	r.killRing.SetLastYank(len(yankRunes))
 	r.redraw()
 }
 
@@ -104,8 +105,8 @@ func (r *Readline) yankCycle(direction int) {
 	r.buffer = append(r.buffer[:start], r.buffer[r.cursor:]...)
 	r.cursor = start
 
-	// Get next item from kill ring (simplified)
-	yankText := r.killRing.Yank()
+	// Get next item from kill ring using Cycle
+	yankText := r.killRing.Cycle(direction)
 
 	if yankText == "" {
 		return
@@ -124,5 +125,6 @@ func (r *Readline) yankCycle(direction int) {
 	}
 
 	r.cursor += len(yankRunes)
+	r.killRing.SetLastYank(len(yankRunes))
 	r.redraw()
 }
