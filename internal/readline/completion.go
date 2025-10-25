@@ -149,8 +149,14 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 	filename := prefix
 
 	if strings.Contains(prefix, "/") {
-		dir = filepath.Dir(prefix)
-		filename = filepath.Base(prefix)
+		// Handle trailing slash case
+		if strings.HasSuffix(prefix, "/") {
+			dir = prefix
+			filename = ""
+		} else {
+			dir = filepath.Dir(prefix)
+			filename = filepath.Base(prefix)
+		}
 	}
 
 	entries, err := os.ReadDir(dir)
@@ -161,6 +167,11 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 	var matches []CompletionItem
 	for _, entry := range entries {
 		name := entry.Name()
+		// Skip hidden files unless explicitly requested
+		if strings.HasPrefix(name, ".") && !strings.HasPrefix(filename, ".") {
+			continue
+		}
+		
 		if strings.HasPrefix(name, filename) {
 			if entry.IsDir() {
 				matches = append(matches, CompletionItem{Text: name + "/", Type: "directory"})
