@@ -51,7 +51,7 @@ func (r *Readline) redraw() {
 	// Print buffer with suggestion
 	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
 	if r.suggestion != "" {
-		_, _ = fmt.Print(r.color.Colorize(r.suggestion, Gray)) //nolint:forbidigo
+		_, _ = fmt.Print(r.color.Colorize(r.suggestion, "gray")) //nolint:forbidigo
 	}
 
 	// Position cursor correctly
