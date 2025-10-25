@@ -28,7 +28,6 @@ func CaptureStdout(fn func()) string {
 
 // TestActualRenderingOutput tests the real rendering output
 func TestActualRenderingOutput(t *testing.T) {
-	t.Parallel()
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
 
@@ -112,7 +111,6 @@ func TestColorFormatValidation(t *testing.T) {
 
 // TestRenderingRegression tests that rendering behavior doesn't regress
 func TestRenderingRegression(t *testing.T) {
-	t.Parallel()
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
 
