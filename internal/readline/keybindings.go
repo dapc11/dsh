@@ -116,40 +116,65 @@ func (r *Readline) handleEscapeSequence() error { //nolint:gocognit,cyclop,funle
 		return fmt.Errorf("failed to read escape sequence: %w", err)
 	}
 
-	if ch1 != '[' {
-		return nil
-	}
+	switch ch1 {
+	case 127: // Alt+Backspace (ESC + DEL)
+		r.killRing.ResetYank()
+		r.killWordBackward()
+	case '[':
+		ch2, err := r.readChar()
+		if err != nil {
+			return fmt.Errorf("failed to read escape sequence: %w", err)
+		}
 
-	ch2, err := r.readChar()
-	if err != nil {
-		return fmt.Errorf("failed to read escape sequence: %w", err)
-	}
-
-	switch ch2 {
-	case 'A': // Up arrow
-		if r.menuMode {
-			r.navigateMenu(-1)
-		} else {
-			r.historyPrevious()
+		switch ch2 {
+		case 'A': // Up arrow
+			if r.menuMode {
+				r.navigateMenu(-1)
+			} else {
+				r.historyPrevious()
+			}
+		case 'B': // Down arrow
+			if r.menuMode {
+				r.navigateMenu(1)
+			} else {
+				r.historyNext()
+			}
+		case 'C': // Right arrow
+			if r.menuMode {
+				r.navigateMenuHorizontal(1)
+			} else {
+				r.moveCursorRight()
+			}
+		case 'D': // Left arrow
+			if r.menuMode {
+				r.navigateMenuHorizontal(-1)
+			} else {
+				r.moveCursorLeft()
+			}
+		case '1':
+			ch3, err := r.readChar()
+			if err == nil && ch3 == ';' {
+				ch4, err := r.readChar()
+				if err == nil && ch4 == '5' {
+					ch5, err := r.readChar()
+					if err == nil {
+						switch ch5 {
+						case 'C': // Ctrl+Right
+							r.moveWordForward()
+						case 'D': // Ctrl+Left
+							r.moveWordBackward()
+						}
+					}
+				}
+			}
 		}
-	case 'B': // Down arrow
-		if r.menuMode {
-			r.navigateMenu(1)
-		} else {
-			r.historyNext()
-		}
-	case 'C': // Right arrow
-		if r.menuMode {
-			r.navigateMenuHorizontal(1)
-		} else {
-			r.moveCursorRight()
-		}
-	case 'D': // Left arrow
-		if r.menuMode {
-			r.navigateMenuHorizontal(-1)
-		} else {
-			r.moveCursorLeft()
-		}
+	case 'y': // Alt+Y (yank pop forward)
+		r.yankPop()
+	case 'Y': // Alt+Shift+Y (yank pop backward)
+		r.yankCycle(-1)
+	case 'd': // Alt+D (delete word forward)
+		r.killRing.ResetYank()
+		r.killWordForward()
 	}
 
 	return nil
