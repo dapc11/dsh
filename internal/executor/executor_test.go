@@ -6,6 +6,7 @@ import (
 )
 
 func TestExecutor_SimpleCommand(t *testing.T) {
+	t.Parallel()
 	cmd := &parser.Command{
 		Args: []string{"echo", "hello", "world"},
 	}
@@ -16,6 +17,7 @@ func TestExecutor_SimpleCommand(t *testing.T) {
 }
 
 func TestExecutor_NonExistentCommand(t *testing.T) {
+	t.Parallel()
 	cmd := &parser.Command{
 		Args: []string{"nonexistentcommand12345"},
 	}

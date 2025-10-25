@@ -10,6 +10,7 @@ import (
 )
 
 func TestCustomFzfCreation(t *testing.T) {
+	t.Parallel()
 	items := []string{"echo hello", "git status", "ls -la"}
 	fzf := readline.NewCustomFzf(items)
 
@@ -23,6 +24,7 @@ func TestCustomFzfCreation(t *testing.T) {
 }
 
 func TestFuzzyMatching(t *testing.T) {
+	t.Parallel()
 	// Test the fuzzy matching logic that our implementation uses
 	items := []string{
 		"echo hello world",
@@ -59,6 +61,7 @@ func TestFuzzyMatching(t *testing.T) {
 }
 
 func TestCommandTruncation(t *testing.T) {
+	t.Parallel()
 	// Test the truncation logic used in the display
 	testCases := []struct {
 		input    string
@@ -101,6 +104,7 @@ func TestCommandTruncation(t *testing.T) {
 }
 
 func TestHistoryDeduplication(t *testing.T) {
+	t.Parallel()
 	// Test the deduplication logic used in FuzzyHistorySearchCustom
 	historyItems := []string{
 		"echo hello",
@@ -137,6 +141,7 @@ func TestHistoryDeduplication(t *testing.T) {
 }
 
 func TestOffsetCalculation(t *testing.T) {
+	t.Parallel()
 	// Test the offset calculation logic for scrolling
 	maxVisible := 5
 
@@ -172,6 +177,7 @@ func TestOffsetCalculation(t *testing.T) {
 }
 
 func TestEmptyHistoryHandling(t *testing.T) {
+	t.Parallel()
 	// Test behavior with empty history
 	var historyItems []string
 

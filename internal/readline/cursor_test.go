@@ -20,6 +20,7 @@ func createTestReadline() *Readline {
 }
 
 func TestCursor_Movement(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("hello world")
 	r.cursor = 5 // Between "hello" and " world"
@@ -51,6 +52,7 @@ func TestCursor_Movement(t *testing.T) {
 }
 
 func TestCursor_WordMovement(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("hello world test")
 	r.cursor = 0
@@ -74,6 +76,7 @@ func TestCursor_WordMovement(t *testing.T) {
 }
 
 func TestCursor_Boundaries(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("test")
 	r.cursor = 0

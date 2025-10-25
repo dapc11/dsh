@@ -5,6 +5,7 @@ import (
 )
 
 func TestKillRing_Add(t *testing.T) {
+	t.Parallel()
 	kr := NewKillRing()
 
 	// Test adding items
@@ -19,6 +20,7 @@ func TestKillRing_Add(t *testing.T) {
 }
 
 func TestKillRing_Cycle(t *testing.T) {
+	t.Parallel()
 	kr := NewKillRing()
 	kr.Add("first")
 	kr.Add("second")
@@ -45,6 +47,7 @@ func TestKillRing_Cycle(t *testing.T) {
 }
 
 func TestKillRing_CycleBackward(t *testing.T) {
+	t.Parallel()
 	kr := NewKillRing()
 	kr.Add("first")
 	kr.Add("second")
@@ -63,6 +66,7 @@ func TestKillRing_CycleBackward(t *testing.T) {
 }
 
 func TestKillRing_LastYank(t *testing.T) {
+	t.Parallel()
 	kr := NewKillRing()
 
 	// Initially no yank
@@ -84,6 +88,7 @@ func TestKillRing_LastYank(t *testing.T) {
 }
 
 func TestKillRing_EmptyRing(t *testing.T) {
+	t.Parallel()
 	kr := NewKillRing()
 
 	// Empty ring should return empty string
@@ -97,6 +102,7 @@ func TestKillRing_EmptyRing(t *testing.T) {
 }
 
 func TestKillRing_SingleItem(t *testing.T) {
+	t.Parallel()
 	kr := NewKillRing()
 	kr.Add("only")
 

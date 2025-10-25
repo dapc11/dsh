@@ -5,6 +5,7 @@ import (
 )
 
 func TestTerminal_New(t *testing.T) {
+	t.Parallel()
 	// This test may fail in non-terminal environments, so we'll be lenient
 	terminal, err := NewTerminal()
 	if err != nil {
@@ -18,6 +19,7 @@ func TestTerminal_New(t *testing.T) {
 }
 
 func TestTerminal_GetTerminalSize(t *testing.T) {
+	t.Parallel()
 	terminal, err := NewTerminal()
 	if err != nil {
 		t.Skipf("Terminal initialization failed: %v", err)
@@ -35,6 +37,7 @@ func TestTerminal_GetTerminalSize(t *testing.T) {
 }
 
 func TestColor_New(t *testing.T) {
+	t.Parallel()
 	color := NewColor()
 
 	if color == nil {
@@ -43,6 +46,7 @@ func TestColor_New(t *testing.T) {
 }
 
 func TestColor_Colorize(t *testing.T) {
+	t.Parallel()
 	color := NewColor()
 
 	text := "test text"
@@ -66,6 +70,7 @@ func TestColor_Colorize(t *testing.T) {
 }
 
 func TestColor_DisabledColors(t *testing.T) {
+	t.Parallel()
 	color := &Color{enabled: false}
 
 	text := "test text"

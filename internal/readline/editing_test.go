@@ -5,6 +5,7 @@ import (
 )
 
 func TestEditing_InsertChar(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("hllo")
 	r.cursor = 1
@@ -23,6 +24,7 @@ func TestEditing_InsertChar(t *testing.T) {
 }
 
 func TestEditing_DeleteChar(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("hello")
 	r.cursor = 1 // At 'e'
@@ -41,6 +43,7 @@ func TestEditing_DeleteChar(t *testing.T) {
 }
 
 func TestEditing_Backspace(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("hello")
 	r.cursor = 2 // After 'e'
@@ -59,6 +62,7 @@ func TestEditing_Backspace(t *testing.T) {
 }
 
 func TestEditing_ClearLine(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 	r.buffer = []rune("hello world")
 	r.cursor = 5
@@ -75,6 +79,7 @@ func TestEditing_ClearLine(t *testing.T) {
 }
 
 func TestEditing_BoundaryConditions(t *testing.T) {
+	t.Parallel()
 	r := createTestReadline()
 
 	// Test backspace at beginning

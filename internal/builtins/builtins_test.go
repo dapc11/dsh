@@ -8,6 +8,7 @@ import (
 )
 
 func TestExecuteBuiltin_Help(t *testing.T) {
+	t.Parallel()
 	result := ExecuteBuiltin([]string{"help"})
 	if !result {
 		t.Error("help command should return true")
@@ -15,6 +16,7 @@ func TestExecuteBuiltin_Help(t *testing.T) {
 }
 
 func TestExecuteBuiltin_Exit(t *testing.T) {
+	t.Parallel()
 	result := ExecuteBuiltin([]string{"exit"})
 	if result {
 		t.Error("exit command should return false")
@@ -22,6 +24,7 @@ func TestExecuteBuiltin_Exit(t *testing.T) {
 }
 
 func TestExecuteBuiltin_Pwd(t *testing.T) {
+	t.Parallel()
 	result := ExecuteBuiltin([]string{"pwd"})
 	if !result {
 		t.Error("pwd command should return true")
@@ -68,6 +71,7 @@ func TestExecuteBuiltin_Cd(t *testing.T) {
 }
 
 func TestExecuteBuiltin_Todo(t *testing.T) {
+	t.Parallel()
 	// Test todo list (empty)
 	result := ExecuteBuiltin([]string{"todo"})
 	if !result {
@@ -82,6 +86,7 @@ func TestExecuteBuiltin_Todo(t *testing.T) {
 }
 
 func TestExecuteBuiltin_InvalidCommand(t *testing.T) {
+	t.Parallel()
 	result := ExecuteBuiltin([]string{"nonexistent"})
 	if result {
 		t.Error("invalid command should return false")
@@ -89,6 +94,7 @@ func TestExecuteBuiltin_InvalidCommand(t *testing.T) {
 }
 
 func TestExecuteBuiltin_EmptyArgs(t *testing.T) {
+	t.Parallel()
 	result := ExecuteBuiltin([]string{})
 	if result {
 		t.Error("empty args should return false")
@@ -96,6 +102,7 @@ func TestExecuteBuiltin_EmptyArgs(t *testing.T) {
 }
 
 func TestIsBuiltin(t *testing.T) {
+	t.Parallel()
 	builtins := []string{"cd", "pwd", "help", "exit", "todo"}
 
 	for _, cmd := range builtins {
