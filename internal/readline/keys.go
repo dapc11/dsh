@@ -12,6 +12,7 @@ const (
 	KeyCtrlL     = 12
 	KeyCtrlN     = 14
 	KeyCtrlP     = 16
+	KeyCtrlR     = 18
 	KeyCtrlU     = 21
 	KeyCtrlW     = 23
 	KeyCtrlY     = 25
