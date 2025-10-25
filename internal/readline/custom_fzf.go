@@ -88,7 +88,7 @@ func (f *CustomFzf) Run() (string, error) {
 				f.selected = (f.selected + 1) % len(f.matches)
 				f.adjustOffset()
 			}
-		case 19, 1002: // Ctrl-S or Ctrl-Shift-R - cycle to previous match
+		case 1002: // Ctrl-Shift-R - cycle to previous match
 			if len(f.matches) > 0 {
 				f.selected = (f.selected - 1 + len(f.matches)) % len(f.matches)
 				f.adjustOffset()
