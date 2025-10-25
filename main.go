@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"dsh/internal/lexer"
 	"dsh/internal/parser"
 	"dsh/internal/readline"
+	"github.com/mattn/go-isatty"
 )
 
 func main() {
@@ -28,32 +30,51 @@ func main() {
 	}
 
 	// Interactive mode
-	rl, err := readline.New("dsh> ")
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "dsh: failed to initialize readline: %v\n", err)
-		os.Exit(1)
-	}
-
-	for {
-		line, err := rl.ReadLine()
+	if isatty.IsTerminal(os.Stdin.Fd()) {
+		rl, err := readline.New("dsh> ")
 		if err != nil {
-			if errors.Is(err, readline.ErrEOF) {
-				// Ctrl+D pressed on empty line - exit gracefully
+			_, _ = fmt.Fprintf(os.Stderr, "dsh: failed to initialize readline: %v\n", err)
+			os.Exit(1)
+		}
+
+		for {
+			line, err := rl.ReadLine()
+			if err != nil {
+				if errors.Is(err, readline.ErrEOF) {
+					// Ctrl+D pressed on empty line - exit gracefully
+					break
+				}
+				_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+
 				break
 			}
-			_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
 
-			break
+			if line == "" {
+				continue
+			}
+
+			if !processCommandLine(line) {
+				// Command returned false (likely exit command)
+				os.Exit(0)
+			}
 		}
-
-		if line == "" {
-			continue
-		}
-
-		if !processCommandLine(line) {
-			break
+	} else {
+		// Non-interactive mode - read from stdin
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				continue
+			}
+			if !processCommandLine(line) {
+				// Command returned false (likely exit command)
+				os.Exit(0)
+			}
 		}
 	}
+	
+	// Exit with last command's exit status
+	os.Exit(executor.GetLastExitStatus())
 }
 
 func processCommandLine(line string) bool {

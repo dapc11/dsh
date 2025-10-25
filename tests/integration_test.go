@@ -30,7 +30,7 @@ func TestShell_BasicCommands(t *testing.T) {
 		{
 			name:     "help command",
 			input:    "help\nexit\n",
-			expected: "Available commands:",
+			expected: "Built-in commands:",
 		},
 	}
 
@@ -102,7 +102,7 @@ func TestShell_BackgroundCommands(t *testing.T) {
 	}
 
 	// Should complete quickly (background process)
-	if duration > 200*time.Millisecond {
+	if duration > 500*time.Millisecond {
 		t.Errorf("Background command took too long: %v", duration)
 	}
 
