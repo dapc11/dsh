@@ -3,7 +3,7 @@ package interactive
 import (
 	"bufio"
 	"context"
-	"fmt"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 )
+
+var ErrReadTimeout = errors.New("read timeout")
 
 // InteractiveSession manages a DSH session for interactive testing
 type InteractiveSession struct {
@@ -88,7 +90,7 @@ func (s *InteractiveSession) ReadOutput(timeout time.Duration) (string, error) {
 	case err := <-errChan:
 		return "", err
 	case <-time.After(timeout):
-		return "", fmt.Errorf("read timeout")
+		return "", ErrReadTimeout
 	}
 }
 

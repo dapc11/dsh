@@ -1,12 +1,18 @@
 package readline
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/sahilm/fuzzy"
 	"golang.org/x/term"
+)
+
+var (
+	ErrNoSelection = errors.New("no selection")
+	ErrCancelled   = errors.New("cancelled")
 )
 
 // CustomFzf implements a custom fzf-style interface
@@ -60,10 +66,10 @@ func (f *CustomFzf) Run() (string, error) {
 			if len(f.matches) > 0 && f.selected < len(f.matches) {
 				return f.matches[f.selected].Str, nil
 			}
-			return "", fmt.Errorf("no selection")
+			return "", ErrNoSelection
 		case 3, 27: // Ctrl-C or Escape
 			f.clearInline()
-			return "", fmt.Errorf("cancelled")
+			return "", ErrCancelled
 		case 16, 1000: // Ctrl-P or Up arrow - navigate up
 			if f.selected > 0 {
 				f.selected--

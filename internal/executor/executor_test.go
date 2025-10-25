@@ -20,8 +20,14 @@ func TestExecutor_NonExistentCommand(t *testing.T) {
 		Args: []string{"nonexistentcommand12345"},
 	}
 
-	if ExecuteCommand(cmd) {
-		t.Error("Expected command to fail for non-existent command")
+	// Command should continue processing (return true) but set exit status
+	if !ExecuteCommand(cmd) {
+		t.Error("Expected command to continue processing even for non-existent command")
+	}
+	
+	// Check that exit status was set correctly
+	if GetLastExitStatus() == 0 {
+		t.Error("Expected non-zero exit status for non-existent command")
 	}
 }
 

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +11,8 @@ import (
 	"testing"
 	"time"
 )
+
+var ErrCommandTimeout = errors.New("command timed out after 3 seconds")
 
 // runDSHCommand runs a single command in DSH with timeout
 func runDSHCommand(t *testing.T, command string) (string, error) {
@@ -21,8 +24,8 @@ func runDSHCommand(t *testing.T, command string) (string, error) {
 	cmd := exec.CommandContext(ctx, dshPath, "-c", command)
 	output, err := cmd.CombinedOutput()
 
-	if ctx.Err() == context.DeadlineExceeded {
-		return "", fmt.Errorf("command timed out after 3 seconds")
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return "", ErrCommandTimeout
 	}
 
 	return strings.TrimSpace(string(output)), err
