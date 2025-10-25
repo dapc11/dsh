@@ -17,7 +17,7 @@ func TestLexer_SimpleCommand(t *testing.T) {
 		}
 	}
 
-	expected := []TokenType{WORD, WORD, EOF}
+	expected := []TokenType{Word, Word, EOF}
 	if len(tokens) != len(expected) {
 		t.Errorf("Expected %d tokens, got %d", len(expected), len(tokens))
 	}
@@ -49,7 +49,7 @@ func TestLexer_Redirection(t *testing.T) {
 		}
 	}
 
-	expected := []TokenType{WORD, REDIRECT_IN, WORD, REDIRECT_OUT, WORD, EOF}
+	expected := []TokenType{Word, RedirectIn, Word, RedirectOut, Word, EOF}
 	for i, token := range tokens {
 		if i < len(expected) && token.Type != expected[i] {
 			t.Errorf("Token %d: expected %v, got %v", i, expected[i], token.Type)
@@ -96,7 +96,7 @@ func TestLexer_Background(t *testing.T) {
 		}
 	}
 
-	expected := []TokenType{WORD, WORD, BACKGROUND, EOF}
+	expected := []TokenType{Word, Word, Background, EOF}
 	for i, token := range tokens {
 		if i < len(expected) && token.Type != expected[i] {
 			t.Errorf("Token %d: expected %v, got %v", i, expected[i], token.Type)
@@ -117,7 +117,7 @@ func TestLexer_Semicolon(t *testing.T) {
 		}
 	}
 
-	expected := []TokenType{WORD, WORD, SEMICOLON, WORD, WORD, EOF}
+	expected := []TokenType{Word, Word, Semicolon, Word, Word, EOF}
 	for i, token := range tokens {
 		if i < len(expected) && token.Type != expected[i] {
 			t.Errorf("Token %d: expected %v, got %v", i, expected[i], token.Type)
@@ -139,7 +139,7 @@ func TestLexer_Comments(t *testing.T) {
 	}
 
 	// Comments should be ignored
-	expected := []TokenType{WORD, WORD, EOF}
+	expected := []TokenType{Word, Word, EOF}
 	if len(tokens) != len(expected) {
 		t.Errorf("Expected %d tokens (comment ignored), got %d", len(expected), len(tokens))
 	}
@@ -178,7 +178,7 @@ func TestLexer_AppendRedirection(t *testing.T) {
 		}
 	}
 
-	expected := []TokenType{WORD, WORD, REDIRECT_APPEND, WORD, EOF}
+	expected := []TokenType{Word, Word, RedirectAppend, Word, EOF}
 	for i, token := range tokens {
 		if i < len(expected) && token.Type != expected[i] {
 			t.Errorf("Token %d: expected %v, got %v", i, expected[i], token.Type)

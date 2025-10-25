@@ -11,7 +11,7 @@ func TestParser_SimpleCommand(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -20,7 +20,12 @@ func TestParser_SimpleCommand(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	cmd := commands[0]
+	pipeline := commands[0]
+	if len(pipeline.Commands) != 1 {
+		t.Errorf("Expected 1 command in pipeline, got %d", len(pipeline.Commands))
+	}
+	
+	cmd := pipeline.Commands[0]
 	if len(cmd.Args) != 3 {
 		t.Errorf("Expected 3 args, got %d", len(cmd.Args))
 	}
@@ -38,7 +43,7 @@ func TestParser_Redirection(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -61,7 +66,7 @@ func TestParser_Background(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -81,7 +86,7 @@ func TestParser_MultipleCommands(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -103,7 +108,7 @@ func TestParser_AppendRedirection(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -126,7 +131,7 @@ func TestParser_EmptyInput(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -141,7 +146,7 @@ func TestParser_QuotedArguments(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -168,7 +173,7 @@ func TestParser_ComplexCommand(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	commands, err := p.Parse()
+	commands, err := p.ParseCommandLine()
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}

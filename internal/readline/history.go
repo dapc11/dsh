@@ -72,7 +72,7 @@ func (h *History) Previous() string {
 		h.pos--
 		return h.items[h.pos]
 	}
-	
+
 	// Return first item if we're at the beginning
 	if len(h.items) > 0 {
 		return h.items[0]
