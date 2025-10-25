@@ -14,7 +14,7 @@ import (
 
 var ErrReadTimeout = errors.New("read timeout")
 
-// InteractiveSession manages a DSH session for interactive testing
+// InteractiveSession manages a DSH session for interactive testing.
 type InteractiveSession struct {
 	cmd    *exec.Cmd
 	stdin  *os.File
@@ -22,7 +22,7 @@ type InteractiveSession struct {
 	cancel context.CancelFunc
 }
 
-// NewInteractiveSession starts DSH with pseudo-terminal
+// NewInteractiveSession starts DSH with pseudo-terminal.
 func NewInteractiveSession(t *testing.T) *InteractiveSession {
 	t.Helper()
 	if testing.Short() {
@@ -43,7 +43,8 @@ func NewInteractiveSession(t *testing.T) *InteractiveSession {
 	cmd.Stdout = stdoutW
 	cmd.Stderr = stdoutW
 
-	if err := cmd.Start(); err != nil {
+	err := cmd.Start()
+	if err != nil {
 		cancel()
 		t.Fatalf("Failed to start DSH: %v", err)
 	}
@@ -56,13 +57,13 @@ func NewInteractiveSession(t *testing.T) *InteractiveSession {
 	}
 }
 
-// SendKeys sends keystrokes to the shell
+// SendKeys sends keystrokes to the shell.
 func (s *InteractiveSession) SendKeys(keys string) error {
 	_, err := s.stdin.WriteString(keys)
 	return err
 }
 
-// ReadOutput reads output with timeout
+// ReadOutput reads output with timeout.
 func (s *InteractiveSession) ReadOutput(timeout time.Duration) (string, error) {
 	done := make(chan string, 1)
 	errChan := make(chan error, 1)
@@ -78,7 +79,8 @@ func (s *InteractiveSession) ReadOutput(timeout time.Duration) (string, error) {
 				break
 			}
 		}
-		if err := scanner.Err(); err != nil {
+		err := scanner.Err()
+		if err != nil {
 			errChan <- err
 			return
 		}
@@ -95,7 +97,7 @@ func (s *InteractiveSession) ReadOutput(timeout time.Duration) (string, error) {
 	}
 }
 
-// Close terminates the session
+// Close terminates the session.
 func (s *InteractiveSession) Close() {
 	_, _ = s.stdin.WriteString("exit\n")
 	_ = s.stdin.Close()
@@ -104,7 +106,7 @@ func (s *InteractiveSession) Close() {
 	_ = s.cmd.Wait()
 }
 
-// TestTabCompletion tests tab completion functionality
+// TestTabCompletion tests tab completion functionality.
 func TestTabCompletion(t *testing.T) {
 	session := NewInteractiveSession(t)
 	defer session.Close()
@@ -133,7 +135,7 @@ func TestTabCompletion(t *testing.T) {
 	})
 }
 
-// TestRendering tests visual rendering aspects
+// TestRendering tests visual rendering aspects.
 func TestRendering(t *testing.T) {
 	session := NewInteractiveSession(t)
 	defer session.Close()

@@ -17,7 +17,7 @@ var (
 	ErrCancelled = errors.New("cancelled")
 )
 
-// CustomFzf implements a custom fzf-style interface
+// CustomFzf implements a custom fzf-style interface.
 type CustomFzf struct {
 	items          []string
 	matches        []fuzzy.Match
@@ -28,7 +28,7 @@ type CustomFzf struct {
 	lastDrawnLines int
 }
 
-// NewCustomFzf creates a new custom fzf interface
+// NewCustomFzf creates a new custom fzf interface.
 func NewCustomFzf(items []string) *CustomFzf {
 	return &CustomFzf{
 		items:    items,
@@ -38,7 +38,7 @@ func NewCustomFzf(items []string) *CustomFzf {
 	}
 }
 
-// Run starts the custom fzf interface
+// Run starts the custom fzf interface.
 func (f *CustomFzf) Run() (string, error) {
 	// Initialize matches with all items
 	for i, item := range f.items {
@@ -46,7 +46,8 @@ func (f *CustomFzf) Run() (string, error) {
 	}
 
 	// Enter raw mode
-	if err := f.enterRawMode(); err != nil {
+	err := f.enterRawMode()
+	if err != nil {
 		return "", err
 	}
 	defer f.exitRawMode()
@@ -99,7 +100,7 @@ func (f *CustomFzf) Run() (string, error) {
 	}
 }
 
-// enterRawMode puts terminal in raw mode
+// enterRawMode puts terminal in raw mode.
 func (f *CustomFzf) enterRawMode() error {
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
@@ -109,14 +110,14 @@ func (f *CustomFzf) enterRawMode() error {
 	return nil
 }
 
-// exitRawMode restores terminal mode
+// exitRawMode restores terminal mode.
 func (f *CustomFzf) exitRawMode() {
 	if f.oldState != nil {
 		_ = term.Restore(int(os.Stdin.Fd()), f.oldState)
 	}
 }
 
-// readKey reads a single key from stdin, handling escape sequences
+// readKey reads a single key from stdin, handling escape sequences.
 func (f *CustomFzf) readKey() (int, error) {
 	var buf [3]byte
 	n, err := os.Stdin.Read(buf[:1])
@@ -145,7 +146,7 @@ func (f *CustomFzf) readKey() (int, error) {
 	return int(buf[0]), nil
 }
 
-// updateMatches performs fuzzy search and updates matches
+// updateMatches performs fuzzy search and updates matches.
 func (f *CustomFzf) updateMatches() {
 	if f.query == "" {
 		// Show all items when no query
@@ -162,7 +163,7 @@ func (f *CustomFzf) updateMatches() {
 	f.offset = 0
 }
 
-// adjustOffset adjusts scroll offset to keep selected item visible
+// adjustOffset adjusts scroll offset to keep selected item visible.
 func (f *CustomFzf) adjustOffset() {
 	maxVisible := 5
 
@@ -173,7 +174,7 @@ func (f *CustomFzf) adjustOffset() {
 	}
 }
 
-// drawInline renders the interface inline below current position
+// drawInline renders the interface inline below current position.
 func (f *CustomFzf) drawInline() {
 	// Always clear exactly 6 lines (header + 5 matches) if we've drawn before
 	if f.lastDrawnLines > 0 {
@@ -224,7 +225,7 @@ func (f *CustomFzf) drawInline() {
 	f.lastDrawnLines = lines
 }
 
-// clearInline clears the inline display
+// clearInline clears the inline display.
 func (f *CustomFzf) clearInline() {
 	if f.lastDrawnLines > 0 {
 		for range 6 {
@@ -233,7 +234,7 @@ func (f *CustomFzf) clearInline() {
 	}
 }
 
-// FuzzyHistorySearchCustom uses the custom fzf implementation
+// FuzzyHistorySearchCustom uses the custom fzf implementation.
 func (r *Readline) FuzzyHistorySearchCustom() string {
 	if len(r.history.items) == 0 {
 		return ""

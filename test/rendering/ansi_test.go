@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-// ANSISequence represents expected ANSI escape sequences
+// ANSISequence represents expected ANSI escape sequences.
 type ANSISequence struct {
 	Name        string
 	Pattern     string
 	Description string
 }
 
-// Common ANSI sequences used in terminal applications
+// Common ANSI sequences used in terminal applications.
 var expectedSequences = []ANSISequence{
 	{"cursor_left", `\x1b\[D`, "Move cursor left"},
 	{"cursor_right", `\x1b\[C`, "Move cursor right"},
@@ -31,7 +31,7 @@ var expectedSequences = []ANSISequence{
 	{"bold", `\x1b\[1m`, "Bold text"},
 }
 
-// TestANSISequenceGeneration tests that we can generate valid ANSI sequences
+// TestANSISequenceGeneration tests that we can generate valid ANSI sequences.
 func TestANSISequenceGeneration(t *testing.T) {
 	for _, seq := range expectedSequences {
 		t.Run(seq.Name, func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestANSISequenceGeneration(t *testing.T) {
 	}
 }
 
-// TestRenderingOutput tests actual DSH output for ANSI sequences
+// TestRenderingOutput tests actual DSH output for ANSI sequences.
 func TestRenderingOutput(t *testing.T) {
 	// Simulate common terminal operations
 	operations := []struct {
@@ -130,7 +130,7 @@ func TestRenderingOutput(t *testing.T) {
 	}
 }
 
-// TestTabCompletionSequences tests expected sequences for tab completion
+// TestTabCompletionSequences tests expected sequences for tab completion.
 func TestTabCompletionSequences(t *testing.T) {
 	// Simulate tab completion rendering
 	completionOutput := func() string {
@@ -166,7 +166,7 @@ func TestTabCompletionSequences(t *testing.T) {
 	}
 }
 
-// TestLineEditingSequences tests sequences for line editing operations
+// TestLineEditingSequences tests sequences for line editing operations.
 func TestLineEditingSequences(t *testing.T) {
 	operations := []struct {
 		name     string
@@ -193,7 +193,7 @@ func TestLineEditingSequences(t *testing.T) {
 	}
 }
 
-// TestRenderingDiagnostics provides diagnostic information for debugging
+// TestRenderingDiagnostics provides diagnostic information for debugging.
 func TestRenderingDiagnostics(t *testing.T) {
 	t.Log("=== RENDERING DIAGNOSTICS ===")
 

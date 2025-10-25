@@ -64,7 +64,7 @@ func TestUpdateMatches(t *testing.T) {
 
 func TestAdjustOffset(t *testing.T) {
 	items := make([]string, 20) // Create 20 items
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		items[i] = "command" + string(rune('0'+i))
 	}
 	fzf := NewCustomFzf(items)

@@ -75,7 +75,7 @@ func TestCommandChaining(t *testing.T) {
 	}
 }
 
-// TestFileRedirection tests basic I/O redirection
+// TestFileRedirection tests basic I/O redirection.
 func TestFileRedirection(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -90,7 +90,8 @@ func TestFileRedirection(t *testing.T) {
 		}
 
 		// Check if file was created and has correct content
-		if content, err := os.ReadFile(testFile); err != nil {
+		content, err := os.ReadFile(testFile)
+		if err != nil {
 			t.Logf("Could not read output file: %v", err)
 		} else if !strings.Contains(string(content), "test output") {
 			t.Errorf("File content incorrect, expected 'test output', got: %q", string(content))
@@ -98,7 +99,7 @@ func TestFileRedirection(t *testing.T) {
 	})
 }
 
-// TestQuoteHandling tests quote processing
+// TestQuoteHandling tests quote processing.
 func TestQuoteHandling(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -123,7 +124,7 @@ func TestQuoteHandling(t *testing.T) {
 	}
 }
 
-// TestErrorHandling tests error scenarios
+// TestErrorHandling tests error scenarios.
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -148,7 +149,7 @@ func TestErrorHandling(t *testing.T) {
 	}
 }
 
-// TestWorkflowIntegration tests realistic usage patterns
+// TestWorkflowIntegration tests realistic usage patterns.
 func TestWorkflowIntegration(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -162,7 +163,8 @@ func TestWorkflowIntegration(t *testing.T) {
 
 		// Verify file exists
 		mainFile := filepath.Join(tmpDir, "main.go")
-		if content, err := os.ReadFile(mainFile); err != nil {
+		content, err := os.ReadFile(mainFile)
+		if err != nil {
 			t.Logf("Could not read created file: %v", err)
 		} else if !strings.Contains(string(content), "package main") {
 			t.Errorf("File content incorrect, got: %q", string(content))

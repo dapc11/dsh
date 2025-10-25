@@ -154,7 +154,7 @@ func TestHistory_MaxSize(t *testing.T) {
 	}
 
 	// Add more than max size
-	for i := 0; i < 1200; i++ {
+	for i := range 1200 {
 		h.Add(fmt.Sprintf("command%d", i))
 	}
 

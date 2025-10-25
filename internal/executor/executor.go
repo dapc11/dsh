@@ -120,7 +120,8 @@ func executeExternal(cmd *parser.Command) bool {
 		return true
 	}
 
-	return runForegroundProcess(execCmd)
+	runForegroundProcess(execCmd)
+	return true
 }
 
 func openOutputFile(filename string, appendMode bool) (*os.File, error) {
@@ -152,7 +153,7 @@ func startBackgroundProcess(execCmd *exec.Cmd) {
 	_, _ = fmt.Fprintf(os.Stdout, "[%d]\n", execCmd.Process.Pid)
 }
 
-func runForegroundProcess(execCmd *exec.Cmd) bool {
+func runForegroundProcess(execCmd *exec.Cmd) {
 	err := execCmd.Run()
 	setExitStatus(err)
 
@@ -163,10 +164,7 @@ func runForegroundProcess(execCmd *exec.Cmd) bool {
 			_, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
 		}
 		// Command failed, but continue processing (don't exit shell)
-		return true
 	}
-
-	return true
 }
 
 func executeMultiCommandPipeline() bool {

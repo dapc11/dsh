@@ -170,7 +170,7 @@ func (parser *Parser) processCommandTokens(cmd *Command) error {
 	for parser.isCommandToken() {
 		switch parser.currentToken.Type {
 		case lexer.Word:
-			cmd.Args = append(cmd.Args, parser.currentToken.Value)
+			cmd.Args = append(cmd.Args, expandTilde(parser.currentToken.Value))
 			parser.nextToken()
 		case lexer.RedirectOut:
 			err := parser.handleOutputRedirect(cmd, false)
@@ -212,7 +212,7 @@ func (parser *Parser) handleOutputRedirect(cmd *Command, appendMode bool) error 
 		return ErrExpectedFilenameAfterOut
 	}
 
-	cmd.OutputFile = parser.currentToken.Value
+	cmd.OutputFile = expandTilde(parser.currentToken.Value)
 	cmd.AppendMode = appendMode
 	parser.nextToken()
 
@@ -225,7 +225,7 @@ func (parser *Parser) handleInputRedirect(cmd *Command) error {
 		return ErrExpectedFilenameAfterIn
 	}
 
-	cmd.InputFile = parser.currentToken.Value
+	cmd.InputFile = expandTilde(parser.currentToken.Value)
 	parser.nextToken()
 
 	return nil

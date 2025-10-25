@@ -288,7 +288,7 @@ func (r *Readline) showCompletionMenu() { //nolint:cyclop,funlen // Complex UI r
 	// Display items in grid
 	_, _ = fmt.Print("\r\n") //nolint:forbidigo
 	for i := range maxRows {
-		for j := 0; j < cols; j++ {
+		for j := range cols {
 			idx := i*cols + j
 			if idx >= len(pageItems) {
 				break
@@ -470,7 +470,7 @@ func (r *Readline) navigateMenuHorizontal(direction int) {
 func (r *Readline) clearCompletionMenu() {
 	if r.menuLinesDrawn > 0 {
 		// Move up and clear the exact number of lines we drew
-		for i := 0; i < r.menuLinesDrawn; i++ {
+		for range r.menuLinesDrawn {
 			_, _ = os.Stdout.WriteString("\033[1A\033[2K")
 		}
 		r.menuLinesDrawn = 0

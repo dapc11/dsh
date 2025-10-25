@@ -36,34 +36,7 @@ func (r *Renderer) Render(menu *Menu) {
 		return
 	}
 
-	width, height := r.terminal.GetTerminalSize()
-	maxItemWidth := 0
-
-	// Find max item width
-	for _, item := range menu.items {
-		if len(item.Text) > maxItemWidth {
-			maxItemWidth = len(item.Text)
-		}
-	}
-
-	itemWidth := maxItemWidth + 2
-	cols := width / itemWidth
-	if cols < 1 {
-		cols = 1
-	}
-
-	// Calculate available rows
-	availableRows := height - 5
-	if availableRows < 3 {
-		availableRows = 3
-	}
-
-	maxRows := availableRows
-	if maxRows > menu.maxRows {
-		maxRows = menu.maxRows
-	}
-
-	itemsPerPage := maxRows * cols
+	itemWidth, cols, maxRows, itemsPerPage := r.calculateLayout(menu)
 	totalPages := (len(menu.items) + itemsPerPage - 1) / itemsPerPage
 
 	// Adjust page if selection moved
@@ -83,8 +56,8 @@ func (r *Renderer) Render(menu *Menu) {
 
 	// Display items in grid
 	_, _ = fmt.Print("\r\n") //nolint:forbidigo
-	for i := 0; i < maxRows; i++ {
-		for j := 0; j < cols; j++ {
+	for i := range maxRows {
+		for j := range cols {
 			idx := i*cols + j
 			if idx >= len(pageItems) {
 				break
@@ -141,4 +114,37 @@ func (r *Renderer) Clear(menu *Menu) {
 
 	menu.displayed = false
 	menu.linesDrawn = 0
+}
+
+// calculateLayout calculates the layout parameters for the menu.
+func (r *Renderer) calculateLayout(menu *Menu) (itemWidth, cols, maxRows, itemsPerPage int) {
+	width, height := r.terminal.GetTerminalSize()
+	maxItemWidth := 0
+
+	// Find max item width
+	for _, item := range menu.items {
+		if len(item.Text) > maxItemWidth {
+			maxItemWidth = len(item.Text)
+		}
+	}
+
+	itemWidth = maxItemWidth + 2
+	cols = width / itemWidth
+	if cols < 1 {
+		cols = 1
+	}
+
+	// Calculate available rows
+	availableRows := height - 5
+	if availableRows < 3 {
+		availableRows = 3
+	}
+
+	maxRows = availableRows
+	if maxRows > menu.maxRows {
+		maxRows = menu.maxRows
+	}
+
+	itemsPerPage = maxRows * cols
+	return itemWidth, cols, maxRows, itemsPerPage
 }

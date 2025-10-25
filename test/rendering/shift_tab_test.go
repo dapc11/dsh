@@ -7,7 +7,7 @@ import (
 	"dsh/internal/completion"
 )
 
-// TestShiftTabBackwardCycling tests that shift-tab cycles backward through completions
+// TestShiftTabBackwardCycling tests that shift-tab cycles backward through completions.
 func TestShiftTabBackwardCycling(t *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}

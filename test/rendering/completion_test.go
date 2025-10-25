@@ -6,7 +6,7 @@ import (
 	"dsh/internal/completion"
 )
 
-// MockColorProvider provides test color formatting using real ANSI codes
+// MockColorProvider provides test color formatting using real ANSI codes.
 type MockColorProvider struct{}
 
 func (m *MockColorProvider) Colorize(text, colorName string) string {
@@ -35,7 +35,7 @@ func (m *MockColorProvider) Colorize(text, colorName string) string {
 	return colorCode + text + "\033[0m"
 }
 
-// MockTerminalProvider provides test terminal size
+// MockTerminalProvider provides test terminal size.
 type MockTerminalProvider struct {
 	width  int
 	height int
@@ -45,7 +45,7 @@ func (m *MockTerminalProvider) GetTerminalSize() (int, int) {
 	return m.width, m.height
 }
 
-// TestCompletionMenuDisplay tests basic menu display
+// TestCompletionMenuDisplay tests basic menu display.
 func TestCompletionMenuDisplay(t *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
@@ -89,7 +89,7 @@ func TestCompletionMenuDisplay(t *testing.T) {
 	renderer.Render(menu)
 }
 
-// TestCompletionNavigation tests menu navigation
+// TestCompletionNavigation tests menu navigation.
 func TestCompletionNavigation(t *testing.T) {
 	menu := completion.NewMenu()
 
@@ -129,7 +129,7 @@ func TestCompletionNavigation(t *testing.T) {
 	}
 }
 
-// TestCompletionHideShow tests menu hide/show behavior
+// TestCompletionHideShow tests menu hide/show behavior.
 func TestCompletionHideShow(t *testing.T) {
 	menu := completion.NewMenu()
 
@@ -160,7 +160,7 @@ func TestCompletionHideShow(t *testing.T) {
 	}
 }
 
-// TestCompletionRendering tests actual rendering behavior
+// TestCompletionRendering tests actual rendering behavior.
 func TestCompletionRendering(_ *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
@@ -184,7 +184,7 @@ func TestCompletionRendering(_ *testing.T) {
 	renderer.Clear(menu)
 }
 
-// TestCompletionTypeHandling tests different completion types
+// TestCompletionTypeHandling tests different completion types.
 func TestCompletionTypeHandling(t *testing.T) {
 	menu := completion.NewMenu()
 
@@ -227,7 +227,7 @@ func TestCompletionTypeHandling(t *testing.T) {
 			for i, expectedItem := range tc.items {
 				// Reset to first item, then navigate to target
 				menu.Show(tc.items, "")
-				for j := 0; j < i; j++ {
+				for range i {
 					menu.NextItem()
 				}
 
@@ -249,7 +249,7 @@ func TestCompletionTypeHandling(t *testing.T) {
 	}
 }
 
-// TestCompletionEdgeCases tests edge cases and error conditions
+// TestCompletionEdgeCases tests edge cases and error conditions.
 func TestCompletionEdgeCases(t *testing.T) {
 	menu := completion.NewMenu()
 

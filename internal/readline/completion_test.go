@@ -47,10 +47,12 @@ func TestCompletion_Files(t *testing.T) {
 	testDir := filepath.Join(tmpDir, "testdir")
 
 	// Create test files
-	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+	err := os.WriteFile(testFile, []byte("test"), 0644)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Mkdir(testDir, 0755); err != nil {
+	err = os.Mkdir(testDir, 0755)
+	if err != nil {
 		t.Fatal(err)
 	}
 

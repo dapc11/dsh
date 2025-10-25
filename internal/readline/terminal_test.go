@@ -91,7 +91,7 @@ func TestSupportsColor(_ *testing.T) {
 	_ = result
 }
 
-// Helper function since strings.Contains might not be available
+// Helper function since strings.Contains might not be available.
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (len(substr) == 0 || findSubstring(s, substr) >= 0)
 }
@@ -106,7 +106,7 @@ func findSubstring(s, substr string) int {
 
 	for i := 0; i <= len(s)-len(substr); i++ {
 		match := true
-		for j := 0; j < len(substr); j++ {
+		for j := range len(substr) {
 			if s[i+j] != substr[j] {
 				match = false
 				break

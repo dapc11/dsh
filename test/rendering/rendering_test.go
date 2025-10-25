@@ -10,7 +10,7 @@ import (
 	"dsh/internal/completion"
 )
 
-// CaptureStdout captures stdout during function execution
+// CaptureStdout captures stdout during function execution.
 func CaptureStdout(fn func()) string {
 	old := os.Stdout
 	r, w, _ := os.Pipe()
@@ -26,7 +26,7 @@ func CaptureStdout(fn func()) string {
 	return buf.String()
 }
 
-// TestActualRenderingOutput tests the real rendering output
+// TestActualRenderingOutput tests the real rendering output.
 func TestActualRenderingOutput(t *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
@@ -82,7 +82,7 @@ func TestActualRenderingOutput(t *testing.T) {
 	}
 }
 
-// TestColorFormatValidation tests specific color format expectations
+// TestColorFormatValidation tests specific color format expectations.
 func TestColorFormatValidation(t *testing.T) {
 	t.Parallel()
 	colorProvider := &MockColorProvider{}
@@ -109,7 +109,7 @@ func TestColorFormatValidation(t *testing.T) {
 	}
 }
 
-// TestRenderingRegression tests that rendering behavior doesn't regress
+// TestRenderingRegression tests that rendering behavior doesn't regress.
 func TestRenderingRegression(t *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}

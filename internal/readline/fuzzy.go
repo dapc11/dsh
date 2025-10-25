@@ -6,7 +6,7 @@ import (
 	"github.com/ktr0731/go-fuzzyfinder"
 )
 
-// FuzzyHistorySearch opens fzf-style window for history search
+// FuzzyHistorySearch opens fzf-style window for history search.
 func (r *Readline) FuzzyHistorySearch() string {
 	if len(r.history.items) == 0 {
 		return ""
@@ -46,7 +46,7 @@ func (r *Readline) FuzzyHistorySearch() string {
 	return items[idx]
 }
 
-// FuzzyFileSearch opens fzf-style window for file search
+// FuzzyFileSearch opens fzf-style window for file search.
 func (r *Readline) FuzzyFileSearch() string {
 	// TODO: Implement Ctrl-T file search
 	return ""

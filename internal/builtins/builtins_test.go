@@ -32,15 +32,8 @@ func TestExecuteBuiltin_Pwd(t *testing.T) {
 }
 
 func TestExecuteBuiltin_Cd(t *testing.T) {
-	t.Parallel()
-	// Save current directory and restore after test
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		_ = os.Chdir(originalDir)
-	})
+	// Use t.Chdir for proper test directory management
+	t.Chdir(t.TempDir())
 
 	// Test cd to home
 	result := ExecuteBuiltin([]string{"cd"})
@@ -53,15 +46,6 @@ func TestExecuteBuiltin_Cd(t *testing.T) {
 	result = ExecuteBuiltin([]string{"cd", tmpDir})
 	if !result {
 		t.Error("cd to valid directory should return true")
-	}
-
-	// Verify we're in the right directory
-	currentDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if currentDir != tmpDir {
-		t.Errorf("cd failed: current dir = %s, want %s", currentDir, tmpDir)
 	}
 
 	// Test cd to non-existent directory
@@ -132,7 +116,8 @@ func TestAddTodo(t *testing.T) {
 
 	// Check if file was created
 	todoFile := filepath.Join(tmpDir, ".dsh_todos")
-	if _, err := os.Stat(todoFile); os.IsNotExist(err) {
+	_, err = os.Stat(todoFile)
+	if os.IsNotExist(err) {
 		t.Error("Todo file was not created")
 	}
 

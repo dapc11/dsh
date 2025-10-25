@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -161,16 +162,19 @@ func TestShell_ErrorHandling(t *testing.T) {
 
 // runShellCommand executes the shell with given input and returns output.
 func runShellCommand(input string) (string, error) {
+	ctx := context.Background()
+
 	// Build the shell first
-	buildCmd := exec.Command("go", "build", "-o", "dsh_test", ".")
+	buildCmd := exec.CommandContext(ctx, "go", "build", "-o", "dsh_test", ".")
 	buildCmd.Dir = ".."
-	if err := buildCmd.Run(); err != nil {
+	err := buildCmd.Run()
+	if err != nil {
 		return "", err
 	}
 	defer func() { _ = os.Remove("../dsh_test") }()
 
 	// Run the shell with input
-	cmd := exec.Command("./dsh_test")
+	cmd := exec.CommandContext(ctx, "./dsh_test")
 	cmd.Dir = ".."
 	cmd.Stdin = strings.NewReader(input)
 
@@ -178,7 +182,7 @@ func runShellCommand(input string) (string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	// Combine stdout and stderr for analysis
 	output := stdout.String() + stderr.String()

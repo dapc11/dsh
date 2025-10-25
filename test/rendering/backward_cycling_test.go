@@ -6,7 +6,7 @@ import (
 	"dsh/internal/completion"
 )
 
-// TestBackwardCycling tests basic backward navigation through completion menu
+// TestBackwardCycling tests basic backward navigation through completion menu.
 func TestBackwardCycling(t *testing.T) {
 	menu := completion.NewMenu()
 	items := []completion.Item{
@@ -44,7 +44,7 @@ func TestBackwardCycling(t *testing.T) {
 	}
 }
 
-// TestForwardBackwardCombination tests mixing forward and backward navigation
+// TestForwardBackwardCombination tests mixing forward and backward navigation.
 func TestForwardBackwardCombination(t *testing.T) {
 	menu := completion.NewMenu()
 	items := []completion.Item{
@@ -84,7 +84,7 @@ func TestForwardBackwardCombination(t *testing.T) {
 	}
 }
 
-// TestSingleItemBackward tests backward navigation with only one item
+// TestSingleItemBackward tests backward navigation with only one item.
 func TestSingleItemBackward(t *testing.T) {
 	menu := completion.NewMenu()
 	items := []completion.Item{
@@ -108,7 +108,7 @@ func TestSingleItemBackward(t *testing.T) {
 	}
 }
 
-// TestBackwardRenderingSelection tests that backward navigation updates visual selection
+// TestBackwardRenderingSelection tests that backward navigation updates visual selection.
 func TestBackwardRenderingSelection(t *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
@@ -140,7 +140,7 @@ func TestBackwardRenderingSelection(t *testing.T) {
 	}
 }
 
-// contains checks if string contains substring (helper function)
+// contains checks if string contains substring (helper function).
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) &&
 		(s == substr || len(s) > len(substr) &&
