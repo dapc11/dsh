@@ -183,12 +183,9 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawCompact renders the interface using limited screen space
 func (f *CustomFzf) drawCompact(maxLines int) {
-	// Always clear a fixed number of lines above us
-	if f.lastDrawnLines > 0 {
-		// Move up and clear exactly what we drew before
-		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
-		}
+	// Always clear 12 lines above us (more than we'll ever use)
+	for i := 0; i < 12; i++ {
+		fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
 	}
 	
 	lines := 0
@@ -226,10 +223,9 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 
 // clearCompact clears the compact display
 func (f *CustomFzf) clearCompact(maxLines int) {
-	if f.lastDrawnLines > 0 {
-		for i := 0; i < f.lastDrawnLines; i++ {
-			fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
-		}
+	// Clear 12 lines above us
+	for i := 0; i < 12; i++ {
+		fmt.Print("\033[1A\033[2K") // Move up one line and clear entire line
 	}
 }
 
