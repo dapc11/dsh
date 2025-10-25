@@ -24,7 +24,7 @@ func TestParser_SimpleCommand(t *testing.T) {
 	if len(pipeline.Commands) != 1 {
 		t.Errorf("Expected 1 command in pipeline, got %d", len(pipeline.Commands))
 	}
-	
+
 	cmd := pipeline.Commands[0]
 	if len(cmd.Args) != 3 {
 		t.Errorf("Expected 3 args, got %d", len(cmd.Args))
@@ -52,7 +52,8 @@ func TestParser_Redirection(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	pipeline := commands[0]; cmd := pipeline.Commands[0]
+	pipeline := commands[0]
+	cmd := pipeline.Commands[0]
 	if cmd.InputFile != "input.txt" {
 		t.Errorf("Expected input file 'input.txt', got '%s'", cmd.InputFile)
 	}
@@ -75,7 +76,8 @@ func TestParser_Background(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	pipeline := commands[0]; cmd := pipeline.Commands[0]
+	pipeline := commands[0]
+	cmd := pipeline.Commands[0]
 	if !cmd.Background {
 		t.Error("Expected background command")
 	}
@@ -117,7 +119,8 @@ func TestParser_AppendRedirection(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	pipeline := commands[0]; cmd := pipeline.Commands[0]
+	pipeline := commands[0]
+	cmd := pipeline.Commands[0]
 	if cmd.OutputFile != "output.txt" {
 		t.Errorf("Expected output file 'output.txt', got '%s'", cmd.OutputFile)
 	}
@@ -155,7 +158,8 @@ func TestParser_QuotedArguments(t *testing.T) {
 		t.Errorf("Expected 1 command, got %d", len(commands))
 	}
 
-	pipeline := commands[0]; cmd := pipeline.Commands[0]
+	pipeline := commands[0]
+	cmd := pipeline.Commands[0]
 	if len(cmd.Args) != 3 {
 		t.Errorf("Expected 3 args, got %d", len(cmd.Args))
 	}

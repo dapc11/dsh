@@ -29,14 +29,14 @@ func TestExecuteBuiltin_Pwd(t *testing.T) {
 }
 
 func TestExecuteBuiltin_Cd(t *testing.T) {
-	// Save current directory
+	// Save current directory and restore after test
 	originalDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() {
+	t.Cleanup(func() {
 		_ = os.Chdir(originalDir)
-	}()
+	})
 
 	// Test cd to home
 	result := ExecuteBuiltin([]string{"cd"})
@@ -115,10 +115,7 @@ func TestIsBuiltin(t *testing.T) {
 func TestAddTodo(t *testing.T) {
 	// Create temporary home directory
 	tmpDir := t.TempDir()
-	_ = os.Setenv("HOME", tmpDir)
-	defer func() {
-		_ = os.Unsetenv("HOME")
-	}()
+	t.Setenv("HOME", tmpDir)
 
 	err := addTodo("test todo item")
 	if err != nil {
@@ -145,10 +142,7 @@ func TestAddTodo(t *testing.T) {
 func TestListTodos(t *testing.T) {
 	// Create temporary home directory
 	tmpDir := t.TempDir()
-	_ = os.Setenv("HOME", tmpDir)
-	defer func() {
-		_ = os.Unsetenv("HOME")
-	}()
+	t.Setenv("HOME", tmpDir)
 
 	// Test with no todos file
 	todos := loadTodos()

@@ -8,7 +8,7 @@ func TestMenu_NewMenu(t *testing.T) {
 	menu := NewMenu()
 
 	if menu == nil {
-		t.Error("NewMenu returned nil")
+		t.Fatal("NewMenu returned nil")
 	}
 
 	if menu.maxRows != 10 {

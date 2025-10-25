@@ -22,8 +22,6 @@ type CustomFzf struct {
 	query          string
 	selected       int
 	offset         int
-	width          int
-	height         int
 	oldState       *term.State
 	lastDrawnLines int
 }
@@ -112,13 +110,8 @@ func (f *CustomFzf) enterRawMode() error {
 // exitRawMode restores terminal mode
 func (f *CustomFzf) exitRawMode() {
 	if f.oldState != nil {
-		term.Restore(int(os.Stdin.Fd()), f.oldState)
+		_ = term.Restore(int(os.Stdin.Fd()), f.oldState)
 	}
-}
-
-// updateSize gets current terminal size
-func (f *CustomFzf) updateSize() {
-	f.width, f.height, _ = term.GetSize(int(os.Stdin.Fd()))
 }
 
 // readKey reads a single key from stdin, handling escape sequences

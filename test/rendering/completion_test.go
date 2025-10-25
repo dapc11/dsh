@@ -161,7 +161,7 @@ func TestCompletionHideShow(t *testing.T) {
 }
 
 // TestCompletionRendering tests actual rendering behavior
-func TestCompletionRendering(t *testing.T) {
+func TestCompletionRendering(_ *testing.T) {
 	colorProvider := &MockColorProvider{}
 	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
 

@@ -167,7 +167,7 @@ func runShellCommand(input string) (string, error) {
 	if err := buildCmd.Run(); err != nil {
 		return "", err
 	}
-	defer os.Remove("../dsh_test")
+	defer func() { _ = os.Remove("../dsh_test") }()
 
 	// Run the shell with input
 	cmd := exec.Command("./dsh_test")

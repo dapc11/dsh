@@ -3,6 +3,7 @@ package test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"dsh/internal/readline"
@@ -12,11 +13,7 @@ func TestPathCompletionWithTrailingSlash(t *testing.T) {
 	completion := readline.NewCompletion()
 
 	// Create a temporary directory structure for testing
-	tmpDir, err := os.MkdirTemp("", "dsh_completion_test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	// Create test files and directories
 	testFiles := []string{"file1.txt", "file2.log", "another.txt"}
@@ -27,7 +24,7 @@ func TestPathCompletionWithTrailingSlash(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create test file %s: %v", file, err)
 		}
-		f.Close()
+		_ = f.Close()
 	}
 
 	for _, dir := range testDirs {
@@ -70,11 +67,7 @@ func TestPartialPathCompletion(t *testing.T) {
 	completion := readline.NewCompletion()
 
 	// Create a temporary directory structure for testing
-	tmpDir, err := os.MkdirTemp("", "dsh_completion_test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	// Create test files with different prefixes
 	testFiles := []string{"apple.txt", "application.log", "banana.txt", "cherry.txt"}
@@ -84,7 +77,7 @@ func TestPartialPathCompletion(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create test file %s: %v", file, err)
 		}
-		f.Close()
+		_ = f.Close()
 	}
 
 	// Test partial completion - should only show files starting with "app"
@@ -135,7 +128,7 @@ func TestRootPathCompletion(t *testing.T) {
 
 	// If we have matches, they should all start with /h
 	for _, match := range matches {
-		if !filepath.HasPrefix(match.Text, "/h") {
+		if !strings.HasPrefix(match.Text, "/h") {
 			t.Errorf("Match %s doesn't start with /h", match.Text)
 		}
 	}
@@ -178,11 +171,7 @@ func TestEmptyDirectoryCompletion(t *testing.T) {
 	completion := readline.NewCompletion()
 
 	// Create empty temporary directory
-	tmpDir, err := os.MkdirTemp("", "dsh_empty_test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	// Test completion in empty directory
 	input := "cat " + tmpDir + "/"
@@ -201,11 +190,7 @@ func TestHiddenFileCompletion(t *testing.T) {
 	completion := readline.NewCompletion()
 
 	// Create temporary directory with hidden files
-	tmpDir, err := os.MkdirTemp("", "dsh_hidden_test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	// Create hidden and regular files
 	files := []string{".hidden1", ".hidden2", "visible1", "visible2"}
@@ -214,7 +199,7 @@ func TestHiddenFileCompletion(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create test file %s: %v", file, err)
 		}
-		f.Close()
+		_ = f.Close()
 	}
 
 	// Test completion without dot - should not show hidden files

@@ -45,7 +45,7 @@ func ExecuteBuiltin(args []string) bool {
 	return false
 }
 
-func handleExit(args []string) bool {
+func handleExit(_ []string) bool {
 	// In tests, just return false to signal exit
 	// In real usage, the shell will handle the exit
 	return false

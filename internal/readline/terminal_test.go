@@ -77,7 +77,7 @@ func TestColor_DisabledColors(t *testing.T) {
 	}
 }
 
-func TestSupportsColor(t *testing.T) {
+func TestSupportsColor(_ *testing.T) {
 	// This function checks environment variables and terminal capabilities
 	// We'll just ensure it doesn't panic and returns a boolean
 	result := supportsColor()

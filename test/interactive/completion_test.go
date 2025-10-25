@@ -24,6 +24,7 @@ type InteractiveSession struct {
 
 // NewInteractiveSession starts DSH with pseudo-terminal
 func NewInteractiveSession(t *testing.T) *InteractiveSession {
+	t.Helper()
 	if testing.Short() {
 		t.Skip("Skipping interactive test in short mode")
 	}
@@ -96,11 +97,11 @@ func (s *InteractiveSession) ReadOutput(timeout time.Duration) (string, error) {
 
 // Close terminates the session
 func (s *InteractiveSession) Close() {
-	s.stdin.WriteString("exit\n")
-	s.stdin.Close()
-	s.stdout.Close()
+	_, _ = s.stdin.WriteString("exit\n")
+	_ = s.stdin.Close()
+	_ = s.stdout.Close()
 	s.cancel()
-	s.cmd.Wait()
+	_ = s.cmd.Wait()
 }
 
 // TestTabCompletion tests tab completion functionality

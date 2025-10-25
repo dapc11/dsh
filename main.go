@@ -72,7 +72,7 @@ func main() {
 			}
 		}
 	}
-	
+
 	// Exit with last command's exit status
 	os.Exit(executor.GetLastExitStatus())
 }

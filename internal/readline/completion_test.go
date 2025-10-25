@@ -55,9 +55,7 @@ func TestCompletion_Files(t *testing.T) {
 	}
 
 	// Change to test directory
-	oldDir, _ := os.Getwd()
-	defer os.Chdir(oldDir)
-	os.Chdir(tmpDir)
+	t.Chdir(tmpDir)
 
 	c := NewCompletion()
 

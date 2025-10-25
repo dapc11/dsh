@@ -15,7 +15,7 @@ import (
 var ErrCommandTimeout = errors.New("command timed out after 3 seconds")
 
 // runDSHCommand runs a single command in DSH with timeout
-func runDSHCommand(t *testing.T, command string) (string, error) {
+func runDSHCommand(_ *testing.T, command string) (string, error) {
 	dshPath := filepath.Join("..", "..", "dsh")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
