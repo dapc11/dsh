@@ -163,7 +163,7 @@ func (f *CustomFzf) updateMatches() {
 
 // adjustOffset adjusts scroll offset to keep selected item visible
 func (f *CustomFzf) adjustOffset() {
-	maxVisible := 8
+	maxVisible := 5
 	
 	if f.selected < f.offset {
 		f.offset = f.selected
@@ -174,22 +174,50 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawInline renders the interface inline below current position
 func (f *CustomFzf) drawInline() {
-	// Clear current line and show current match
-	fmt.Print("\r\033[K")
-	
-	if len(f.matches) == 0 {
-		fmt.Printf("🔍 %s (no matches)", f.query)
-		return
+	// Clear previous display
+	if f.lastDrawnLines > 0 {
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[1A\033[2K")
+		}
 	}
 	
-	// Show current selection
-	current := f.matches[f.selected].Str
-	fmt.Printf("🔍 %s (%d/%d) > %s", f.query, f.selected+1, len(f.matches), current)
+	lines := 0
+	
+	// Header line
+	if len(f.matches) == 0 {
+		fmt.Printf("🔍 %s (no matches)\r\n", f.query)
+		lines++
+	} else {
+		fmt.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
+		lines++
+		
+		// Show max 5 matches
+		maxVisible := 5
+		endIdx := f.offset + maxVisible
+		if endIdx > len(f.matches) {
+			endIdx = len(f.matches)
+		}
+		
+		for i := f.offset; i < endIdx; i++ {
+			if i == f.selected {
+				fmt.Printf("\033[7m> %s\033[0m\r\n", f.matches[i].Str)
+			} else {
+				fmt.Printf("  %s\r\n", f.matches[i].Str)
+			}
+			lines++
+		}
+	}
+	
+	f.lastDrawnLines = lines
 }
 
 // clearInline clears the inline display
 func (f *CustomFzf) clearInline() {
-	fmt.Print("\r\033[K") // Clear current line
+	if f.lastDrawnLines > 0 {
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[1A\033[2K")
+		}
+	}
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
