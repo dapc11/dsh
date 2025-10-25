@@ -41,6 +41,10 @@ func (r *Readline) handleKey(ch byte) bool { //nolint:cyclop,funlen // Key handl
 		}
 	case KeyCtrlD:
 		r.killRing.ResetYank()
+		if len(r.buffer) == 0 {
+			// EOF case - let ReadLine handle it
+			return false
+		}
 		r.deleteChar()
 	case KeyCtrlK:
 		r.killToEnd()
