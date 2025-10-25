@@ -188,14 +188,15 @@ func (f *CustomFzf) adjustOffset() {
 
 // drawCompact renders the interface using limited screen space
 func (f *CustomFzf) drawCompact(maxLines int) {
-	// Move cursor up to clear previous display
-	fmt.Printf("\033[%dA", f.lastDrawnLines)
-	
-	// Clear lines
-	for i := 0; i < f.lastDrawnLines; i++ {
-		fmt.Print("\033[K\r\n")
+	// Only move up if we've drawn before
+	if f.lastDrawnLines > 0 {
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
+		// Clear lines
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[K\r\n")
+		}
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
-	fmt.Printf("\033[%dA", f.lastDrawnLines)
 	
 	lines := 0
 	
@@ -232,11 +233,13 @@ func (f *CustomFzf) drawCompact(maxLines int) {
 
 // clearCompact clears the compact display
 func (f *CustomFzf) clearCompact(maxLines int) {
-	fmt.Printf("\033[%dA", f.lastDrawnLines)
-	for i := 0; i < f.lastDrawnLines; i++ {
-		fmt.Print("\033[K\r\n")
+	if f.lastDrawnLines > 0 {
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
+		for i := 0; i < f.lastDrawnLines; i++ {
+			fmt.Print("\033[K\r\n")
+		}
+		fmt.Printf("\033[%dA", f.lastDrawnLines)
 	}
-	fmt.Printf("\033[%dA", f.lastDrawnLines)
 }
 
 // FuzzyHistorySearchCustom uses the custom fzf implementation
