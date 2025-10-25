@@ -149,11 +149,12 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 	filename := prefix
 
 	if strings.Contains(prefix, "/") {
-		// Handle trailing slash case
+		// Handle trailing slash case - show all files in directory
 		if strings.HasSuffix(prefix, "/") {
 			dir = prefix
 			filename = ""
 		} else {
+			// Partial path - get directory and filename to match
 			dir = filepath.Dir(prefix)
 			filename = filepath.Base(prefix)
 		}
@@ -173,20 +174,30 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 		}
 		
 		if strings.HasPrefix(name, filename) {
-			if entry.IsDir() {
-				matches = append(matches, CompletionItem{Text: name + "/", Type: "directory"})
+			// For partial paths, we need to return the full path from the original prefix
+			var displayText string
+			if dir == "." {
+				displayText = name
 			} else {
-				matches = append(matches, CompletionItem{Text: name, Type: "file"})
+				// Replace the filename part with the matched name
+				displayText = filepath.Join(filepath.Dir(prefix), name)
+			}
+			
+			if entry.IsDir() {
+				matches = append(matches, CompletionItem{Text: displayText + "/", Type: "directory"})
+			} else {
+				matches = append(matches, CompletionItem{Text: displayText, Type: "file"})
 			}
 		}
 	}
 
 	if len(matches) == 1 {
-		completion := matches[0].Text[len(filename):]
+		// Calculate completion from the original prefix
+		completion := matches[0].Text[len(prefix):]
 		return matches, completion
 	}
 
-	return matches, c.commonPrefixItems(matches, filename)
+	return matches, c.commonPrefixItems(matches, prefix)
 }
 
 // commonPrefixItems finds the common prefix of CompletionItems.
@@ -199,7 +210,7 @@ func (c *Completion) commonPrefixItems(matches []CompletionItem, current string)
 		return matches[0].Text[len(current):]
 	}
 
-	// Find common prefix
+	// Find common prefix among all matches
 	prefix := matches[0].Text
 	for _, match := range matches[1:] {
 		for i := 0; i < len(prefix) && i < len(match.Text); i++ {
@@ -210,10 +221,11 @@ func (c *Completion) commonPrefixItems(matches []CompletionItem, current string)
 		}
 	}
 
+	// Return the part that extends beyond the current input
 	if len(prefix) > len(current) {
 		return prefix[len(current):]
 	}
-
+	
 	return ""
 }
 
