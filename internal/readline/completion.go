@@ -185,13 +185,22 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 			} else {
 				// If we expanded a tilde, keep the tilde format in display
 				if strings.HasPrefix(prefix, "~") && expandedPrefix != prefix {
-					// Replace the expanded home directory back with tilde
-					homeDir := os.Getenv("HOME")
-					if homeDir != "" && strings.HasPrefix(dir, homeDir) {
-						tildeDir := strings.Replace(dir, homeDir, "~", 1)
-						displayText = filepath.Join(tildeDir, name)
+					// Special case: if prefix is just "~", show as "~/"
+					if prefix == "~" && name == "" {
+						displayText = "~"
 					} else {
-						displayText = filepath.Join(dir, name)
+						// Replace the expanded home directory back with tilde
+						homeDir := os.Getenv("HOME")
+						if homeDir != "" && strings.HasPrefix(dir, homeDir) {
+							tildeDir := strings.Replace(dir, homeDir, "~", 1)
+							if name == "" {
+								displayText = tildeDir
+							} else {
+								displayText = filepath.Join(tildeDir, name)
+							}
+						} else {
+							displayText = filepath.Join(dir, name)
+						}
 					}
 				} else {
 					// Replace the filename part with the matched name
@@ -208,6 +217,13 @@ func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) {
 	}
 
 	if len(matches) == 1 {
+		// Special handling for tilde expansion
+		if strings.HasPrefix(prefix, "~") && expandedPrefix != prefix {
+			// If user typed just "~", complete to "~/"
+			if prefix == "~" {
+				return matches, "/"
+			}
+		}
 		// Calculate completion from the original prefix
 		completion := matches[0].Text[len(prefix):]
 		return matches, completion
