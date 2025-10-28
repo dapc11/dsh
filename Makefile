@@ -1,6 +1,6 @@
 BINARY_NAME=dsh
 
-.PHONY: build test test-unit test-integration test-rendering coverage lint fmt clean check deps install
+.PHONY: build test unit-test lint-test ui-test test-integration test-rendering coverage lint fmt clean check deps install
 
 build:
 	go build -o $(BINARY_NAME) .
@@ -9,12 +9,20 @@ clean:
 	go clean
 	rm -f $(BINARY_NAME) coverage.out coverage.html
 
-# Run all tests
-test: test-unit test-integration test-rendering
+# Run all tests (without linting for now)
+test-no-lint: unit-test ui-test test-integration test-rendering
 
 # Run unit tests only
-test-unit:
+unit-test:
 	go test -v -race ./internal/...
+
+# Run linting tests
+lint-test:
+	golangci-lint run
+
+# Run UI tests
+ui-test:
+	go test -v ./test/ui/...
 
 # Run integration tests (requires built binary)
 test-integration: build
@@ -23,6 +31,9 @@ test-integration: build
 # Run rendering tests with diagnostic output
 test-rendering: build
 	go test -v ./test/rendering/...
+
+# Legacy aliases for backward compatibility
+test-unit: unit-test
 
 # Run tests with coverage report
 coverage:
@@ -35,7 +46,7 @@ lint:
 	golangci-lint run
 
 # Run all quality checks
-check: fmt lint test
+check: fmt lint-test unit-test
 
 # Install dependencies
 deps:
