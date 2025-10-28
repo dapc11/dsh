@@ -5,18 +5,15 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
+
+	"dsh/internal/terminal"
 )
 
-// Terminal constants for ioctl operations.
-const (
-	// TIOCGWINSZ is the ioctl command to get terminal window size.
-	TIOCGWINSZ = 0x5413
-)
-
-// Terminal handles raw terminal operations.
+// Terminal handles raw terminal operations with foundation.
 type Terminal struct {
-	fd       int
-	original syscall.Termios
+	fd            int
+	original      syscall.Termios
+	termInterface *terminal.Interface
 }
 
 // NewTerminal initializes terminal for raw mode.
@@ -30,8 +27,9 @@ func NewTerminal() (*Terminal, error) {
 	}
 
 	return &Terminal{
-		fd:       fd,
-		original: original,
+		fd:            fd,
+		original:      original,
+		termInterface: terminal.NewInterface(),
 	}, nil
 }
 
@@ -45,11 +43,16 @@ func (t *Terminal) SetRawMode() error {
 	raw.Cc[syscall.VMIN] = 1
 	raw.Cc[syscall.VTIME] = 0
 
-	return setTermios(t.fd, &raw)
+	err := setTermios(t.fd, &raw)
+	if err == nil {
+		t.termInterface.EnableRawMode()
+	}
+	return err
 }
 
 // Restore restores original terminal mode.
 func (t *Terminal) Restore() error {
+	t.termInterface.DisableRawMode()
 	return setTermios(t.fd, &t.original)
 }
 
@@ -61,6 +64,28 @@ func (t *Terminal) Read(buf []byte) (int, error) {
 	}
 
 	return n, nil
+}
+
+// GetTerminalSize returns terminal width and height.
+func (t *Terminal) GetTerminalSize() (int, int) {
+	var ws struct {
+		Row    uint16
+		Col    uint16
+		Xpixel uint16
+		Ypixel uint16
+	}
+
+	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(0), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws))) //nolint:gosec // Required for terminal size detection
+	if errno != 0 {
+		return 80, 24 // Default fallback
+	}
+
+	return int(ws.Col), int(ws.Row)
+}
+
+// Interface returns the terminal interface for advanced operations.
+func (t *Terminal) Interface() *terminal.Interface {
+	return t.termInterface
 }
 
 func getTermios(fd int, termios *syscall.Termios) error {
@@ -79,21 +104,4 @@ func setTermios(fd int, termios *syscall.Termios) error {
 	}
 
 	return nil
-}
-
-// GetTerminalSize returns terminal width and height.
-func (t *Terminal) GetTerminalSize() (int, int) {
-	var ws struct {
-		Row    uint16
-		Col    uint16
-		Xpixel uint16
-		Ypixel uint16
-	}
-
-	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(0), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws))) //nolint:gosec // Required for terminal size detection
-	if errno != 0 {
-		return 80, 24 // Default fallback
-	}
-
-	return int(ws.Col), int(ws.Row)
 }

@@ -2,39 +2,31 @@
 package completion
 
 import (
-	"fmt"
 	"strings"
+
+	"dsh/internal/terminal"
 )
 
-// Renderer handles the visual display of completion menus.
+// Renderer handles the visual display of completion menus with proper buffer management.
 type Renderer struct {
-	colorizer ColorProvider
-	terminal  TerminalProvider
-}
-
-// ColorProvider provides color formatting capabilities.
-type ColorProvider interface {
-	Colorize(text, color string) string
-}
-
-// TerminalProvider provides terminal size information.
-type TerminalProvider interface {
-	GetTerminalSize() (width, height int)
+	terminal terminal.TerminalInterface
 }
 
 // NewRenderer creates a new menu renderer.
-func NewRenderer(colorizer ColorProvider, terminal TerminalProvider) *Renderer {
+func NewRenderer(term terminal.TerminalInterface) *Renderer {
 	return &Renderer{
-		colorizer: colorizer,
-		terminal:  terminal,
+		terminal: term,
 	}
 }
 
-// Render displays the completion menu.
+// Render displays the completion menu with proper cursor management.
 func (r *Renderer) Render(menu *Menu) {
 	if !menu.IsDisplayed() || !menu.HasItems() {
 		return
 	}
+
+	// Save cursor position before rendering
+	r.terminal.SaveCursor()
 
 	itemWidth, cols, maxRows, itemsPerPage := r.calculateLayout(menu)
 	totalPages := (len(menu.items) + itemsPerPage - 1) / itemsPerPage
@@ -54,8 +46,11 @@ func (r *Renderer) Render(menu *Menu) {
 
 	pageItems := menu.items[startIdx:endIdx]
 
+	// Move to next line to start rendering
+	r.terminal.WriteString("\r\n")
+
 	// Display items in grid
-	_, _ = fmt.Print("\r\n") //nolint:forbidigo
+	linesUsed := 0
 	for i := range maxRows {
 		for j := range cols {
 			idx := i*cols + j
@@ -69,56 +64,61 @@ func (r *Renderer) Render(menu *Menu) {
 
 			var displayText string
 			if globalIdx == menu.selected {
-				displayText = r.colorizer.Colorize(text, "reverse")
+				displayText = r.terminal.StyleText(text, terminal.Style{Reverse: true})
 			} else {
 				switch item.Type {
 				case "builtin":
-					displayText = r.colorizer.Colorize(text, "cyan")
+					displayText = r.terminal.Colorize(text, terminal.ColorCyan)
 				case "command":
-					displayText = r.colorizer.Colorize(text, "green")
+					displayText = r.terminal.Colorize(text, terminal.ColorGreen)
 				case "directory":
-					displayText = r.colorizer.Colorize(text, "blue")
+					displayText = r.terminal.Colorize(text, terminal.ColorBlue)
 				default:
 					displayText = text
 				}
 			}
 
 			padding := itemWidth - len(text)
-			_, _ = fmt.Print(displayText + strings.Repeat(" ", padding)) //nolint:forbidigo
+			r.terminal.WriteString(displayText + strings.Repeat(" ", padding))
 		}
-		_, _ = fmt.Print("\r\n") //nolint:forbidigo
+		r.terminal.WriteString("\r\n")
+		linesUsed++
 	}
 
 	// Show pagination info
 	if totalPages > 1 {
-		pageInfo := fmt.Sprintf("Page %d/%d (%d items)", menu.page+1, totalPages, len(menu.items))
-		_, _ = fmt.Print(r.colorizer.Colorize(pageInfo, "gray") + "\r\n") //nolint:forbidigo
+		pageInfo := "Page " + string(rune(menu.page+1+'0')) + "/" + string(rune(totalPages+'0'))
+		r.terminal.WriteString(r.terminal.Colorize(pageInfo, terminal.ColorBrightBlack) + "\r\n")
+		linesUsed++
 	}
 
-	// Restore cursor to original position
-	_, _ = fmt.Print("\0338") //nolint:forbidigo // Restore cursor position
+	// Store lines used for cleanup
+	menu.linesDrawn = linesUsed
 
 	// Mark menu as displayed
 	menu.displayed = true
-	menu.linesDrawn = maxRows + 1 // menu rows + pagination line
 }
 
-// Clear removes the completion menu from display.
+// Clear removes the completion menu from display with proper cleanup.
 func (r *Renderer) Clear(menu *Menu) {
 	if !menu.displayed {
 		return
 	}
 
-	// Clear from current position to end of screen
-	_, _ = fmt.Print("\r\n\033[0J\033[A") //nolint:forbidigo // Move to next line, clear to end, move back up
+	// Clear from cursor to end of screen
+	r.terminal.ClearFromCursor()
 
+	// Restore cursor to original position
+	r.terminal.RestoreCursor()
+
+	// Mark menu as not displayed
 	menu.displayed = false
 	menu.linesDrawn = 0
 }
 
 // calculateLayout calculates the layout parameters for the menu.
 func (r *Renderer) calculateLayout(menu *Menu) (itemWidth, cols, maxRows, itemsPerPage int) {
-	width, height := r.terminal.GetTerminalSize()
+	width, height := r.terminal.Size()
 	maxItemWidth := 0
 
 	// Find max item width

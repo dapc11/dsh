@@ -4,6 +4,8 @@ package readline
 import (
 	"errors"
 	"fmt"
+
+	"dsh/internal/terminal"
 )
 
 var (
@@ -14,7 +16,8 @@ var (
 // Readline provides emacs-like line editing functionality.
 type Readline struct {
 	prompt         string
-	terminal       *Terminal
+	terminal       *terminal.Interface
+	rawTerminal    *Terminal
 	history        *History
 	killRing       *KillRing
 	buffer         []rune
@@ -22,29 +25,26 @@ type Readline struct {
 	suggestion     string
 	searchPrefix   string
 	browseMode     bool
-	color          *Color
 	completion     *Completion
-	completionList []CompletionItem
-	completionIdx  int
-	completionBase string
-	menuMode       bool
-	menuSelected   int
-	menuDisplayed  bool
-	menuPage       int
-	menuMaxRows    int
-	menuLinesDrawn int
+	completionMenu *CompletionMenu
+	bufferManager  *BufferManager
 }
 
 // New creates a new readline instance.
 func New(prompt string) (*Readline, error) {
-	terminal, err := NewTerminal()
+	termInterface := terminal.NewInterface()
+
+	rawTerminal, err := NewTerminal()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize terminal: %w", err)
 	}
 
+	bufferManager := NewBufferManager(termInterface)
+
 	return &Readline{
 		prompt:         prompt,
-		terminal:       terminal,
+		terminal:       termInterface,
+		rawTerminal:    rawTerminal,
 		history:        NewHistory(),
 		killRing:       NewKillRing(),
 		buffer:         make([]rune, 0, 256),
@@ -52,27 +52,23 @@ func New(prompt string) (*Readline, error) {
 		suggestion:     "",
 		searchPrefix:   "",
 		browseMode:     false,
-		color:          NewColor(),
 		completion:     NewCompletion(),
-		completionList: nil,
-		completionIdx:  -1,
-		completionBase: "",
-		menuMode:       false,
-		menuSelected:   0,
-		menuDisplayed:  false,
-		menuPage:       0,
-		menuMaxRows:    10,
-		menuLinesDrawn: 0,
+		completionMenu: NewCompletionMenu(termInterface),
+		bufferManager:  bufferManager,
 	}, nil
 }
 
 // ReadLine reads a line with emacs-like editing.
 func (r *Readline) ReadLine() (string, error) {
-	err := r.terminal.SetRawMode()
+	err := r.rawTerminal.SetRawMode()
 	if err != nil {
 		return "", fmt.Errorf("failed to set raw mode: %w", err)
 	}
-	defer func() { _ = r.terminal.Restore() }()
+	defer func() {
+		// Clean up any temporary buffers before restoring terminal
+		r.bufferManager.CleanupAll()
+		_ = r.rawTerminal.Restore()
+	}()
 
 	r.buffer = r.buffer[:0]
 	r.cursor = 0
@@ -81,23 +77,23 @@ func (r *Readline) ReadLine() (string, error) {
 	r.displayPrompt()
 
 	for {
-		ch, err := r.readChar()
+		keyEvent, err := r.terminal.ReadKey()
 		if err != nil {
-			return "", fmt.Errorf("failed to read character: %w", err)
+			return "", fmt.Errorf("failed to read key: %w", err)
 		}
 
-		if r.handleKey(ch) {
+		if r.handleKeyEvent(keyEvent) {
 			continue
 		}
 
 		// Check for EOF case
-		if ch == KeyCtrlD && len(r.buffer) == 0 {
+		if keyEvent.Key == terminal.KeyCtrlD && len(r.buffer) == 0 {
 			return "", ErrEOF
 		}
 
 		// Return completed line
 		r.moveCursorToEnd()
-		_, _ = fmt.Print("\r\n") //nolint:forbidigo
+		r.terminal.WriteString("\r\n")
 		line := string(r.buffer)
 		if line != "" {
 			r.history.Add(line)
@@ -107,16 +103,8 @@ func (r *Readline) ReadLine() (string, error) {
 	}
 }
 
-func (r *Readline) readChar() (byte, error) {
-	buf := make([]byte, 1)
-	_, err := r.terminal.Read(buf)
-	if err != nil {
-		return 0, fmt.Errorf("failed to read character: %w", err)
-	}
-
-	return buf[0], nil
-}
-
 func (r *Readline) displayPrompt() {
-	_, _ = fmt.Print(r.prompt) //nolint:forbidigo
+	if r.terminal != nil {
+		r.terminal.WriteString(r.prompt)
+	}
 }

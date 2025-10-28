@@ -11,7 +11,7 @@ func TestEditing_InsertChar(t *testing.T) {
 	r.cursor = 1
 
 	// Insert 'e' between 'h' and 'l'
-	r.insertChar('e')
+	r.insertRune('e')
 
 	expected := "hello"
 	if string(r.buffer) != expected {

@@ -1,8 +1,8 @@
 package readline
 
-import "fmt"
+import "dsh/internal/terminal"
 
-func (r *Readline) insertChar(ch rune) {
+func (r *Readline) insertRune(ch rune) {
 	if r.cursor == len(r.buffer) {
 		r.buffer = append(r.buffer, ch)
 	} else {
@@ -35,23 +35,29 @@ func (r *Readline) clearLine() {
 }
 
 func (r *Readline) clearScreen() {
-	_, _ = fmt.Print("\033[2J\033[H") //nolint:forbidigo // Clear screen and move to top
-	r.displayPrompt()
+	if r.terminal != nil {
+		r.terminal.WriteString("\033[2J\033[H") // Clear screen and move to top
+		r.displayPrompt()
+	}
 	r.redraw()
 }
 
 func (r *Readline) redraw() {
+	if r.terminal == nil {
+		return
+	}
+
 	// Update suggestion before drawing
 	r.updateSuggestion()
 
 	// Clear line and redraw
-	_, _ = fmt.Print("\r\033[K") //nolint:forbidigo
+	r.terminal.WriteString("\r\033[K")
 	r.displayPrompt()
 
 	// Print buffer with suggestion
-	_, _ = fmt.Print(string(r.buffer)) //nolint:forbidigo
+	r.terminal.WriteString(string(r.buffer))
 	if r.suggestion != "" {
-		_, _ = fmt.Print(r.color.Colorize(r.suggestion, "gray")) //nolint:forbidigo
+		r.terminal.WriteString(r.terminal.Colorize(r.suggestion, terminal.ColorBrightBlack))
 	}
 
 	// Position cursor correctly

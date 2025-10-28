@@ -6,51 +6,10 @@ import (
 	"dsh/internal/completion"
 )
 
-// MockColorProvider provides test color formatting using real ANSI codes.
-type MockColorProvider struct{}
-
-func (m *MockColorProvider) Colorize(text, colorName string) string {
-	var colorCode string
-	switch colorName {
-	case "red":
-		colorCode = "\033[31m"
-	case "green":
-		colorCode = "\033[32m"
-	case "yellow":
-		colorCode = "\033[33m"
-	case "blue":
-		colorCode = "\033[34m"
-	case "magenta":
-		colorCode = "\033[35m"
-	case "cyan":
-		colorCode = "\033[36m"
-	case "gray":
-		colorCode = "\033[90m"
-	case "reverse":
-		colorCode = "\033[7m"
-	default:
-		return text // Unknown color, return as-is
-	}
-
-	return colorCode + text + "\033[0m"
-}
-
-// MockTerminalProvider provides test terminal size.
-type MockTerminalProvider struct {
-	width  int
-	height int
-}
-
-func (m *MockTerminalProvider) GetTerminalSize() (int, int) {
-	return m.width, m.height
-}
-
 // TestCompletionMenuDisplay tests basic menu display.
 func TestCompletionMenuDisplay(t *testing.T) {
-	colorProvider := &MockColorProvider{}
-	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
-
-	renderer := completion.NewRenderer(colorProvider, terminalProvider)
+	mockTerminal := NewMockTerminalInterface(80, 24)
+	renderer := completion.NewRenderer(mockTerminal)
 	menu := completion.NewMenu()
 
 	// Show menu with items
@@ -162,10 +121,9 @@ func TestCompletionHideShow(t *testing.T) {
 
 // TestCompletionRendering tests actual rendering behavior.
 func TestCompletionRendering(_ *testing.T) {
-	colorProvider := &MockColorProvider{}
-	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
+	mockTerminal := NewMockTerminalInterface(80, 24)
 
-	renderer := completion.NewRenderer(colorProvider, terminalProvider)
+	renderer := completion.NewRenderer(mockTerminal)
 	menu := completion.NewMenu()
 
 	items := []completion.Item{

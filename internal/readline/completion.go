@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"dsh/internal/terminal"
 )
 
 // Completion handles tab completion for commands and files.
@@ -293,6 +295,78 @@ func expandTilde(path string) string {
 	return strings.Replace(path, "~"+username, u.HomeDir, 1)
 }
 
+// CompletionMenu represents the tab completion menu.
+type CompletionMenu struct {
+	items       []CompletionItem
+	selected    int
+	oldSelected int // Track previous selection for selective redraw
+	active      bool
+	renderer    *CompletionRenderer // Use zsh-style renderer
+}
+
+// NewCompletionMenu creates a new completion menu.
+func NewCompletionMenu(term terminal.TerminalInterface) *CompletionMenu {
+	return &CompletionMenu{
+		items:       make([]CompletionItem, 0),
+		selected:    0,
+		oldSelected: -1,
+		active:      false,
+		renderer:    NewCompletionRenderer(term),
+	}
+}
+
+// Show displays the completion menu with given items.
+func (cm *CompletionMenu) Show(items []CompletionItem) {
+	cm.items = items
+	cm.selected = 0
+	cm.active = true
+}
+
+// IsActive returns whether the menu is currently active.
+func (cm *CompletionMenu) IsActive() bool {
+	return cm.active
+}
+
+// GetSelected returns the currently selected item.
+func (cm *CompletionMenu) GetSelected() (CompletionItem, bool) {
+	if !cm.active || cm.selected >= len(cm.items) {
+		return CompletionItem{}, false
+	}
+	return cm.items[cm.selected], true
+}
+
+// Next moves to the next item.
+func (cm *CompletionMenu) Next() {
+	if len(cm.items) > 0 {
+		newPos := (cm.selected + 1) % len(cm.items)
+		cm.updateSelection(newPos)
+	}
+}
+
+// Prev moves to the previous item.
+func (cm *CompletionMenu) Prev() {
+	if len(cm.items) > 0 {
+		newPos := (cm.selected - 1 + len(cm.items)) % len(cm.items)
+		cm.updateSelection(newPos)
+	}
+}
+
+// Render renders the completion menu using zsh-style video buffer system.
+func (cm *CompletionMenu) Render(bm *BufferManager, term terminal.TerminalInterface) {
+	if !cm.active || len(cm.items) == 0 {
+		return
+	}
+
+	// Create a temporary buffer for the completion menu
+	buffer := bm.CreateTemporaryBuffer("completion_menu")
+	if buffer != nil {
+		// Use the buffer manager for proper cleanup and cursor management
+		bm.SaveState()
+	}
+
+	cm.renderer.ShowCompletion(cm.items, cm.selected)
+}
+
 // deduplicate removes duplicate strings.
 func (c *Completion) deduplicate(strs []string) []string {
 	seen := make(map[string]bool)
@@ -306,4 +380,22 @@ func (c *Completion) deduplicate(strs []string) []string {
 	}
 
 	return result
+}
+
+// updateSelection changes selection and triggers selective redraw using zsh-style approach
+func (cm *CompletionMenu) updateSelection(newPos int) {
+	if newPos == cm.selected {
+		return
+	}
+
+	cm.renderer.UpdateSelection(cm.items, cm.selected, newPos)
+	cm.oldSelected = cm.selected
+	cm.selected = newPos
+}
+
+// Hide hides the completion menu.
+func (cm *CompletionMenu) Hide() {
+	cm.active = false
+	cm.items = nil
+	cm.renderer.HideCompletion()
 }

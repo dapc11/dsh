@@ -9,10 +9,9 @@ import (
 
 // TestShiftTabBackwardCycling tests that shift-tab cycles backward through completions.
 func TestShiftTabBackwardCycling(t *testing.T) {
-	colorProvider := &MockColorProvider{}
-	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
+	mockTerminal := NewMockTerminalInterface(80, 24)
 
-	renderer := completion.NewRenderer(colorProvider, terminalProvider)
+	renderer := completion.NewRenderer(mockTerminal)
 	menu := completion.NewMenu()
 
 	items := []completion.Item{
@@ -51,9 +50,8 @@ func TestShiftTabBackwardCycling(t *testing.T) {
 	}
 
 	// Validate rendering shows correct selection
-	output := CaptureStdout(func() {
-		renderer.Render(menu)
-	})
+	renderer.Render(menu)
+	output := mockTerminal.GetOutput()
 
 	// Should show "help" as selected (reverse video)
 	if !strings.Contains(output, "\033[7mhelp\033[0m") {

@@ -2,18 +2,23 @@ package readline
 
 import (
 	"testing"
+
+	"dsh/internal/terminal"
 )
 
 func createTestReadline() *Readline {
 	r, err := New("test> ")
 	if err != nil {
-		// Create minimal readline for testing without terminal
+		// Create minimal readline for testing - just skip terminal operations
+		termInterface := terminal.NewInterface()
 		return &Readline{
-			prompt:   "test> ",
-			buffer:   make([]rune, 0, 256),
-			cursor:   0,
-			history:  NewHistory(),
-			killRing: NewKillRing(),
+			prompt:         "test> ",
+			buffer:         make([]rune, 0, 256),
+			cursor:         0,
+			history:        NewHistory(),
+			killRing:       NewKillRing(),
+			terminal:       termInterface,
+			completionMenu: NewCompletionMenu(termInterface),
 		}
 	}
 	return r

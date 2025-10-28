@@ -110,9 +110,8 @@ func TestSingleItemBackward(t *testing.T) {
 
 // TestBackwardRenderingSelection tests that backward navigation updates visual selection.
 func TestBackwardRenderingSelection(t *testing.T) {
-	colorProvider := &MockColorProvider{}
-	terminalProvider := &MockTerminalProvider{width: 80, height: 24}
-	renderer := completion.NewRenderer(colorProvider, terminalProvider)
+	mockTerminal := NewMockTerminalInterface(80, 24)
+	renderer := completion.NewRenderer(mockTerminal)
 
 	menu := completion.NewMenu()
 	items := []completion.Item{
@@ -124,10 +123,11 @@ func TestBackwardRenderingSelection(t *testing.T) {
 	// Navigate backward to last item
 	menu.PrevItem()
 
-	// Render and check selection
-	output := CaptureStdout(func() {
-		renderer.Render(menu)
-	})
+	// Render to mock terminal
+	renderer.Render(menu)
+
+	// Get output from mock terminal
+	output := mockTerminal.GetOutput()
 
 	// Should show cmd2 as selected (reverse video)
 	if !contains(output, "\033[7mcmd2\033[0m") {
