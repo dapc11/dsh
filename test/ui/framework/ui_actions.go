@@ -107,3 +107,31 @@ func Expect(output string) UIAction {
 		Expected: output,
 	}
 }
+
+// Tab completion specific actions
+
+// ShowCompletion types text and shows completion menu
+func ShowCompletion(text string) []UIAction {
+	return []UIAction{
+		Type(text),
+		Press(terminal.KeyTab),
+	}
+}
+
+// CompleteWith types text, shows menu, and selects completion
+func CompleteWith(text string) []UIAction {
+	return []UIAction{
+		Type(text),
+		Press(terminal.KeyTab),
+		Press(terminal.KeyEnter),
+	}
+}
+
+// CancelCompletion types text, shows menu, then cancels
+func CancelCompletion(text string) []UIAction {
+	return []UIAction{
+		Type(text),
+		Press(terminal.KeyTab),
+		Press(terminal.KeyEscape),
+	}
+}

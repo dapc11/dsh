@@ -108,6 +108,12 @@ func (r *Readline) GetBuffer() string {
 	return string(r.buffer)
 }
 
+// SetBuffer sets the input buffer (for testing)
+func (r *Readline) SetBuffer(text string) {
+	r.buffer = []rune(text)
+	r.cursor = len(r.buffer)
+}
+
 // GetHistory returns the history manager (for testing)
 func (r *Readline) GetHistory() *History {
 	return r.history
