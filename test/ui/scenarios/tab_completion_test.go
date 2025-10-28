@@ -217,7 +217,7 @@ func TestTabCompletionStateTracking(t *testing.T) {
 			initialState = f.CaptureBufferState()
 		},
 		Scenario: []framework.UIAction{
-			framework.Press(terminal.KeyTab),     // Show completion
+			framework.Press(terminal.KeyTab),    // Show completion
 			framework.Press(terminal.KeyEscape), // Cancel
 		},
 		Assertions: []framework.UIAssertion{
@@ -248,8 +248,8 @@ func TestTabCompletionDoubleTabNavigation(t *testing.T) {
 		},
 		Scenario: []framework.UIAction{
 			framework.Type("e"),
-			framework.Press(terminal.KeyTab),  // First tab - show menu
-			framework.Press(terminal.KeyTab),  // Second tab - navigate to next item
+			framework.Press(terminal.KeyTab),   // First tab - show menu
+			framework.Press(terminal.KeyTab),   // Second tab - navigate to next item
 			framework.Press(terminal.KeyEnter), // Select highlighted item
 		},
 		Assertions: []framework.UIAssertion{
@@ -274,7 +274,7 @@ func TestTabCompletionDoubleTabNavigation(t *testing.T) {
 					} else {
 						t.Logf("Full output: %q", output)
 					}
-					
+
 					result := f.AssertRendering().HasNoExcessiveCursorMovement()
 					if !result.Passed {
 						t.Errorf("Rendering issue: %s", result.Message)
@@ -316,9 +316,9 @@ func TestTabCompletionCleanup(t *testing.T) {
 		},
 		Scenario: []framework.UIAction{
 			framework.Type("e"),
-			framework.Press(terminal.KeyTab),    // Show menu
-			framework.Press(terminal.KeyTab),    // Navigate
-			framework.Press(terminal.KeyEnter),  // Select
+			framework.Press(terminal.KeyTab),   // Show menu
+			framework.Press(terminal.KeyTab),   // Navigate
+			framework.Press(terminal.KeyEnter), // Select
 		},
 		Assertions: []framework.UIAssertion{
 			{
@@ -407,9 +407,9 @@ func TestTabCompletionExactOutput(t *testing.T) {
 		},
 		Scenario: []framework.UIAction{
 			framework.Type("e"),
-			framework.Press(terminal.KeyTab),    // Show menu
-			framework.Press(terminal.KeyTab),    // Navigate
-			framework.Press(terminal.KeyEnter),  // Select
+			framework.Press(terminal.KeyTab),   // Show menu
+			framework.Press(terminal.KeyTab),   // Navigate
+			framework.Press(terminal.KeyEnter), // Select
 		},
 		Assertions: []framework.UIAssertion{
 			{
@@ -417,20 +417,20 @@ func TestTabCompletionExactOutput(t *testing.T) {
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
 					t.Logf("Full final output: %q", output)
-					
+
 					// Should end with exactly "dsh> e2freefrag" without duplication
 					expectedEnd := "dsh> e2freefrag"
 					if !strings.HasSuffix(output, expectedEnd) {
 						t.Errorf("Output should end with %q", expectedEnd)
 						return false
 					}
-					
+
 					// Should not contain prompt duplication
 					if strings.Contains(output, "dsh> edsh>") || strings.Contains(output, "dsh> dsh>") {
 						t.Errorf("Output contains prompt duplication")
 						return false
 					}
-					
+
 					return true
 				},
 				Message: "Final output should be clean without prompt duplication",

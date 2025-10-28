@@ -200,11 +200,11 @@ func (a *BufferStateAssertion) ChangedTo(expected string) AssertionResult {
 // HasNoExcessiveCursorMovement checks for erratic cursor behavior
 func (a *RenderingAssertion) HasNoExcessiveCursorMovement() AssertionResult {
 	output := a.framework.GetOutput()
-	
+
 	// Count cursor movement sequences
 	cursorMoves := strings.Count(output, "\033[") // ANSI escape sequences
 	outputLength := len(output)
-	
+
 	// More strict threshold: if more than 50 ANSI sequences, it's excessive
 	if cursorMoves > 50 {
 		return AssertionResult{
@@ -212,37 +212,37 @@ func (a *RenderingAssertion) HasNoExcessiveCursorMovement() AssertionResult {
 			Message: fmt.Sprintf("Excessive cursor movement detected: %d ANSI sequences in %d chars (ratio: %.2f)", cursorMoves, outputLength, float64(cursorMoves)/float64(outputLength)),
 		}
 	}
-	
+
 	return AssertionResult{Passed: true, Message: "No excessive cursor movement detected"}
 }
 
 // HasCleanOutput checks for clean rendering without artifacts
 func (a *RenderingAssertion) HasCleanOutput() AssertionResult {
 	output := a.framework.GetOutput()
-	
+
 	// Check for common rendering issues
 	issues := []string{}
-	
+
 	// Check for repeated cursor saves/restores - be more lenient (allow 1 mismatch)
 	saves := strings.Count(output, "\033[s")
 	restores := strings.Count(output, "\033[u")
 	if abs(saves-restores) > 1 {
 		issues = append(issues, fmt.Sprintf("Unmatched cursor save/restore: %d saves, %d restores", saves, restores))
 	}
-	
+
 	// Check for excessive line clearing
 	clears := strings.Count(output, "\033[2K") + strings.Count(output, "\033[K")
 	if clears > 15 { // Increased threshold for completion menus
 		issues = append(issues, fmt.Sprintf("Excessive line clearing: %d clear sequences", clears))
 	}
-	
+
 	if len(issues) > 0 {
 		return AssertionResult{
 			Passed:  false,
 			Message: fmt.Sprintf("Rendering issues detected: %s", strings.Join(issues, "; ")),
 		}
 	}
-	
+
 	return AssertionResult{Passed: true, Message: "Clean rendering output"}
 }
 

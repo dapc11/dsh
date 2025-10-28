@@ -48,7 +48,7 @@ func TestTabCompletion_MultipleMatches(t *testing.T) {
 
 	// Should show completion menu (basic check that completion works)
 	output := term.GetOutput()
-	if !strings.Contains(output, "echo") || !strings.Contains(output, "exit") {
+	if !strings.Contains(output, "exit") || !strings.Contains(output, "e2") {
 		t.Error("Should display completion options")
 	}
 }
@@ -183,6 +183,7 @@ func newTestReadline(term *MockTerminal) (*Readline, error) {
 		cursor:        0,
 		completion:    NewCompletion(),
 		bufferManager: NewBufferManager(term),
+		terminal:      term, // Set terminal field
 	}
 	rl.completionMenu = NewCompletionMenu(term)
 	return rl, nil

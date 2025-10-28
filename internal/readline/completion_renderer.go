@@ -35,35 +35,35 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 
 	// Store items for redraw
 	cr.lastItems = items
-	
+
 	// Save cursor and move to next line
 	cr.terminal.WriteString("\033[s") // Save cursor
 	cr.terminal.WriteString("\r\n")   // New line
-	
+
 	// Simple menu rendering - just show items in columns
 	maxItems := 10 // Limit items to prevent excessive output
 	if len(items) > maxItems {
 		items = items[:maxItems]
 	}
-	
+
 	cols := 2
 	for i, item := range items {
 		if i > 0 && i%cols == 0 {
 			cr.terminal.WriteString("\r\n")
 		}
-		
+
 		// Highlight selected item
 		if i == selected {
 			cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
 		} else {
 			cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
 		}
-		
+
 		if i%cols != cols-1 {
 			cr.terminal.WriteString("  ")
 		}
 	}
-	
+
 	cr.terminal.WriteString("\r\n")
 	cr.active = true
 }
@@ -164,13 +164,13 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 	if !cr.active || cr.lastItems == nil {
 		return
 	}
-	
+
 	// Clear from cursor and redraw menu with new selection
 	cr.terminal.WriteString("\033[u") // Restore cursor
 	cr.terminal.WriteString("\033[J") // Clear from cursor to end
 	cr.terminal.WriteString("\033[s") // Save cursor again for next time
 	cr.terminal.WriteString("\r\n")   // New line
-	
+
 	// Calculate which page of items to show based on selection
 	maxItems := 10
 	pageStart := (newSelected / maxItems) * maxItems
@@ -178,16 +178,16 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 	if pageEnd > len(cr.lastItems) {
 		pageEnd = len(cr.lastItems)
 	}
-	
+
 	// Show the correct page of items
 	pageItems := cr.lastItems[pageStart:pageEnd]
 	cols := 2
-	
+
 	for i, item := range pageItems {
 		if i > 0 && i%cols == 0 {
 			cr.terminal.WriteString("\r\n")
 		}
-		
+
 		// Highlight selected item (adjust index for page)
 		globalIndex := pageStart + i
 		if globalIndex == newSelected {
@@ -195,11 +195,11 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 		} else {
 			cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
 		}
-		
+
 		if i%cols != cols-1 {
 			cr.terminal.WriteString("  ")
 		}
 	}
-	
+
 	cr.terminal.WriteString("\r\n")
 }
