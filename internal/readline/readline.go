@@ -16,7 +16,7 @@ var (
 // Readline provides emacs-like line editing functionality.
 type Readline struct {
 	prompt         string
-	terminal       *terminal.Interface
+	terminal       terminal.TerminalInterface
 	rawTerminal    *Terminal
 	history        *History
 	killRing       *KillRing
@@ -100,6 +100,35 @@ func (r *Readline) ReadLine() (string, error) {
 		}
 
 		return line, nil
+	}
+}
+
+// GetBuffer returns the current input buffer (for testing)
+func (r *Readline) GetBuffer() string {
+	return string(r.buffer)
+}
+
+// GetHistory returns the history manager (for testing)
+func (r *Readline) GetHistory() *History {
+	return r.history
+}
+
+// ProcessKey processes a key event (for testing)
+func (r *Readline) ProcessKey(keyEvent terminal.KeyEvent) {
+	r.handleKeyEvent(keyEvent)
+}
+
+// NewTestReadline creates a readline instance for testing with a mock terminal
+func NewTestReadline(mockTerm terminal.TerminalInterface) *Readline {
+	return &Readline{
+		buffer:         make([]rune, 0, 256),
+		cursor:         0,
+		completion:     NewCompletion(),
+		bufferManager:  NewBufferManager(mockTerm),
+		killRing:       NewKillRing(),
+		history:        NewHistory(),
+		completionMenu: NewCompletionMenu(mockTerm),
+		terminal:       mockTerm, // Use the same terminal field
 	}
 }
 

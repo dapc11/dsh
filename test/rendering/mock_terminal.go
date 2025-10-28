@@ -8,19 +8,23 @@ import (
 
 // MockTerminalInterface implements terminal.TerminalInterface for testing.
 type MockTerminalInterface struct {
-	width   int
-	height  int
-	output  string
-	rawMode bool
+	width    int
+	height   int
+	output   string
+	rawMode  bool
+	keyQueue []terminal.KeyEvent
+	keyIndex int
 }
 
 // NewMockTerminalInterface creates a mock terminal interface.
 func NewMockTerminalInterface(width, height int) *MockTerminalInterface {
 	return &MockTerminalInterface{
-		width:   width,
-		height:  height,
-		output:  "",
-		rawMode: false,
+		width:    width,
+		height:   height,
+		output:   "",
+		rawMode:  false,
+		keyQueue: make([]terminal.KeyEvent, 0),
+		keyIndex: 0,
 	}
 }
 
@@ -103,7 +107,13 @@ func (m *MockTerminalInterface) StyleText(text string, style terminal.Style) str
 
 // InputReader methods
 func (m *MockTerminalInterface) ReadKey() (terminal.KeyEvent, error) {
-	return terminal.KeyEvent{}, nil
+	if m.keyIndex < len(m.keyQueue) {
+		key := m.keyQueue[m.keyIndex]
+		m.keyIndex++
+		return key, nil
+	}
+	// Return Escape to exit interactive modes when no more keys
+	return terminal.KeyEvent{Key: terminal.KeyEscape}, nil
 }
 
 // Interface methods
@@ -133,4 +143,20 @@ func (m *MockTerminalInterface) GetOutput() string {
 
 func (m *MockTerminalInterface) ClearOutput() {
 	m.output = ""
+}
+
+// QueueKey adds a key event to the input queue
+func (m *MockTerminalInterface) QueueKey(key terminal.KeyEvent) {
+	m.keyQueue = append(m.keyQueue, key)
+}
+
+// QueueKeys adds multiple key events to the input queue
+func (m *MockTerminalInterface) QueueKeys(keys ...terminal.KeyEvent) {
+	m.keyQueue = append(m.keyQueue, keys...)
+}
+
+// ClearKeyQueue clears the key input queue
+func (m *MockTerminalInterface) ClearKeyQueue() {
+	m.keyQueue = m.keyQueue[:0]
+	m.keyIndex = 0
 }

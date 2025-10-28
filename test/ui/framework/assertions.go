@@ -27,6 +27,11 @@ type MenuAssertion struct {
 	framework *UITestFramework
 }
 
+// BufferAssertion provides fluent buffer assertions
+type BufferAssertion struct {
+	framework *UITestFramework
+}
+
 // AssertOutput starts output assertion chain
 func (f *UITestFramework) AssertOutput() *OutputAssertion {
 	return &OutputAssertion{
@@ -43,6 +48,11 @@ func (f *UITestFramework) AssertCursor() *CursorAssertion {
 // AssertMenu starts menu assertion chain
 func (f *UITestFramework) AssertMenu() *MenuAssertion {
 	return &MenuAssertion{framework: f}
+}
+
+// AssertBuffer starts buffer assertion chain
+func (f *UITestFramework) AssertBuffer() *BufferAssertion {
+	return &BufferAssertion{framework: f}
 }
 
 // Output assertion methods
@@ -101,4 +111,15 @@ func (a *MenuAssertion) Contains(items ...string) AssertionResult {
 		}
 	}
 	return AssertionResult{Passed: true, Message: fmt.Sprintf("Menu contains all items: %v", items)}
+}
+
+// Buffer assertion methods
+
+// Equals checks if buffer equals expected text
+func (a *BufferAssertion) Equals(expected string) AssertionResult {
+	actual := a.framework.GetShell().GetBuffer()
+	if actual == expected {
+		return AssertionResult{Passed: true, Message: "Buffer matches expected"}
+	}
+	return AssertionResult{Passed: false, Message: fmt.Sprintf("Buffer mismatch.\n  Expected: %q\n  Actual:   %q", expected, actual)}
 }

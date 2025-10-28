@@ -1,12 +1,13 @@
 package framework
 
 import (
+	"dsh/internal/readline"
 	"dsh/test/rendering"
 )
 
 // UITestFramework provides automated UI testing for DSH shell
 type UITestFramework struct {
-	shell    *TestShell
+	readline *readline.Readline
 	mockTerm *rendering.MockTerminalInterface
 	recorder *InteractionRecorder
 	history  []string
@@ -15,10 +16,12 @@ type UITestFramework struct {
 // NewUITestFramework creates a new UI test framework instance
 func NewUITestFramework() *UITestFramework {
 	mockTerm := rendering.NewMockTerminalInterface(80, 24)
-	shell := NewTestShell(mockTerm)
+
+	// Create readline with mock terminal using the test helper
+	rl := readline.NewTestReadline(mockTerm)
 
 	return &UITestFramework{
-		shell:    shell,
+		readline: rl,
 		mockTerm: mockTerm,
 		recorder: NewInteractionRecorder(),
 		history:  make([]string, 0),
@@ -35,6 +38,10 @@ func (f *UITestFramework) SetPrompt(prompt string) *UITestFramework {
 func (f *UITestFramework) AddHistory(commands ...string) *UITestFramework {
 	for _, cmd := range commands {
 		f.history = append(f.history, cmd)
+		// Also add to the readline's history
+		if f.readline != nil && f.readline.GetHistory() != nil {
+			f.readline.GetHistory().Add(cmd)
+		}
 	}
 	return f
 }
@@ -53,13 +60,18 @@ func (f *UITestFramework) ClearOutput() *UITestFramework {
 // Reset resets the framework to initial state
 func (f *UITestFramework) Reset() *UITestFramework {
 	f.mockTerm = rendering.NewMockTerminalInterface(80, 24)
-	f.shell = NewTestShell(f.mockTerm)
+	f.readline = readline.NewTestReadline(f.mockTerm)
 	f.recorder = NewInteractionRecorder()
 	f.history = make([]string, 0)
 	return f
 }
 
-// GetShell returns the test shell for direct access
-func (f *UITestFramework) GetShell() *TestShell {
-	return f.shell
+// GetShell returns the readline for direct access
+func (f *UITestFramework) GetShell() *readline.Readline {
+	return f.readline
+}
+
+// GetMockTerminal returns the mock terminal for direct access
+func (f *UITestFramework) GetMockTerminal() *rendering.MockTerminalInterface {
+	return f.mockTerm
 }

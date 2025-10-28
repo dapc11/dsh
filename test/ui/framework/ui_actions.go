@@ -12,6 +12,7 @@ const (
 	ActionType_
 	ActionWait
 	ActionValidate
+	ActionSetupKeys
 )
 
 // UIAction represents a single UI interaction
@@ -57,9 +58,45 @@ func Press(key terminal.Key) UIAction {
 
 // PressCtrl creates a Ctrl+key action
 func PressCtrl(key rune) UIAction {
+	var ctrlKey terminal.Key
+	switch key {
+	case 'a':
+		ctrlKey = terminal.KeyCtrlA
+	case 'b':
+		ctrlKey = terminal.KeyCtrlB
+	case 'c':
+		ctrlKey = terminal.KeyCtrlC
+	case 'd':
+		ctrlKey = terminal.KeyCtrlD
+	case 'e':
+		ctrlKey = terminal.KeyCtrlE
+	case 'f':
+		ctrlKey = terminal.KeyCtrlF
+	case 'k':
+		ctrlKey = terminal.KeyCtrlK
+	case 'l':
+		ctrlKey = terminal.KeyCtrlL
+	case 'n':
+		ctrlKey = terminal.KeyCtrlN
+	case 'p':
+		ctrlKey = terminal.KeyCtrlP
+	case 'r':
+		ctrlKey = terminal.KeyCtrlR
+	case 'u':
+		ctrlKey = terminal.KeyCtrlU
+	case 'w':
+		ctrlKey = terminal.KeyCtrlW
+	case 'y':
+		ctrlKey = terminal.KeyCtrlY
+	case 'z':
+		ctrlKey = terminal.KeyCtrlZ
+	default:
+		ctrlKey = terminal.KeyCtrlA + terminal.Key(key-'a') // fallback
+	}
+
 	return UIAction{
 		Type: ActionKeyPress,
-		Data: terminal.KeyEvent{Key: terminal.KeyCtrlA + terminal.Key(key-'a')},
+		Data: terminal.KeyEvent{Key: ctrlKey},
 	}
 }
 

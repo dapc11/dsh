@@ -21,8 +21,8 @@ func TestUITestFramework_Creation(t *testing.T) {
 		t.Fatal("InteractionRecorder should not be nil")
 	}
 
-	if fw.shell == nil {
-		t.Fatal("TestShell should not be nil")
+	if fw.readline == nil {
+		t.Fatal("Readline should not be nil")
 	}
 }
 

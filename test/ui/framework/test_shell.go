@@ -34,6 +34,11 @@ func (s *TestShell) ProcessKey(keyEvent terminal.KeyEvent) {
 		s.handleArrowUp()
 	case terminal.KeyEnter:
 		s.handleEnter()
+	case terminal.KeyCtrlA:
+		s.cursor = 0
+	case terminal.KeyCtrlU:
+		s.buffer = s.buffer[:0]
+		s.cursor = 0
 	default:
 		if keyEvent.Rune != 0 {
 			s.insertRune(keyEvent.Rune)
@@ -41,10 +46,20 @@ func (s *TestShell) ProcessKey(keyEvent terminal.KeyEvent) {
 	}
 }
 
-// insertRune adds a character to the buffer
+// insertRune adds a character to the buffer at cursor position
 func (s *TestShell) insertRune(r rune) {
-	s.buffer = append(s.buffer, r)
-	s.cursor = len(s.buffer)
+	if s.cursor >= len(s.buffer) {
+		// Insert at end
+		s.buffer = append(s.buffer, r)
+	} else {
+		// Insert at cursor position
+		newBuffer := make([]rune, len(s.buffer)+1)
+		copy(newBuffer[:s.cursor], s.buffer[:s.cursor])
+		newBuffer[s.cursor] = r
+		copy(newBuffer[s.cursor+1:], s.buffer[s.cursor:])
+		s.buffer = newBuffer
+	}
+	s.cursor++
 }
 
 // handleTabCompletion simulates tab completion

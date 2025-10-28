@@ -22,18 +22,23 @@ type CustomFzf struct {
 	query          string
 	selected       int
 	offset         int
-	terminal       *terminal.Interface
+	terminal       terminal.TerminalInterface
 	lastDrawnLines int
 }
 
 // NewCustomFzf creates a new custom fzf interface.
 func NewCustomFzf(items []string) *CustomFzf {
+	return NewCustomFzfWithTerminal(items, terminal.NewInterface())
+}
+
+// NewCustomFzfWithTerminal creates a new custom fzf interface with a specific terminal.
+func NewCustomFzfWithTerminal(items []string, term terminal.TerminalInterface) *CustomFzf {
 	return &CustomFzf{
 		items:    items,
 		matches:  make([]fuzzy.Match, len(items)),
 		selected: 0,
 		offset:   0,
-		terminal: terminal.NewInterface(),
+		terminal: term,
 	}
 }
 
@@ -209,7 +214,9 @@ func (r *Readline) FuzzyHistorySearchCustom() string {
 		return ""
 	}
 
-	fzf := NewCustomFzf(items)
+	// Use the terminal interface
+	fzf := NewCustomFzfWithTerminal(items, r.terminal)
+
 	result, err := fzf.Run()
 	if err != nil {
 		return ""

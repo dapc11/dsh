@@ -136,6 +136,14 @@ go test -race ./...
 - **Pragmatic:** Favor working solutions over perfect theory
 - **Security-conscious:** Always consider attack vectors
 - **Educational:** Reference tutorial examples when explaining behavior
+- **Commit Messages:** Write concise, descriptive messages that explain what was done and why, avoiding bullet point lists. Focus on the key change and its purpose rather than enumerating every detail.
+
+### Git Commit Message Rules
+- **Subject line:** Maximum 50 characters, imperative mood ("Add feature" not "Added feature")
+- **Body lines:** Maximum 72 characters per line
+- **Format:** Subject line, blank line, then body paragraphs
+- **Content:** Explain what and why, not how
+- **Style:** Descriptive prose, avoid bullet points or lists
 
 ## Key Mantras
 1. **"Format, Lint, Test"** - After every single change

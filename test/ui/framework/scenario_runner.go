@@ -72,6 +72,8 @@ func (r *ScenarioRunner) executeAction(action UIAction) AssertionResult {
 		return r.executeKeyPress(action.Data.(terminal.KeyEvent))
 	case ActionValidate:
 		return r.executeValidation(action.Expected)
+	case ActionSetupKeys:
+		return r.executeSetupKeys(action.Data.([]terminal.KeyEvent))
 	default:
 		return AssertionResult{Passed: false, Message: "Unknown action type"}
 	}
@@ -85,8 +87,8 @@ func (r *ScenarioRunner) executeType(text string) AssertionResult {
 			Rune: char,
 		}
 		r.framework.recorder.RecordKey(keyEvent)
-		// Actually process the key through the test shell
-		r.framework.shell.ProcessKey(keyEvent)
+		// Process the key through the real readline
+		r.framework.readline.ProcessKey(keyEvent)
 	}
 	return AssertionResult{Passed: true, Message: fmt.Sprintf("Typed: %s", text)}
 }
@@ -94,8 +96,8 @@ func (r *ScenarioRunner) executeType(text string) AssertionResult {
 // executeKeyPress simulates pressing a key
 func (r *ScenarioRunner) executeKeyPress(keyEvent terminal.KeyEvent) AssertionResult {
 	r.framework.recorder.RecordKey(keyEvent)
-	// Actually process the key through the test shell
-	r.framework.shell.ProcessKey(keyEvent)
+	// Process the key through the real readline
+	r.framework.readline.ProcessKey(keyEvent)
 	return AssertionResult{Passed: true, Message: fmt.Sprintf("Pressed key: %v", keyEvent.Key)}
 }
 
@@ -106,6 +108,13 @@ func (r *ScenarioRunner) executeValidation(expected string) AssertionResult {
 		return AssertionResult{Passed: true, Message: fmt.Sprintf("Found expected output: %s", expected)}
 	}
 	return AssertionResult{Passed: false, Message: fmt.Sprintf("Expected output not found: %s", expected)}
+}
+
+// executeSetupKeys queues keys for interactive components
+func (r *ScenarioRunner) executeSetupKeys(keys []terminal.KeyEvent) AssertionResult {
+	mockTerm := r.framework.GetMockTerminal()
+	mockTerm.QueueKeys(keys...)
+	return AssertionResult{Passed: true, Message: fmt.Sprintf("Queued %d keys for interactive input", len(keys))}
 }
 
 // TestResult represents the result of a UI test
