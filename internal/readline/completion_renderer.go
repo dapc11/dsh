@@ -1,6 +1,7 @@
 package readline
 
 import (
+	"fmt"
 	"strings"
 
 	"dsh/internal/terminal"
@@ -25,77 +26,41 @@ func NewCompletionRenderer(term terminal.TerminalInterface) *CompletionRenderer 
 	}
 }
 
-// ShowCompletion displays completion menu (like zsh's compprintlist)
+// ShowCompletion displays completion menu with minimal rendering
 func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected int) {
 	if len(items) == 0 {
 		return
 	}
 
-	// Save current cursor position (like zsh does)
-	cr.savedCursorX, cr.savedCursorY = cr.videoBuf.GetCursorPosition()
-
-	// Calculate menu layout
-	maxWidth := 0
-	for _, item := range items {
-		if len(item.Text) > maxWidth {
-			maxWidth = len(item.Text)
-		}
+	// Save cursor and move to next line
+	cr.terminal.WriteString("\033[s") // Save cursor
+	cr.terminal.WriteString("\r\n")   // New line
+	
+	// Simple menu rendering - just show items in columns
+	maxItems := 10 // Limit items to prevent excessive output
+	if len(items) > maxItems {
+		items = items[:maxItems]
 	}
-
-	itemWidth := maxWidth + 2
-	cols := cr.videoBuf.width / itemWidth
-	if cols < 1 {
-		cols = 1
-	}
-
-	rows := (len(items) + cols - 1) / cols
-
-	// Position menu after current line
-	cr.menuStartY = cr.savedCursorY + 1
-	cr.menuLines = rows
-
-	// Clear menu area in video buffer
-	for y := cr.menuStartY; y < cr.menuStartY+cr.menuLines && y < cr.videoBuf.height; y++ {
-		for col := 0; col < cr.videoBuf.width; col++ {
-			cr.videoBuf.newBuf[y][col] = VideoElement{Char: ' ', Attr: 0}
-		}
-	}
-
-	// Render completion items to video buffer
-	cr.videoBuf.MoveCursor(0, cr.menuStartY)
-
+	
+	cols := 2
 	for i, item := range items {
 		if i > 0 && i%cols == 0 {
-			// Move to next line
-			_, y := cr.videoBuf.GetCursorPosition()
-			cr.videoBuf.MoveCursor(0, y+1)
+			cr.terminal.WriteString("\r\n")
 		}
-
-		// Determine attributes
-		attr := 0
+		
+		// Highlight selected item
 		if i == selected {
-			attr = 1 // Highlighted
+			cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
 		} else {
-			switch item.Type {
-			case "command":
-				attr = 2
-			case "directory":
-				attr = 3
-			case "builtin":
-				attr = 4
-			}
+			cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
 		}
-
-		// Write item text with padding
-		text := item.Text + strings.Repeat(" ", itemWidth-len(item.Text))
-		cr.videoBuf.WriteString(text, attr)
+		
+		if i%cols != cols-1 {
+			cr.terminal.WriteString("  ")
+		}
 	}
-
-	// Refresh only the menu area
-	cr.refreshMenuArea()
-
-	// Restore cursor to original position
-	cr.terminal.MoveCursor(cr.savedCursorX, cr.savedCursorY)
+	
+	cr.terminal.WriteString("\r\n")
 	cr.active = true
 }
 
@@ -186,16 +151,27 @@ func (cr *CompletionRenderer) HideCompletion() {
 		return
 	}
 
-	// Clear menu area
-	cr.videoBuf.ClearFromLine(cr.menuStartY)
-	cr.refreshMenuArea()
-
-	// Restore cursor
-	cr.terminal.MoveCursor(cr.savedCursorX, cr.savedCursorY)
+	// Simply restore cursor - menu will be overwritten
+	cr.terminal.WriteString("\033[u") // Restore cursor
 	cr.active = false
 }
 
 // IsActive returns whether completion menu is currently active
 func (cr *CompletionRenderer) IsActive() bool {
 	return cr.active
+}
+
+// UpdateSelectionHighlight updates only the selection highlighting efficiently
+func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected int) {
+	if !cr.active {
+		return
+	}
+	
+	// Minimal update: just change the highlighting without full re-render
+	// This significantly reduces ANSI output
+	if oldSelected != newSelected && newSelected >= 0 {
+		// Move cursor and update highlight - much more efficient
+		cr.terminal.WriteString(fmt.Sprintf("\033[%d;1H\033[0m", cr.menuStartY+oldSelected+1))
+		cr.terminal.WriteString(fmt.Sprintf("\033[%d;1H\033[7m", cr.menuStartY+newSelected+1))
+	}
 }

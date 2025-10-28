@@ -335,6 +335,29 @@ func (cm *CompletionMenu) GetSelected() (CompletionItem, bool) {
 	return cm.items[cm.selected], true
 }
 
+// GetSelectedIndex returns the currently selected index.
+func (cm *CompletionMenu) GetSelectedIndex() int {
+	return cm.selected
+}
+
+// UpdateSelection updates only the selection highlighting without full re-render.
+func (cm *CompletionMenu) UpdateSelection(oldSelected, newSelected int) {
+	if !cm.active {
+		return
+	}
+	cm.renderer.UpdateSelection(cm.items, oldSelected, newSelected)
+}
+
+// UpdateSelectionOnly updates just the selection highlighting efficiently.
+func (cm *CompletionMenu) UpdateSelectionOnly() {
+	if !cm.active {
+		return
+	}
+	// Only update the visual selection, don't re-render entire menu
+	cm.renderer.UpdateSelectionHighlight(cm.oldSelected, cm.selected)
+	cm.oldSelected = cm.selected
+}
+
 // Next moves to the next item.
 func (cm *CompletionMenu) Next() {
 	if len(cm.items) > 0 {

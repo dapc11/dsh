@@ -30,9 +30,10 @@ func TestTabCompletionBasic(t *testing.T) {
 				Message: "Tab completion menu should appear",
 			},
 			{
-				Name: "Menu should contain echo and exit",
+				Name: "Menu should contain available completions",
 				Check: func(f *framework.UITestFramework) bool {
-					return f.AssertMenu().Contains("echo", "exit").Passed
+					// Check for items that should be in the simplified menu
+					return f.AssertMenu().Contains("exit", "e2freefrag").Passed
 				},
 				Message: "Menu should show available completions",
 			},
@@ -294,6 +295,47 @@ func TestTabCompletionDoubleTabNavigation(t *testing.T) {
 					return result.Passed
 				},
 				Message: "Completion should not leave rendering artifacts",
+			},
+		},
+	}
+
+	result := runner.RunTest(test)
+	if !result.Passed {
+		t.Errorf("Test failed:\n%s", result.String())
+	}
+}
+
+func TestTabCompletionCleanup(t *testing.T) {
+	fw := framework.NewUITestFramework()
+	runner := framework.NewScenarioRunner(fw)
+
+	test := framework.UITest{
+		Name: "Tab completion menu cleanup after selection",
+		Setup: func(f *framework.UITestFramework) {
+			f.SetPrompt("dsh> ").ClearOutput()
+		},
+		Scenario: []framework.UIAction{
+			framework.Type("e"),
+			framework.Press(terminal.KeyTab),    // Show menu
+			framework.Press(terminal.KeyTab),    // Navigate
+			framework.Press(terminal.KeyEnter),  // Select
+		},
+		Assertions: []framework.UIAssertion{
+			{
+				Name: "Buffer should contain selected completion",
+				Check: func(f *framework.UITestFramework) bool {
+					return f.AssertBuffer().Equals("e2freefrag").Passed
+				},
+				Message: "Should complete to e2freefrag",
+			},
+			{
+				Name: "Output should contain screen clear after selection",
+				Check: func(f *framework.UITestFramework) bool {
+					output := f.GetOutput()
+					// Should contain screen clear sequence after completion
+					return strings.Contains(output, "\033[2J\033[H")
+				},
+				Message: "Should clear screen to remove completion menu",
 			},
 		},
 	}

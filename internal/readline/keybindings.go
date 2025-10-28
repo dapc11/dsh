@@ -205,12 +205,10 @@ func (r *Readline) handleTabCompletion() {
 		r.cursor = len(r.buffer)
 	} else if len(matches) > 1 {
 		if r.completionMenu.IsActive() {
-			// Menu already active - navigate to next item
-			r.completionMenu.Next()
-			r.bufferManager.CleanupAll()
-			r.completionMenu.Render(r.bufferManager, r.terminal)
+			// Menu already active - just navigate, don't re-render everything
+			r.navigateTabCompletion(1)
 		} else {
-			// Show menu for first time
+			// Show menu for first time only
 			r.completionMenu.Show(matches)
 			r.completionMenu.Render(r.bufferManager, r.terminal)
 		}
@@ -222,6 +220,12 @@ func (r *Readline) clearTabCompletion() {
 	if r.completionMenu.IsActive() {
 		r.completionMenu.Hide()
 		r.bufferManager.CleanupAll()
+		
+		// Clear the screen and redraw clean prompt
+		r.terminal.WriteString("\033[2J\033[H") // Clear screen and move to top
+		r.displayPrompt()
+		r.terminal.WriteString(string(r.buffer))
+		r.setCursorPosition()
 	}
 }
 
@@ -237,8 +241,8 @@ func (r *Readline) navigateTabCompletion(direction int) {
 		r.completionMenu.Prev()
 	}
 
-	// Re-render menu without clearing saved state
-	r.completionMenu.Render(r.bufferManager, r.terminal)
+	// Use incremental update instead of full re-render
+	r.completionMenu.UpdateSelectionOnly()
 }
 
 // acceptTabCompletion accepts the current completion selection.
@@ -273,7 +277,10 @@ func (r *Readline) acceptTabCompletion() {
 	}
 
 	r.cursor = len(r.buffer)
+	
+	// Clear the completion menu and clean up display
 	r.clearTabCompletion()
+	r.redraw() // Redraw the prompt and buffer without menu
 }
 
 // History operations.
