@@ -329,13 +329,13 @@ func TestTabCompletionCleanup(t *testing.T) {
 				Message: "Should complete to e2freefrag",
 			},
 			{
-				Name: "Output should contain screen clear after selection",
+				Name: "Output should restore cursor after selection",
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
-					// Should contain screen clear sequence after completion
-					return strings.Contains(output, "\033[2J\033[H")
+					// Should contain cursor restore sequence instead of full screen clear
+					return strings.Contains(output, "\033[u")
 				},
-				Message: "Should clear screen to remove completion menu",
+				Message: "Should restore cursor to clean up completion menu",
 			},
 		},
 	}
@@ -386,6 +386,54 @@ func TestTabCompletionPagination(t *testing.T) {
 					return hasEarlyItems && hasLaterItems
 				},
 				Message: "Should show both early and later completion items during pagination",
+			},
+		},
+	}
+
+	result := runner.RunTest(test)
+	if !result.Passed {
+		t.Errorf("Test failed:\n%s", result.String())
+	}
+}
+
+func TestTabCompletionExactOutput(t *testing.T) {
+	fw := framework.NewUITestFramework()
+	runner := framework.NewScenarioRunner(fw)
+
+	test := framework.UITest{
+		Name: "Tab completion produces exact clean output",
+		Setup: func(f *framework.UITestFramework) {
+			f.SetPrompt("dsh> ").ClearOutput()
+		},
+		Scenario: []framework.UIAction{
+			framework.Type("e"),
+			framework.Press(terminal.KeyTab),    // Show menu
+			framework.Press(terminal.KeyTab),    // Navigate
+			framework.Press(terminal.KeyEnter),  // Select
+		},
+		Assertions: []framework.UIAssertion{
+			{
+				Name: "Final output should end with clean prompt and command",
+				Check: func(f *framework.UITestFramework) bool {
+					output := f.GetOutput()
+					t.Logf("Full final output: %q", output)
+					
+					// Should end with exactly "dsh> e2freefrag" without duplication
+					expectedEnd := "dsh> e2freefrag"
+					if !strings.HasSuffix(output, expectedEnd) {
+						t.Errorf("Output should end with %q", expectedEnd)
+						return false
+					}
+					
+					// Should not contain prompt duplication
+					if strings.Contains(output, "dsh> edsh>") || strings.Contains(output, "dsh> dsh>") {
+						t.Errorf("Output contains prompt duplication")
+						return false
+					}
+					
+					return true
+				},
+				Message: "Final output should be clean without prompt duplication",
 			},
 		},
 	}

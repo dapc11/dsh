@@ -151,12 +151,6 @@ func (cr *CompletionRenderer) refreshMenuArea() {
 
 // HideCompletion clears the completion menu
 func (cr *CompletionRenderer) HideCompletion() {
-	if !cr.active {
-		return
-	}
-
-	// Simply restore cursor - menu will be overwritten
-	cr.terminal.WriteString("\033[u") // Restore cursor
 	cr.active = false
 }
 

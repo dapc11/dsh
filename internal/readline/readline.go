@@ -143,3 +143,8 @@ func (r *Readline) displayPrompt() {
 		r.terminal.WriteString(r.prompt)
 	}
 }
+
+// SetPrompt sets the prompt string
+func (r *Readline) SetPrompt(prompt string) {
+	r.prompt = prompt
+}

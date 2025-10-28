@@ -30,7 +30,10 @@ func NewUITestFramework() *UITestFramework {
 
 // SetPrompt sets the shell prompt for testing
 func (f *UITestFramework) SetPrompt(prompt string) *UITestFramework {
-	// For now, just store the prompt - could be used for display
+	// Set the prompt on the readline instance
+	if f.readline != nil {
+		f.readline.SetPrompt(prompt)
+	}
 	return f
 }
 
