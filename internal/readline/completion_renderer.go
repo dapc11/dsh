@@ -16,6 +16,7 @@ type CompletionRenderer struct {
 	menuStartY   int
 	menuLines    int
 	active       bool
+	lastItems    []CompletionItem // Store items for redraw
 }
 
 // NewCompletionRenderer creates a new completion renderer
@@ -32,6 +33,9 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 		return
 	}
 
+	// Store items for redraw
+	cr.lastItems = items
+	
 	// Save cursor and move to next line
 	cr.terminal.WriteString("\033[s") // Save cursor
 	cr.terminal.WriteString("\r\n")   // New line
@@ -163,15 +167,45 @@ func (cr *CompletionRenderer) IsActive() bool {
 
 // UpdateSelectionHighlight updates only the selection highlighting efficiently
 func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected int) {
-	if !cr.active {
+	if !cr.active || cr.lastItems == nil {
 		return
 	}
 	
-	// Minimal update: just change the highlighting without full re-render
-	// This significantly reduces ANSI output
-	if oldSelected != newSelected && newSelected >= 0 {
-		// Move cursor and update highlight - much more efficient
-		cr.terminal.WriteString(fmt.Sprintf("\033[%d;1H\033[0m", cr.menuStartY+oldSelected+1))
-		cr.terminal.WriteString(fmt.Sprintf("\033[%d;1H\033[7m", cr.menuStartY+newSelected+1))
+	// Clear from cursor and redraw menu with new selection
+	cr.terminal.WriteString("\033[u") // Restore cursor
+	cr.terminal.WriteString("\033[J") // Clear from cursor to end
+	cr.terminal.WriteString("\033[s") // Save cursor again for next time
+	cr.terminal.WriteString("\r\n")   // New line
+	
+	// Calculate which page of items to show based on selection
+	maxItems := 10
+	pageStart := (newSelected / maxItems) * maxItems
+	pageEnd := pageStart + maxItems
+	if pageEnd > len(cr.lastItems) {
+		pageEnd = len(cr.lastItems)
 	}
+	
+	// Show the correct page of items
+	pageItems := cr.lastItems[pageStart:pageEnd]
+	cols := 2
+	
+	for i, item := range pageItems {
+		if i > 0 && i%cols == 0 {
+			cr.terminal.WriteString("\r\n")
+		}
+		
+		// Highlight selected item (adjust index for page)
+		globalIndex := pageStart + i
+		if globalIndex == newSelected {
+			cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
+		} else {
+			cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
+		}
+		
+		if i%cols != cols-1 {
+			cr.terminal.WriteString("  ")
+		}
+	}
+	
+	cr.terminal.WriteString("\r\n")
 }

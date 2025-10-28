@@ -346,6 +346,56 @@ func TestTabCompletionCleanup(t *testing.T) {
 	}
 }
 
+func TestTabCompletionPagination(t *testing.T) {
+	fw := framework.NewUITestFramework()
+	runner := framework.NewScenarioRunner(fw)
+
+	test := framework.UITest{
+		Name: "Tab completion pagination after 15+ tabs",
+		Setup: func(f *framework.UITestFramework) {
+			f.SetPrompt("dsh> ").ClearOutput()
+		},
+		Scenario: []framework.UIAction{
+			framework.Type("e"),
+			framework.Press(terminal.KeyTab), // Show initial menu
+			// Press tab 15 more times to go beyond visible items
+			framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab),
+			framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab),
+			framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab), framework.Press(terminal.KeyTab),
+			framework.Press(terminal.KeyEnter), // Select whatever is highlighted
+		},
+		Assertions: []framework.UIAssertion{
+			{
+				Name: "Should complete to a valid command after pagination",
+				Check: func(f *framework.UITestFramework) bool {
+					buffer := f.GetShell().GetBuffer()
+					t.Logf("Buffer after 15+ tabs + enter: %q", buffer)
+					// Should be a valid command starting with 'e'
+					return len(buffer) > 1 && buffer[0] == 'e'
+				},
+				Message: "Should complete to valid command after pagination",
+			},
+			{
+				Name: "Should show different completion items after pagination",
+				Check: func(f *framework.UITestFramework) bool {
+					output := f.GetOutput()
+					// Should contain both early items (exit, e2freefrag) and later items (ebtables)
+					hasEarlyItems := strings.Contains(output, "exit") && strings.Contains(output, "e2freefrag")
+					hasLaterItems := strings.Contains(output, "ebtables")
+					t.Logf("Has early items: %v, Has later items: %v", hasEarlyItems, hasLaterItems)
+					return hasEarlyItems && hasLaterItems
+				},
+				Message: "Should show both early and later completion items during pagination",
+			},
+		},
+	}
+
+	result := runner.RunTest(test)
+	if !result.Passed {
+		t.Errorf("Test failed:\n%s", result.String())
+	}
+}
+
 func TestTabCompletionSingleMatch(t *testing.T) {
 	fw := framework.NewUITestFramework()
 	runner := framework.NewScenarioRunner(fw)
