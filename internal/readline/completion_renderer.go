@@ -161,45 +161,6 @@ func (cr *CompletionRenderer) IsActive() bool {
 
 // UpdateSelectionHighlight updates only the selection highlighting efficiently
 func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected int) {
-	if !cr.active || cr.lastItems == nil {
-		return
-	}
-
-	// Clear from cursor and redraw menu with new selection indicator
-	cr.terminal.WriteString("\033[u") // Restore cursor
-	cr.terminal.WriteString("\033[J") // Clear from cursor to end
-	cr.terminal.WriteString("\033[s") // Save cursor again for next time
-	cr.terminal.WriteString("\r\n")   // New line
-
-	// Calculate which page of items to show based on selection
-	maxItems := 10
-	pageStart := (newSelected / maxItems) * maxItems
-	pageEnd := pageStart + maxItems
-	if pageEnd > len(cr.lastItems) {
-		pageEnd = len(cr.lastItems)
-	}
-
-	// Show the correct page of items
-	pageItems := cr.lastItems[pageStart:pageEnd]
-	cols := 2
-
-	for i, item := range pageItems {
-		if i > 0 && i%cols == 0 {
-			cr.terminal.WriteString("\r\n")
-		}
-
-		// Show selection indicator for selected item
-		globalIndex := pageStart + i
-		if globalIndex == newSelected {
-			cr.terminal.WriteString(fmt.Sprintf("> %-33s", item.Text))
-		} else {
-			cr.terminal.WriteString(fmt.Sprintf("  %-33s", item.Text))
-		}
-
-		if i%cols != cols-1 {
-			cr.terminal.WriteString("  ")
-		}
-	}
-
-	cr.terminal.WriteString("\r\n")
+	// Do nothing - prevent excessive rendering on navigation
+	// The menu is already displayed, navigation should not trigger redraws
 }

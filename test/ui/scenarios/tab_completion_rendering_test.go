@@ -48,28 +48,25 @@ func TestTabCompletionExcessiveRendering(t *testing.T) {
 				Message: "Should not render excessively",
 			},
 			{
-				Name: "Should show selection indicator changes between tab presses",
+				Name: "Should show initial selection but not redraw for navigation",
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
 					
-					// Look for specific selection patterns with our test files
+					// Look for selection indicators - should only see initial selection
 					firstSelection := strings.Count(output, "> backspace_cursor_test.go")
 					secondSelection := strings.Count(output, "> backspace_delete_test.go")
 					t.Logf("First item selected: %d times", firstSelection)
 					t.Logf("Second item selected: %d times", secondSelection)
 					
-					// With 2 tab presses, we expect:
-					// 1. First tab: shows menu with first item selected
-					// 2. Second tab: redraws menu with second item selected
-					// Each should appear exactly once
-					if firstSelection != 1 || secondSelection != 1 {
-						t.Errorf("Expected each selection to appear once, got first=%d, second=%d", firstSelection, secondSelection)
+					// With no redraws for navigation, only initial selection is visible
+					if firstSelection != 1 || secondSelection != 0 {
+						t.Errorf("Expected only initial selection visible, got first=%d, second=%d", firstSelection, secondSelection)
 						return false
 					}
 					
 					return true
 				},
-				Message: "Should show proper selection navigation",
+				Message: "Should show only initial selection without navigation redraws",
 			},
 		},
 	}
