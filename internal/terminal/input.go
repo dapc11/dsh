@@ -86,7 +86,7 @@ func (r *InputReader) readEscapeSequence() (KeyEvent, error) {
 	// Peek next byte
 	next, err := r.reader.Peek(1)
 	if err != nil || len(next) == 0 {
-		return KeyEvent{Key: KeyEscape}, nil
+		return KeyEvent{Key: KeyEscape}, err
 	}
 
 	if next[0] == '[' {
@@ -97,7 +97,7 @@ func (r *InputReader) readEscapeSequence() (KeyEvent, error) {
 	// Alt + key
 	b, err := r.reader.ReadByte()
 	if err != nil {
-		return KeyEvent{Key: KeyEscape}, nil
+		return KeyEvent{Key: KeyEscape}, err
 	}
 
 	return KeyEvent{Rune: rune(b), Alt: true}, nil

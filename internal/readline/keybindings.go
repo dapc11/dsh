@@ -136,6 +136,8 @@ func (r *Readline) handleKeyEvent(keyEvent terminal.KeyEvent) bool { //nolint:cy
 		} else {
 			r.moveCursorRight()
 		}
+	default:
+		// Handle unimplemented keys
 	}
 
 	return true
@@ -188,6 +190,8 @@ func (r *Readline) handleEscapeSequence() error { //nolint:gocognit,cyclop,funle
 		} else {
 			r.moveCursorRight()
 		}
+	default:
+		// Handle unimplemented keys
 	}
 
 	return nil

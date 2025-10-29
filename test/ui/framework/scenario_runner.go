@@ -67,13 +67,22 @@ func (r *ScenarioRunner) RunTest(test UITest) TestResult {
 func (r *ScenarioRunner) executeAction(action UIAction) AssertionResult {
 	switch action.Type {
 	case ActionType_:
-		return r.executeType(action.Data.(string))
+		if data, ok := action.Data.(string); ok {
+			return r.executeType(data)
+		}
+		return AssertionResult{Passed: false, Message: "Invalid data type for ActionType_"}
 	case ActionKeyPress:
-		return r.executeKeyPress(action.Data.(terminal.KeyEvent))
+		if data, ok := action.Data.(terminal.KeyEvent); ok {
+			return r.executeKeyPress(data)
+		}
+		return AssertionResult{Passed: false, Message: "Invalid data type for ActionKeyPress"}
 	case ActionValidate:
 		return r.executeValidation(action.Expected)
 	case ActionSetupKeys:
-		return r.executeSetupKeys(action.Data.([]terminal.KeyEvent))
+		if data, ok := action.Data.([]terminal.KeyEvent); ok {
+			return r.executeSetupKeys(data)
+		}
+		return AssertionResult{Passed: false, Message: "Invalid data type for ActionSetupKeys"}
 	default:
 		return AssertionResult{Passed: false, Message: "Unknown action type"}
 	}
