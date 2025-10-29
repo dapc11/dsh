@@ -375,7 +375,7 @@ func (cm *CompletionMenu) Prev() {
 }
 
 // Render renders the completion menu using zsh-style video buffer system.
-func (cm *CompletionMenu) Render(bm *BufferManager, term terminal.TerminalInterface) {
+func (cm *CompletionMenu) Render(bm *BufferManager, _ terminal.TerminalInterface) {
 	if !cm.active || len(cm.items) == 0 {
 		return
 	}

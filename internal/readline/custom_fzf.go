@@ -54,7 +54,7 @@ func (f *CustomFzf) Run() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.terminal.DisableRawMode()
+	defer func() { _ = f.terminal.DisableRawMode() }()
 
 	for {
 		f.drawInline()
@@ -137,7 +137,7 @@ func (f *CustomFzf) drawInline() {
 	// Always clear exactly 6 lines (header + 5 matches) if we've drawn before
 	if f.lastDrawnLines > 0 {
 		for range 6 {
-			f.terminal.WriteString("\033[1A\033[2K")
+			_, _ = f.terminal.WriteString("\033[1A\033[2K")
 		}
 	}
 
@@ -145,10 +145,10 @@ func (f *CustomFzf) drawInline() {
 
 	// Header line
 	if len(f.matches) == 0 {
-		f.terminal.Printf("🔍 %s (no matches)\r\n", f.query)
+		_, _ = f.terminal.Printf("🔍 %s (no matches)\r\n", f.query)
 		lines++
 	} else {
-		f.terminal.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
+		_, _ = f.terminal.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
 		lines++
 
 		// Show max 5 matches
@@ -166,16 +166,16 @@ func (f *CustomFzf) drawInline() {
 			}
 
 			if i == f.selected {
-				f.terminal.WriteString(f.terminal.StyleText("> "+cmd, terminal.Style{Reverse: true}) + "\r\n")
+				_, _ = f.terminal.WriteString(f.terminal.StyleText("> "+cmd, terminal.Style{Reverse: true}) + "\r\n")
 			} else {
-				f.terminal.Printf("  %s\r\n", cmd)
+				_, _ = f.terminal.Printf("  %s\r\n", cmd)
 			}
 			lines++
 		}
 
 		// Fill remaining lines with empty lines to maintain consistent clearing
 		for i := lines; i < 6; i++ {
-			f.terminal.WriteString("\r\n")
+			_, _ = f.terminal.WriteString("\r\n")
 			lines++
 		}
 	}
@@ -187,7 +187,7 @@ func (f *CustomFzf) drawInline() {
 func (f *CustomFzf) clearInline() {
 	if f.lastDrawnLines > 0 {
 		for range 6 {
-			f.terminal.WriteString("\033[1A\033[2K")
+			_, _ = f.terminal.WriteString("\033[1A\033[2K")
 		}
 	}
 }

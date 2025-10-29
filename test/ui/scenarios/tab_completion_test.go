@@ -261,11 +261,11 @@ func TestTabCompletionDoubleTabNavigation(t *testing.T) {
 				Name: "Should complete to exact expected command",
 				Check: func(f *framework.UITestFramework) bool {
 					buffer := f.GetShell().GetBuffer()
-					t.Logf("Buffer after tab tab + enter: %q", buffer)
+					t.Logf("Buffer after double tab + enter: %q", buffer)
 					// The actual result is "e2freefrag" - assert exactly that
 					return f.AssertBuffer().Equals("e2freefrag").Passed
 				},
-				Message: "Should complete to exactly 'e2freefrag' after tab tab navigation",
+				Message: "Should complete to exactly 'e2freefrag' after double tab navigation",
 			},
 			{
 				Name: "Should have clean rendering without excessive cursor movement",
@@ -430,7 +430,7 @@ func TestTabCompletionExactOutput(t *testing.T) {
 					}
 
 					// Should not contain prompt duplication
-					if strings.Contains(output, "dsh> edsh>") || strings.Contains(output, "dsh> dsh>") {
+					if strings.Contains(output, "dsh> edsh>") || strings.Contains(output, "dsh>dsh>") {
 						t.Errorf("Output contains prompt duplication")
 						return false
 					}

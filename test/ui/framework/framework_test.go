@@ -76,7 +76,7 @@ func TestOutputAssertion_Contains(t *testing.T) {
 	fw := NewUITestFramework()
 
 	// Simulate some output
-	fw.mockTerm.WriteString("hello world")
+	_, _ = fw.mockTerm.WriteString("hello world")
 
 	result := fw.AssertOutput().Contains("hello")
 	if !result.Passed {
@@ -93,7 +93,7 @@ func TestMenuAssertion_IsVisible(t *testing.T) {
 	fw := NewUITestFramework()
 
 	// Simulate menu output (save cursor + menu content)
-	fw.mockTerm.WriteString("\033[s\necho  exit  help")
+	_, _ = fw.mockTerm.WriteString("\033[s\necho  exit  help")
 
 	result := fw.AssertMenu().IsVisible()
 	if !result.Passed {

@@ -5,7 +5,7 @@ func (r *Readline) moveCursorLeft() {
 	if r.cursor > 0 {
 		r.cursor--
 		if r.terminal != nil {
-			r.terminal.WriteString("\b")
+			_, _ = r.terminal.WriteString("\b")
 		}
 	}
 }
@@ -13,7 +13,7 @@ func (r *Readline) moveCursorLeft() {
 func (r *Readline) moveCursorRight() {
 	if r.cursor < len(r.buffer) {
 		if r.terminal != nil {
-			r.terminal.WriteString(string(r.buffer[r.cursor]))
+			_, _ = r.terminal.WriteString(string(r.buffer[r.cursor]))
 		}
 		r.cursor++
 	}
@@ -38,7 +38,7 @@ func (r *Readline) setCursorPosition() {
 	// Move cursor to correct position using ANSI escape sequences
 	promptLen := len(r.prompt)
 	totalPos := promptLen + r.cursor + 1
-	r.terminal.Printf("\033[%dG", totalPos)
+	_, _ = r.terminal.Printf("\033[%dG", totalPos)
 }
 
 // Word movement.

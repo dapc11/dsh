@@ -70,9 +70,9 @@ func (s *TestShell) handleTabCompletion() {
 	if input == "e" {
 		// Simulate showing completion menu
 		s.mockTerm.SaveCursor()
-		s.mockTerm.WriteString("\r\n")
-		s.mockTerm.WriteString("\033[7mecho\033[0m  \033[32mexit\033[0m  \033[34mhelp\033[0m")
-		s.mockTerm.WriteString("\r\n")
+		_, _ = s.mockTerm.WriteString("\r\n")
+		_, _ = s.mockTerm.WriteString("\033[7mecho\033[0m  \033[32mexit\033[0m  \033[34mhelp\033[0m")
+		_, _ = s.mockTerm.WriteString("\r\n")
 	}
 }
 
@@ -82,7 +82,7 @@ func (s *TestShell) handleArrowDown() {
 	output := s.mockTerm.GetOutput()
 	if len(output) > 0 {
 		// Menu is visible, simulate navigation
-		s.mockTerm.WriteString("\033[36mexit\033[0m") // Highlight next item
+		_, _ = s.mockTerm.WriteString("\033[36mexit\033[0m") // Highlight next item
 	}
 }
 

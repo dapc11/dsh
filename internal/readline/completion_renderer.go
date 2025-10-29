@@ -37,8 +37,8 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 	cr.lastItems = items
 
 	// Save cursor position and move to next line
-	cr.terminal.WriteString("\033[s") // Save cursor for UpdateSelectionHighlight
-	cr.terminal.WriteString("\r\n")   // New line
+	_, _ = cr.terminal.WriteString("\033[s") // Save cursor for UpdateSelectionHighlight
+	_, _ = cr.terminal.WriteString("\r\n")   // New line
 
 	// Simple menu rendering - just show items in columns
 	maxItems := 10 // Limit items to prevent excessive output
@@ -49,22 +49,22 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 	cols := 2
 	for i, item := range items {
 		if i > 0 && i%cols == 0 {
-			cr.terminal.WriteString("\r\n")
+			_, _ = cr.terminal.WriteString("\r\n")
 		}
 
 		// Show selection indicator for selected item
 		if i == selected {
-			cr.terminal.WriteString(fmt.Sprintf("> %-33s", item.Text))
+			_, _ = cr.terminal.WriteString(fmt.Sprintf("> %-33s", item.Text))
 		} else {
-			cr.terminal.WriteString(fmt.Sprintf("  %-33s", item.Text))
+			_, _ = cr.terminal.WriteString(fmt.Sprintf("  %-33s", item.Text))
 		}
 
 		if i%cols != cols-1 {
-			cr.terminal.WriteString("  ")
+			_, _ = cr.terminal.WriteString("  ")
 		}
 	}
 
-	cr.terminal.WriteString("\r\n")
+	_, _ = cr.terminal.WriteString("\r\n")
 	cr.active = true
 }
 
@@ -171,21 +171,21 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 
 	// Update old selection (remove "> ")
 	if oldSelected >= 0 && oldSelected < len(cr.lastItems) && oldSelected < maxItems {
-		row := (oldSelected / cols) + 1 // +1 for first menu line
-		col := (oldSelected % cols) * 37 + 1 // 37 chars per column
-		
+		row := (oldSelected / cols) + 1  // +1 for first menu line
+		col := (oldSelected%cols)*37 + 1 // 37 chars per column
+
 		// Use saved cursor position and relative movements
-		cr.terminal.WriteString("\033[u") // Restore cursor to saved position
-		cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG  ", row, col)) // Move down and right, clear selection
+		_, _ = cr.terminal.WriteString("\033[u")                                    // Restore cursor to saved position
+		_, _ = cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG  ", row, col)) // Move down and right, clear selection
 	}
-	
+
 	// Update new selection (add "> ")
 	if newSelected >= 0 && newSelected < len(cr.lastItems) && newSelected < maxItems {
-		row := (newSelected / cols) + 1 // +1 for first menu line
-		col := (newSelected % cols) * 37 + 1 // 37 chars per column
-		
+		row := (newSelected / cols) + 1  // +1 for first menu line
+		col := (newSelected%cols)*37 + 1 // 37 chars per column
+
 		// Use saved cursor position and relative movements
-		cr.terminal.WriteString("\033[u") // Restore cursor to saved position
-		cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG> ", row, col)) // Move down and right, add selection
+		_, _ = cr.terminal.WriteString("\033[u")                                    // Restore cursor to saved position
+		_, _ = cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG> ", row, col)) // Move down and right, add selection
 	}
 }

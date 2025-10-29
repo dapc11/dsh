@@ -28,11 +28,11 @@ func TestTabCompletionExcessiveRendering(t *testing.T) {
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
 					t.Logf("Full output: %q", output)
-					
+
 					// Count how many times we see files
 					testFileCount := strings.Count(output, "backspace_cursor_test.go")
 					t.Logf("backspace_cursor_test.go appears %d times", testFileCount)
-					
+
 					// With proper behavior: file should appear once per menu state
 					// First tab: shows menu (1 time)
 					// Second tab: redraws menu with new selection (1 more time)
@@ -42,7 +42,7 @@ func TestTabCompletionExcessiveRendering(t *testing.T) {
 						t.Errorf("File appears %d times - excessive rendering", testFileCount)
 						return false
 					}
-					
+
 					return true
 				},
 				Message: "Should not render excessively",
@@ -51,18 +51,18 @@ func TestTabCompletionExcessiveRendering(t *testing.T) {
 				Name: "Should show in-place selection updates",
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
-					
+
 					// Look for cursor restore sequences (new positioning method)
 					cursorRestores := strings.Count(output, "\x1b[u")
 					downMoves := strings.Count(output, "\x1b[1B") + strings.Count(output, "\x1b[2B")
 					t.Logf("Up movements: %d, Down movements: %d", 0, downMoves)
-					
+
 					// Should have cursor restores for updating selection
 					if cursorRestores < 2 {
 						t.Errorf("Expected at least 2 cursor restores for selection update, got %d", cursorRestores)
 						return false
 					}
-					
+
 					return true
 				},
 				Message: "Should show in-place selection updates",

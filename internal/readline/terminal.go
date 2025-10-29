@@ -45,14 +45,14 @@ func (t *Terminal) SetRawMode() error {
 
 	err := setTermios(t.fd, &raw)
 	if err == nil {
-		t.termInterface.EnableRawMode()
+		_ = t.termInterface.EnableRawMode()
 	}
 	return err
 }
 
 // Restore restores original terminal mode.
 func (t *Terminal) Restore() error {
-	t.termInterface.DisableRawMode()
+	_ = t.termInterface.DisableRawMode()
 	return setTermios(t.fd, &t.original)
 }
 

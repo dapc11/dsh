@@ -48,32 +48,32 @@ func (t *Terminal) Size() (width, height int) {
 
 // MoveCursor moves cursor to position.
 func (t *Terminal) MoveCursor(x, y int) {
-	t.WriteString(fmt.Sprintf("\033[%d;%dH", y+1, x+1))
+	_, _ = t.WriteString(fmt.Sprintf("\033[%d;%dH", y+1, x+1))
 }
 
 // ClearLine clears current line.
 func (t *Terminal) ClearLine() {
-	t.WriteString("\033[2K")
+	_, _ = t.WriteString("\033[2K")
 }
 
 // ClearToEnd clears from cursor to end of line.
 func (t *Terminal) ClearToEnd() {
-	t.WriteString("\033[K")
+	_, _ = t.WriteString("\033[K")
 }
 
 // SaveCursor saves cursor position.
 func (t *Terminal) SaveCursor() {
-	t.WriteString("\033[7")
+	_, _ = t.WriteString("\033[7")
 }
 
 // RestoreCursor restores cursor position.
 func (t *Terminal) RestoreCursor() {
-	t.WriteString("\033[8")
+	_, _ = t.WriteString("\033[8")
 }
 
 // HideCursor hides the cursor.
 func (t *Terminal) HideCursor() {
-	t.WriteString("\033[?25l")
+	_, _ = t.WriteString("\033[?25l")
 }
 
 // ShowCursor shows the cursor.

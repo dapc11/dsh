@@ -133,7 +133,7 @@ func (bm *BufferManager) RenderBuffer(buffer *TemporaryBuffer) {
 
 	content := buffer.GetContent()
 	if content != "" {
-		bm.terminal.WriteString(content)
+		_, _ = bm.terminal.WriteString(content)
 	}
 }
 
@@ -190,7 +190,7 @@ func (bm *BufferManager) ClearAt(line, col int, text string) error {
 	bm.terminal.MoveCursor(col, line)
 	// Clear the text by overwriting with spaces
 	spaces := strings.Repeat(" ", len(text))
-	bm.terminal.WriteString(spaces)
+	_, _ = bm.terminal.WriteString(spaces)
 	return nil
 }
 
@@ -198,9 +198,9 @@ func (bm *BufferManager) ClearAt(line, col int, text string) error {
 func (bm *BufferManager) DrawAt(line, col int, text string, highlight bool) error {
 	bm.terminal.MoveCursor(col, line)
 	if highlight {
-		bm.terminal.WriteString("\033[7m" + text + "\033[0m") // Reverse video
+		_, _ = bm.terminal.WriteString("\033[7m" + text + "\033[0m") // Reverse video
 	} else {
-		bm.terminal.WriteString(text)
+		_, _ = bm.terminal.WriteString(text)
 	}
 	return nil
 }

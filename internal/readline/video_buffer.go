@@ -124,12 +124,12 @@ func (vb *VideoBuffer) refreshLine(line int) {
 			currentAttr = elem.Attr
 		}
 
-		vb.terminal.WriteString(string(elem.Char))
+		_, _ = vb.terminal.WriteString(string(elem.Char))
 	}
 
 	// Reset attributes
 	if currentAttr != 0 {
-		vb.terminal.WriteString("\033[0m")
+		_, _ = vb.terminal.WriteString("\033[0m")
 	}
 }
 
@@ -137,15 +137,15 @@ func (vb *VideoBuffer) refreshLine(line int) {
 func (vb *VideoBuffer) applyAttributes(attr int) {
 	switch attr {
 	case 1: // Selected/highlighted
-		vb.terminal.WriteString("\033[7m") // Reverse video
+		_, _ = vb.terminal.WriteString("\033[7m") // Reverse video
 	case 2: // Command
-		vb.terminal.WriteString("\033[32m") // Green
+		_, _ = vb.terminal.WriteString("\033[32m") // Green
 	case 3: // Directory
-		vb.terminal.WriteString("\033[34m") // Blue
+		_, _ = vb.terminal.WriteString("\033[34m") // Blue
 	case 4: // Builtin
-		vb.terminal.WriteString("\033[36m") // Cyan
+		_, _ = vb.terminal.WriteString("\033[36m") // Cyan
 	default:
-		vb.terminal.WriteString("\033[0m") // Reset
+		_, _ = vb.terminal.WriteString("\033[0m") // Reset
 	}
 }
 

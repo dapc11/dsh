@@ -90,7 +90,7 @@ func (r *InputReader) readEscapeSequence() (KeyEvent, error) {
 	}
 
 	if next[0] == '[' {
-		r.reader.ReadByte() // consume '['
+		_, _ = r.reader.ReadByte() // consume '['
 		return r.readCSISequence()
 	}
 

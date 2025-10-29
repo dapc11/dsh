@@ -102,8 +102,8 @@ func (r *ScenarioRunner) executeKeyPress(keyEvent terminal.KeyEvent) AssertionRe
 	// If ProcessKey returns false, simulate what the main readline loop does
 	if !shouldContinue {
 		// This means the line is complete (Enter was pressed)
-		r.framework.mockTerm.WriteString("\r\n")
-		r.framework.mockTerm.WriteString(r.framework.readline.GetPrompt())
+		_, _ = r.framework.mockTerm.WriteString("\r\n")
+		_, _ = r.framework.mockTerm.WriteString(r.framework.readline.GetPrompt())
 		// Reset the buffer for the next line
 		r.framework.readline.SetBuffer("")
 	}
@@ -144,9 +144,9 @@ func (r TestResult) String() string {
 	var details strings.Builder
 	for _, result := range r.Results {
 		if result.Passed {
-			details.WriteString(fmt.Sprintf("  ✓ %s\n", result.Message))
+			_, _ = details.WriteString(fmt.Sprintf("  ✓ %s\n", result.Message))
 		} else {
-			details.WriteString(fmt.Sprintf("  ✗ %s\n", result.Message))
+			_, _ = details.WriteString(fmt.Sprintf("  ✗ %s\n", result.Message))
 		}
 	}
 

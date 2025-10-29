@@ -47,7 +47,7 @@ func (r *Renderer) Render(menu *Menu) {
 	pageItems := menu.items[startIdx:endIdx]
 
 	// Move to next line to start rendering
-	r.terminal.WriteString("\r\n")
+	_, _ = r.terminal.WriteString("\r\n")
 
 	// Display items in grid
 	linesUsed := 0
@@ -79,16 +79,16 @@ func (r *Renderer) Render(menu *Menu) {
 			}
 
 			padding := itemWidth - len(text)
-			r.terminal.WriteString(displayText + strings.Repeat(" ", padding))
+			_, _ = r.terminal.WriteString(displayText + strings.Repeat(" ", padding))
 		}
-		r.terminal.WriteString("\r\n")
+		_, _ = r.terminal.WriteString("\r\n")
 		linesUsed++
 	}
 
 	// Show pagination info
 	if totalPages > 1 {
 		pageInfo := "Page " + string(rune(menu.page+1+'0')) + "/" + string(rune(totalPages+'0'))
-		r.terminal.WriteString(r.terminal.Colorize(pageInfo, terminal.ColorBrightBlack) + "\r\n")
+		_, _ = r.terminal.WriteString(r.terminal.Colorize(pageInfo, terminal.ColorBrightBlack) + "\r\n")
 		linesUsed++
 	}
 

@@ -77,7 +77,7 @@ func TestDeleteRendering(t *testing.T) {
 			},
 			{
 				Name: "Cursor should be in correct position",
-				Check: func(f *framework.UITestFramework) bool {
+				Check: func(_ *framework.UITestFramework) bool {
 					// This would need access to cursor position
 					// For now, just check buffer is correct
 					return true
