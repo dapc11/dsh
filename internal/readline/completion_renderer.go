@@ -36,9 +36,9 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 	// Store items for redraw
 	cr.lastItems = items
 
-	// Save cursor and move to next line
-	cr.terminal.WriteString("\033[s") // Save cursor
-	cr.terminal.WriteString("\r\n")   // New line
+	// Save cursor position and move to next line
+	cr.terminal.WriteString("\033[s\033[s") // Save cursor twice for reliability
+	cr.terminal.WriteString("\r\n")         // New line
 
 	// Simple menu rendering - just show items in columns
 	maxItems := 10 // Limit items to prevent excessive output
@@ -171,22 +171,23 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 
 	// Update old selection (remove "> ")
 	if oldSelected >= 0 && oldSelected < len(cr.lastItems) && oldSelected < maxItems {
-		row := (oldSelected / cols) + 2 // +2 for prompt lines
+		row := (oldSelected / cols) + 1 // +1 for first menu line
 		col := (oldSelected % cols) * 37 + 1 // 37 chars per column
 		
-		// Move to old position and replace "> " with "  "
-		cr.terminal.WriteString(fmt.Sprintf("\033[%d;%dH  ", row, col))
+		// Use saved cursor position and relative movements
+		cr.terminal.WriteString("\033[u") // Restore cursor to saved position
+		cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG  ", row, col)) // Move down and right, clear selection
+		cr.terminal.WriteString("\033[u") // Restore cursor again
 	}
 	
 	// Update new selection (add "> ")
 	if newSelected >= 0 && newSelected < len(cr.lastItems) && newSelected < maxItems {
-		row := (newSelected / cols) + 2 // +2 for prompt lines  
+		row := (newSelected / cols) + 1 // +1 for first menu line
 		col := (newSelected % cols) * 37 + 1 // 37 chars per column
 		
-		// Move to new position and add "> "
-		cr.terminal.WriteString(fmt.Sprintf("\033[%d;%dH> ", row, col))
+		// Use saved cursor position and relative movements
+		cr.terminal.WriteString("\033[u") // Restore cursor to saved position
+		cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG> ", row, col)) // Move down and right, add selection
+		cr.terminal.WriteString("\033[u") // Restore cursor again
 	}
-	
-	// Restore cursor to input line
-	cr.terminal.WriteString("\033[u")
 }
