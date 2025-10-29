@@ -9,6 +9,7 @@ import (
 type Key int
 
 const (
+	// KeyNone represents no key or an unrecognized key
 	KeyNone Key = iota
 	KeyEnter
 	KeyTab

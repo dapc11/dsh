@@ -138,12 +138,12 @@ func TestKeyBindings_SpecialKeys(t *testing.T) {
 	mockTerm := rendering.NewMockTerminalInterface(80, 24)
 	rl := NewTestReadline(mockTerm)
 
-	t.Run("Ctrl+L", func(t *testing.T) {
+	t.Run("Ctrl+L", func(_ *testing.T) {
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlL})
 		// Should not crash
 	})
 
-	t.Run("Ctrl+Z", func(t *testing.T) {
+	t.Run("Ctrl+Z", func(_ *testing.T) {
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlZ})
 		// Should not crash
 	})
@@ -193,7 +193,7 @@ func TestKeyBindings_EscapeSequences(t *testing.T) {
 	mockTerm := rendering.NewMockTerminalInterface(80, 24)
 	rl := NewTestReadline(mockTerm)
 
-	t.Run("Escape", func(t *testing.T) {
+	t.Run("Escape", func(_ *testing.T) {
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyEscape})
 		// Should not crash
 	})

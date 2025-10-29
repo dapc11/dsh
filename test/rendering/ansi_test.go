@@ -1,3 +1,4 @@
+// Package rendering provides tests for terminal rendering and ANSI sequence generation.
 package rendering
 
 import (

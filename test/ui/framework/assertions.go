@@ -1,3 +1,4 @@
+// Package framework provides a testing framework for UI interactions and terminal behavior.
 package framework
 
 import (
@@ -244,12 +245,4 @@ func (a *RenderingAssertion) HasCleanOutput() AssertionResult {
 	}
 
 	return AssertionResult{Passed: true, Message: "Clean rendering output"}
-}
-
-// Helper function for absolute value
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
