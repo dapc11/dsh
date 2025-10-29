@@ -36,9 +36,8 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 	// Store items for redraw
 	cr.lastItems = items
 
-	// Save cursor position and move to next line
-	cr.terminal.WriteString("\033[s\033[s") // Save cursor twice for reliability
-	cr.terminal.WriteString("\r\n")         // New line
+	// Move to next line for menu display
+	cr.terminal.WriteString("\r\n")   // New line
 
 	// Simple menu rendering - just show items in columns
 	maxItems := 10 // Limit items to prevent excessive output
@@ -177,7 +176,6 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 		// Use saved cursor position and relative movements
 		cr.terminal.WriteString("\033[u") // Restore cursor to saved position
 		cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG  ", row, col)) // Move down and right, clear selection
-		cr.terminal.WriteString("\033[u") // Restore cursor again
 	}
 	
 	// Update new selection (add "> ")
@@ -188,6 +186,5 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 		// Use saved cursor position and relative movements
 		cr.terminal.WriteString("\033[u") // Restore cursor to saved position
 		cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG> ", row, col)) // Move down and right, add selection
-		cr.terminal.WriteString("\033[u") // Restore cursor again
 	}
 }

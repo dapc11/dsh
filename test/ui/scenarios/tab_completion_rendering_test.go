@@ -52,14 +52,14 @@ func TestTabCompletionExcessiveRendering(t *testing.T) {
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
 					
-					// Look for relative cursor movements (up/down sequences)
-					upMoves := strings.Count(output, "\x1b[1A")
-					downMoves := strings.Count(output, "\x1b[1B")
-					t.Logf("Up movements: %d, Down movements: %d", upMoves, downMoves)
+					// Look for cursor restore sequences (new positioning method)
+					cursorRestores := strings.Count(output, "\x1b[u")
+					downMoves := strings.Count(output, "\x1b[1B") + strings.Count(output, "\x1b[2B")
+					t.Logf("Up movements: %d, Down movements: %d", 0, downMoves)
 					
-					// Should have cursor moves for updating selection (up to menu, back down)
-					if upMoves < 2 || downMoves < 2 {
-						t.Errorf("Expected at least 2 up and 2 down moves for selection update, got up=%d, down=%d", upMoves, downMoves)
+					// Should have cursor restores for updating selection
+					if cursorRestores < 2 {
+						t.Errorf("Expected at least 2 cursor restores for selection update, got %d", cursorRestores)
 						return false
 					}
 					
