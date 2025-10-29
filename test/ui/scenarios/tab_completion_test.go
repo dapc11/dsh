@@ -95,13 +95,14 @@ func TestTabCompletionSelection(t *testing.T) {
 		Scenario: []framework.UIAction{
 			framework.Type("ec"),
 			framework.Press(terminal.KeyTab),
-			framework.Press(terminal.KeyEnter),
+			// Don't press Enter - just check that Tab completed it
 		},
 		Assertions: []framework.UIAssertion{
 			{
 				Name: "Should complete to echo",
 				Check: func(f *framework.UITestFramework) bool {
 					buffer := f.GetShell().GetBuffer()
+					t.Logf("Buffer after completion: %q", buffer)
 					return buffer == "echo"
 				},
 				Message: "Should complete ec to echo",
@@ -185,7 +186,10 @@ func TestTabCompletionExactResult(t *testing.T) {
 		Setup: func(f *framework.UITestFramework) {
 			f.SetPrompt("dsh> ").ClearOutput()
 		},
-		Scenario: framework.CompleteWith("ec"),
+		Scenario: []framework.UIAction{
+			framework.Type("ec"),
+			framework.Press(terminal.KeyTab),
+		},
 		Assertions: []framework.UIAssertion{
 			{
 				Name: "Buffer should contain exact completion",

@@ -43,7 +43,7 @@
 
 #### 2. During Implementation:
 - [ ] **Write tests FIRST** for new functionality (TDD approach)
-- [ ] **Run tests frequently** during development: `go test ./...`
+- [ ] **Run tests frequently** during development: `make test`
 - [ ] **Format code after every change**: `gofmt -w .`
 - [ ] **Check linting after every change**: `golangci-lint run`
 - [ ] **Fix ALL lint warnings immediately** - never commit with warnings
@@ -128,7 +128,10 @@ make test-all
 # Individual steps
 gofmt -w .
 golangci-lint run
-go test -race ./...
+make test
+
+# Better test output with gotestsum (used by make test)
+gotestsum --format testname ./...
 ```
 
 ## Communication Style

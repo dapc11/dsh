@@ -286,14 +286,15 @@ func (r *Readline) acceptTabCompletion() {
 		r.bufferManager.CleanupAll()
 	}
 
-	// Clean redraw from original cursor position with full prompt
-	r.terminal.WriteString("\033[u")  // Restore to original cursor (start of line)
-	r.terminal.WriteString("\033[2K") // Clear entire line
+	// Only clear the completion menu area, not the entire screen
+	// Move cursor back to the input line and clear from there down
+	r.terminal.WriteString("\033[u") // Restore to saved cursor position (input line)
+	r.terminal.WriteString("\033[J") // Clear from cursor to end of screen (removes menu)
+	// Redraw the current input line cleanly
+	r.terminal.WriteString("\033[2K") // Clear the current line
 	r.terminal.WriteString("\r")      // Move to beginning of line
-	// Explicitly write prompt and buffer
 	fullLine := r.prompt + string(r.buffer)
 	r.terminal.WriteString(fullLine)
-	// Don't call setCursorPosition() to avoid trailing escape sequences
 }
 
 // History operations.

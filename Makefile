@@ -14,7 +14,7 @@ test-no-lint: unit-test ui-test test-integration test-rendering
 
 # Run unit tests only
 unit-test:
-	go test -v -race ./internal/...
+	gotestsum --format testname -v -- -race ./internal/...
 
 # Run linting tests
 lint-test:
@@ -22,15 +22,19 @@ lint-test:
 
 # Run UI tests
 ui-test:
-	go test -v ./test/ui/...
+	gotestsum --format testname -v ./test/ui/...
 
 # Run integration tests (requires built binary)
 test-integration: build
-	go test -v ./test/integration/...
+	gotestsum --format testname -v ./test/integration/...
 
 # Run rendering tests with diagnostic output
 test-rendering: build
-	go test -v ./test/rendering/...
+	gotestsum --format testname -v ./test/rendering/...
+
+# Run all tests
+test:
+	gotestsum --format testname ./...
 
 # Legacy aliases for backward compatibility
 test-unit: unit-test

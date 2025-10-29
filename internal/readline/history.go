@@ -36,6 +36,17 @@ func NewHistory() *History {
 	return h
 }
 
+// NewEmptyHistory creates a new history manager without loading from disk (for testing).
+func NewEmptyHistory() *History {
+	return &History{
+		items:    make([]string, 0, 1000),
+		pos:      0,
+		file:     "", // No file for testing
+		maxSize:  1000,
+		modified: false,
+	}
+}
+
 // Add adds a command to history and saves to disk.
 func (h *History) Add(line string) {
 	line = strings.TrimSpace(line)

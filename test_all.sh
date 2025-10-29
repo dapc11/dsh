@@ -8,7 +8,7 @@ echo "========================="
 
 # Run all tests with coverage
 echo "📊 Running tests with coverage..."
-go test -v -race -coverprofile=coverage.out ./internal/...
+gotestsum --format testname -- -race -coverprofile=coverage.out ./internal/...
 
 # Generate coverage report
 echo "📈 Generating coverage report..."

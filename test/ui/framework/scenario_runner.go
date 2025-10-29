@@ -97,7 +97,17 @@ func (r *ScenarioRunner) executeType(text string) AssertionResult {
 func (r *ScenarioRunner) executeKeyPress(keyEvent terminal.KeyEvent) AssertionResult {
 	r.framework.recorder.RecordKey(keyEvent)
 	// Process the key through the real readline
-	r.framework.readline.ProcessKey(keyEvent)
+	shouldContinue := r.framework.readline.ProcessKey(keyEvent)
+
+	// If ProcessKey returns false, simulate what the main readline loop does
+	if !shouldContinue {
+		// This means the line is complete (Enter was pressed)
+		r.framework.mockTerm.WriteString("\r\n")
+		r.framework.mockTerm.WriteString(r.framework.readline.GetPrompt())
+		// Reset the buffer for the next line
+		r.framework.readline.SetBuffer("")
+	}
+
 	return AssertionResult{Passed: true, Message: fmt.Sprintf("Pressed key: %v", keyEvent.Key)}
 }
 

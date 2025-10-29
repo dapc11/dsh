@@ -120,19 +120,20 @@ func (r *Readline) GetHistory() *History {
 }
 
 // ProcessKey processes a key event (for testing)
-func (r *Readline) ProcessKey(keyEvent terminal.KeyEvent) {
-	r.handleKeyEvent(keyEvent)
+func (r *Readline) ProcessKey(keyEvent terminal.KeyEvent) bool {
+	return r.handleKeyEvent(keyEvent)
 }
 
 // NewTestReadline creates a readline instance for testing with a mock terminal
 func NewTestReadline(mockTerm terminal.TerminalInterface) *Readline {
 	return &Readline{
+		prompt:         "dsh> ", // Initialize with default prompt
 		buffer:         make([]rune, 0, 256),
 		cursor:         0,
 		completion:     NewCompletion(),
 		bufferManager:  NewBufferManager(mockTerm),
 		killRing:       NewKillRing(),
-		history:        NewHistory(),
+		history:        NewEmptyHistory(), // Use empty history for testing
 		completionMenu: NewCompletionMenu(mockTerm),
 		terminal:       mockTerm, // Use the same terminal field
 	}
@@ -147,4 +148,9 @@ func (r *Readline) displayPrompt() {
 // SetPrompt sets the prompt string
 func (r *Readline) SetPrompt(prompt string) {
 	r.prompt = prompt
+}
+
+// GetPrompt returns the current prompt string
+func (r *Readline) GetPrompt() string {
+	return r.prompt
 }
