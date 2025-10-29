@@ -36,7 +36,8 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 	// Store items for redraw
 	cr.lastItems = items
 
-	// Move to next line for menu display
+	// Save cursor position and move to next line
+	cr.terminal.WriteString("\033[s") // Save cursor for UpdateSelectionHighlight
 	cr.terminal.WriteString("\r\n")   // New line
 
 	// Simple menu rendering - just show items in columns

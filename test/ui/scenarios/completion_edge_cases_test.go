@@ -392,8 +392,8 @@ func TestCompletionMenuCleanupAfterAccept(t *testing.T) {
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
 					t.Logf("Output after completion: %q", output)
-					// Updated expectation based on single cursor save from buffer manager
-					expectedOutput := "\r\ndsh> \r\x1b[Kdsh> l\x1b[7G\r\x1b[Kdsh> ls\x1b[8G\x1b[s\r\n> ls                                   lsattr                           \r\n  lsb_release                          lsblk                            \r\n  lscpu                                lshw                             \r\n  lsinitramfs                          lsipc                            \r\n  lslocks                              lslogins                         \r\n\x1b[1;1H\x1b[u\x1b[1B\x1b[1G  \x1b[u\x1b[1B\x1b[38G> \x1b[1;1H\x1b[u\x1b[1B\x1b[38G  \x1b[u\x1b[2B\x1b[1G> \x1b[1;1H\x1b[2K\x1b[u\x1b[u\x1b[J\x1b[2K\rdsh> lsb_release"
+					// Updated expectation: buffer manager saves + ShowCompletion saves = double save
+					expectedOutput := "\r\ndsh> \r\x1b[Kdsh> l\x1b[7G\r\x1b[Kdsh> ls\x1b[8G\x1b[s\x1b[s\r\n> ls                                   lsattr                           \r\n  lsb_release                          lsblk                            \r\n  lscpu                                lshw                             \r\n  lsinitramfs                          lsipc                            \r\n  lslocks                              lslogins                         \r\n\x1b[1;1H\x1b[u\x1b[1B\x1b[1G  \x1b[u\x1b[1B\x1b[38G> \x1b[1;1H\x1b[u\x1b[1B\x1b[38G  \x1b[u\x1b[2B\x1b[1G> \x1b[1;1H\x1b[2K\x1b[u\x1b[u\x1b[J\x1b[2K\rdsh> lsb_release"
 					return output == expectedOutput
 				},
 				Message: "Output should match exact escape sequence pattern",
