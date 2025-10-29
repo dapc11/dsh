@@ -1,0 +1,4290 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>builtins: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">dsh/internal/builtins/builtins.go (85.3%)</option>
+				
+				<option value="file1">dsh/internal/completion/renderer.go (87.7%)</option>
+				
+				<option value="file2">dsh/internal/completion/types.go (100.0%)</option>
+				
+				<option value="file3">dsh/internal/executor/executor.go (48.0%)</option>
+				
+				<option value="file4">dsh/internal/lexer/lexer.go (70.3%)</option>
+				
+				<option value="file5">dsh/internal/parser/expand.go (93.8%)</option>
+				
+				<option value="file6">dsh/internal/parser/parser.go (71.1%)</option>
+				
+				<option value="file7">dsh/internal/readline/buffer_manager.go (63.8%)</option>
+				
+				<option value="file8">dsh/internal/readline/completion.go (70.2%)</option>
+				
+				<option value="file9">dsh/internal/readline/completion_renderer.go (87.7%)</option>
+				
+				<option value="file10">dsh/internal/readline/cursor.go (92.9%)</option>
+				
+				<option value="file11">dsh/internal/readline/custom_fzf.go (15.4%)</option>
+				
+				<option value="file12">dsh/internal/readline/editing.go (93.1%)</option>
+				
+				<option value="file13">dsh/internal/readline/fuzzy.go (0.0%)</option>
+				
+				<option value="file14">dsh/internal/readline/history.go (51.0%)</option>
+				
+				<option value="file15">dsh/internal/readline/keybindings.go (49.7%)</option>
+				
+				<option value="file16">dsh/internal/readline/killring.go (91.3%)</option>
+				
+				<option value="file17">dsh/internal/readline/killring_ops.go (38.9%)</option>
+				
+				<option value="file18">dsh/internal/readline/readline.go (17.5%)</option>
+				
+				<option value="file19">dsh/internal/readline/terminal.go (21.6%)</option>
+				
+				<option value="file20">dsh/internal/readline/video_buffer.go (12.1%)</option>
+				
+				<option value="file21">dsh/internal/terminal/color.go (48.1%)</option>
+				
+				<option value="file22">dsh/internal/terminal/input.go (22.0%)</option>
+				
+				<option value="file23">dsh/internal/terminal/interface.go (12.5%)</option>
+				
+				<option value="file24">dsh/internal/terminal/terminal.go (38.9%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Package builtins implements built-in shell commands like cd, pwd, help, and exit.
+package builtins
+
+import (
+        "bufio"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+        "time"
+)
+
+// BuiltinCommand represents a built-in shell command.
+type BuiltinCommand struct {
+        Name string
+        Func func([]string) bool
+}
+
+// builtinCommands maps command names to their implementations.
+var builtinCommands = map[string]func([]string) bool{ //nolint:gochecknoglobals // Required for builtin command registry
+        "cd":   handleCD,
+        "pwd":  handlePWD,
+        "help": handleHelp,
+        "exit": handleExit,
+        "todo": handleTodo,
+}
+
+// IsBuiltin checks if a command is a built-in.
+func IsBuiltin(name string) bool <span class="cov5" title="9">{
+        _, exists := builtinCommands[name]
+
+        return exists
+}</span>
+
+// ExecuteBuiltin executes a built-in command.
+func ExecuteBuiltin(args []string) bool <span class="cov5" title="10">{
+        if len(args) == 0 </span><span class="cov1" title="1">{
+                return false
+        }</span>
+
+        <span class="cov5" title="9">if fn, exists := builtinCommands[args[0]]; exists </span><span class="cov5" title="8">{
+                return fn(args)
+        }</span>
+
+        <span class="cov1" title="1">return false</span>
+}
+
+func handleExit(_ []string) bool <span class="cov1" title="1">{
+        // In tests, just return false to signal exit
+        // In real usage, the shell will handle the exit
+        return false
+}</span>
+
+func handleCD(args []string) bool <span class="cov3" title="3">{
+        var target string
+        if len(args) &lt; 2 </span><span class="cov1" title="1">{
+                target = os.Getenv("HOME")
+                if target == "" </span><span class="cov0" title="0">{
+                        _, _ = fmt.Fprintf(os.Stderr, "dsh: cd: HOME not set\n")
+
+                        return false
+                }</span>
+        } else<span class="cov2" title="2"> {
+                target = args[1]
+        }</span>
+
+        <span class="cov3" title="3">err := os.Chdir(target)
+        if err != nil </span><span class="cov1" title="1">{
+                _, _ = fmt.Fprintf(os.Stderr, "dsh: cd: %v\n", err)
+
+                return false
+        }</span>
+
+        <span class="cov2" title="2">return true</span>
+}
+
+func handlePWD(_ []string) bool <span class="cov1" title="1">{ //nolint:unparam // Always returns true as pwd command always succeeds
+        pwd, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                _, _ = fmt.Fprintf(os.Stderr, "dsh: pwd: %v\n", err)
+
+                return true
+        }</span>
+
+        <span class="cov1" title="1">_, _ = fmt.Fprintln(os.Stdout, pwd)
+
+        return true</span>
+}
+
+func handleHelp(_ []string) bool <span class="cov1" title="1">{
+        _, _ = fmt.Fprintln(os.Stdout, "dsh - Daniel's Shell")
+        _, _ = fmt.Fprintln(os.Stdout, "Built-in commands: cd, exit, help, pwd, todo")
+        _, _ = fmt.Fprintln(os.Stdout, "Features: quotes, pipes, I/O redirection, emacs-like editing, history, autosuggestions")
+
+        return true
+}</span>
+
+func handleTodo(args []string) bool <span class="cov2" title="2">{
+        if len(args) &lt; 2 </span><span class="cov1" title="1">{
+                // List todos
+                todos := loadTodos()
+                if len(todos) == 0 </span><span class="cov0" title="0">{
+                        _, _ = fmt.Fprintln(os.Stdout, "No todos found.")
+                }</span> else<span class="cov1" title="1"> {
+                        _, _ = fmt.Fprintln(os.Stdout, "DSH Todo List:")
+                        for i, todo := range todos </span><span class="cov9" title="62">{
+                                _, _ = fmt.Fprintf(os.Stdout, "%d. %s\n", i+1, todo)
+                        }</span>
+                }
+                <span class="cov1" title="1">return true</span>
+        }
+
+        // Add new todo
+        <span class="cov1" title="1">todoText := strings.Join(args[1:], " ")
+        err := addTodo(todoText)
+        if err != nil </span><span class="cov0" title="0">{
+                _, _ = fmt.Fprintf(os.Stderr, "dsh: todo: %v\n", err)
+                return false
+        }</span>
+
+        <span class="cov1" title="1">_, _ = fmt.Fprintf(os.Stdout, "Added todo: %s\n", todoText)
+        return true</span>
+}
+
+func loadTodos() []string <span class="cov3" title="3">{
+        homeDir, err := os.UserHomeDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov3" title="3">todoFile := filepath.Join(homeDir, ".dsh_todos")
+        file, err := os.Open(todoFile) //nolint:gosec // User's home directory is safe
+        if err != nil </span><span class="cov1" title="1">{
+                return nil // File doesn't exist yet
+        }</span>
+        <span class="cov2" title="2">defer func() </span><span class="cov2" title="2">{
+                _ = file.Close()
+        }</span>()
+
+        <span class="cov2" title="2">var todos []string
+        scanner := bufio.NewScanner(file)
+        for scanner.Scan() </span><span class="cov10" title="65">{
+                line := strings.TrimSpace(scanner.Text())
+                if line != "" </span><span class="cov9" title="64">{
+                        todos = append(todos, line)
+                }</span>
+        }
+
+        <span class="cov2" title="2">return todos</span>
+}
+
+func addTodo(todo string) error <span class="cov2" title="2">{
+        homeDir, err := os.UserHomeDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get home directory: %w", err)
+        }</span>
+
+        <span class="cov2" title="2">todoFile := filepath.Join(homeDir, ".dsh_todos")
+        file, err := os.OpenFile(todoFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec // User's home directory is safe
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to open todo file: %w", err)
+        }</span>
+        <span class="cov2" title="2">defer func() </span><span class="cov2" title="2">{
+                _ = file.Close()
+        }</span>()
+
+        <span class="cov2" title="2">timestamp := time.Now().Format("2006-01-02 15:04:05")
+        _, err = fmt.Fprintf(file, "[%s] %s\n", timestamp, todo)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to write todo: %w", err)
+        }</span>
+        <span class="cov2" title="2">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package completion provides terminal-based completion menu rendering functionality.
+package completion
+
+import (
+        "strings"
+
+        "dsh/internal/terminal"
+)
+
+// Renderer handles the visual display of completion menus with proper buffer management.
+type Renderer struct {
+        terminal terminal.TerminalInterface
+}
+
+// NewRenderer creates a new menu renderer.
+func NewRenderer(term terminal.TerminalInterface) *Renderer <span class="cov5" title="5">{
+        return &amp;Renderer{
+                terminal: term,
+        }
+}</span>
+
+// Render displays the completion menu with proper cursor management.
+func (r *Renderer) Render(menu *Menu) <span class="cov4" title="4">{
+        if !menu.IsDisplayed() || !menu.HasItems() </span><span class="cov1" title="1">{
+                return
+        }</span>
+
+        // Save cursor position before rendering
+        <span class="cov3" title="3">r.terminal.SaveCursor()
+
+        itemWidth, cols, maxRows, itemsPerPage := r.calculateLayout(menu)
+        totalPages := (len(menu.items) + itemsPerPage - 1) / itemsPerPage
+
+        // Adjust page if selection moved
+        selectedPage := menu.selected / itemsPerPage
+        if selectedPage != menu.page </span><span class="cov0" title="0">{
+                menu.page = selectedPage
+        }</span>
+
+        // Calculate items to show on current page
+        <span class="cov3" title="3">startIdx := menu.page * itemsPerPage
+        endIdx := startIdx + itemsPerPage
+        if endIdx &gt; len(menu.items) </span><span class="cov3" title="3">{
+                endIdx = len(menu.items)
+        }</span>
+
+        <span class="cov3" title="3">pageItems := menu.items[startIdx:endIdx]
+
+        // Move to next line to start rendering
+        r.terminal.WriteString("\r\n")
+
+        // Display items in grid
+        linesUsed := 0
+        for i := range maxRows </span><span class="cov9" title="30">{
+                for j := range cols </span><span class="cov10" title="37">{
+                        idx := i*cols + j
+                        if idx &gt;= len(pageItems) </span><span class="cov9" title="30">{
+                                break</span>
+                        }
+
+                        <span class="cov5" title="7">item := pageItems[idx]
+                        globalIdx := startIdx + idx
+                        text := item.Text
+
+                        var displayText string
+                        if globalIdx == menu.selected </span><span class="cov3" title="3">{
+                                displayText = r.terminal.StyleText(text, terminal.Style{Reverse: true})
+                        }</span> else<span class="cov4" title="4"> {
+                                switch item.Type </span>{
+                                case "builtin":<span class="cov1" title="1">
+                                        displayText = r.terminal.Colorize(text, terminal.ColorCyan)</span>
+                                case "command":<span class="cov1" title="1">
+                                        displayText = r.terminal.Colorize(text, terminal.ColorGreen)</span>
+                                case "directory":<span class="cov2" title="2">
+                                        displayText = r.terminal.Colorize(text, terminal.ColorBlue)</span>
+                                default:<span class="cov0" title="0">
+                                        displayText = text</span>
+                                }
+                        }
+
+                        <span class="cov5" title="7">padding := itemWidth - len(text)
+                        r.terminal.WriteString(displayText + strings.Repeat(" ", padding))</span>
+                }
+                <span class="cov9" title="30">r.terminal.WriteString("\r\n")
+                linesUsed++</span>
+        }
+
+        // Show pagination info
+        <span class="cov3" title="3">if totalPages &gt; 1 </span><span class="cov0" title="0">{
+                pageInfo := "Page " + string(rune(menu.page+1+'0')) + "/" + string(rune(totalPages+'0'))
+                r.terminal.WriteString(r.terminal.Colorize(pageInfo, terminal.ColorBrightBlack) + "\r\n")
+                linesUsed++
+        }</span>
+
+        // Store lines used for cleanup
+        <span class="cov3" title="3">menu.linesDrawn = linesUsed
+
+        // Mark menu as displayed
+        menu.displayed = true</span>
+}
+
+// Clear removes the completion menu from display with proper cleanup.
+func (r *Renderer) Clear(menu *Menu) <span class="cov1" title="1">{
+        if !menu.displayed </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Clear from cursor to end of screen
+        <span class="cov1" title="1">r.terminal.ClearFromCursor()
+
+        // Restore cursor to original position
+        r.terminal.RestoreCursor()
+
+        // Mark menu as not displayed
+        menu.displayed = false
+        menu.linesDrawn = 0</span>
+}
+
+// calculateLayout calculates the layout parameters for the menu.
+func (r *Renderer) calculateLayout(menu *Menu) (itemWidth, cols, maxRows, itemsPerPage int) <span class="cov3" title="3">{
+        width, height := r.terminal.Size()
+        maxItemWidth := 0
+
+        // Find max item width
+        for _, item := range menu.items </span><span class="cov5" title="7">{
+                if len(item.Text) &gt; maxItemWidth </span><span class="cov3" title="3">{
+                        maxItemWidth = len(item.Text)
+                }</span>
+        }
+
+        <span class="cov3" title="3">itemWidth = maxItemWidth + 2
+        cols = width / itemWidth
+        if cols &lt; 1 </span><span class="cov0" title="0">{
+                cols = 1
+        }</span>
+
+        // Calculate available rows
+        <span class="cov3" title="3">availableRows := height - 5
+        if availableRows &lt; 3 </span><span class="cov0" title="0">{
+                availableRows = 3
+        }</span>
+
+        <span class="cov3" title="3">maxRows = availableRows
+        if maxRows &gt; menu.maxRows </span><span class="cov3" title="3">{
+                maxRows = menu.maxRows
+        }</span>
+
+        <span class="cov3" title="3">itemsPerPage = maxRows * cols
+        return itemWidth, cols, maxRows, itemsPerPage</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package completion
+
+// Item represents a completion with its type.
+type Item struct {
+        Text string
+        Type string // "builtin", "command", "file", "directory"
+}
+
+// Menu handles the display and navigation of completion options.
+type Menu struct {
+        items      []Item
+        selected   int
+        displayed  bool
+        linesDrawn int
+        maxRows    int
+        page       int
+        base       string
+}
+
+// NewMenu creates a new completion menu.
+func NewMenu() *Menu <span class="cov10" title="10">{
+        return &amp;Menu{
+                maxRows: 10,
+        }
+}</span>
+
+// Show displays the completion menu with the given items.
+func (m *Menu) Show(items []Item, base string) <span class="cov8" title="7">{
+        m.items = items
+        m.base = base
+        m.selected = 0
+        m.displayed = true
+        m.page = 0
+}</span>
+
+// Hide clears the completion menu.
+func (m *Menu) Hide() <span class="cov1" title="1">{
+        m.displayed = false
+        m.items = nil
+        m.selected = 0
+        m.linesDrawn = 0
+}</span>
+
+// IsDisplayed returns whether the menu is currently shown.
+func (m *Menu) IsDisplayed() bool <span class="cov8" title="7">{
+        return m.displayed
+}</span>
+
+// GetSelected returns the currently selected item.
+func (m *Menu) GetSelected() (Item, bool) <span class="cov10" title="10">{
+        if !m.displayed || m.selected &gt;= len(m.items) </span><span class="cov1" title="1">{
+                return Item{}, false
+        }</span>
+        <span class="cov9" title="9">return m.items[m.selected], true</span>
+}
+
+// GetBase returns the completion base string.
+func (m *Menu) GetBase() string <span class="cov1" title="1">{
+        return m.base
+}</span>
+
+// NextItem moves selection to the next item.
+func (m *Menu) NextItem() <span class="cov8" title="6">{
+        if len(m.items) &gt; 0 </span><span class="cov7" title="5">{
+                m.selected = (m.selected + 1) % len(m.items)
+        }</span>
+}
+
+// PrevItem moves selection to the previous item.
+func (m *Menu) PrevItem() <span class="cov6" title="4">{
+        if len(m.items) &gt; 0 </span><span class="cov5" title="3">{
+                m.selected = (m.selected - 1 + len(m.items)) % len(m.items)
+        }</span>
+}
+
+// HasItems returns whether the menu has any items.
+func (m *Menu) HasItems() bool <span class="cov7" title="5">{
+        return len(m.items) &gt; 0
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Package executor handles command execution with I/O redirection and process management.
+package executor
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "os"
+        "os/exec"
+        "sync"
+        "syscall"
+
+        "dsh/internal/builtins"
+        "dsh/internal/parser"
+)
+
+var (
+        lastExitStatus int
+        exitStatusMu   sync.RWMutex
+)
+
+// GetLastExitStatus returns the exit status of the last executed command.
+func GetLastExitStatus() int <span class="cov1" title="1">{
+        exitStatusMu.RLock()
+        defer exitStatusMu.RUnlock()
+        return lastExitStatus
+}</span>
+
+// setExitStatus sets the exit status from a command execution.
+func setExitStatus(err error) <span class="cov10" title="4">{
+        exitStatusMu.Lock()
+        defer exitStatusMu.Unlock()
+
+        if err == nil </span><span class="cov8" title="3">{
+                lastExitStatus = 0
+                return
+        }</span>
+
+        <span class="cov1" title="1">var exitError *exec.ExitError
+        if errors.As(err, &amp;exitError) </span><span class="cov0" title="0">{
+                if status, ok := exitError.Sys().(syscall.WaitStatus); ok </span><span class="cov0" title="0">{
+                        lastExitStatus = status.ExitStatus()
+                        return
+                }</span>
+        }
+
+        // Default to 1 for other errors
+        <span class="cov1" title="1">lastExitStatus = 1</span>
+}
+
+// ExecuteCommand executes a single command.
+func ExecuteCommand(cmd *parser.Command) bool <span class="cov10" title="4">{
+        if len(cmd.Args) == 0 </span><span class="cov1" title="1">{
+                setExitStatus(nil) // Empty command succeeds
+                return true
+        }</span>
+
+        // Handle built-in commands
+        <span class="cov8" title="3">if builtins.IsBuiltin(cmd.Args[0]) </span><span class="cov1" title="1">{
+                success := builtins.ExecuteBuiltin(cmd.Args)
+                if success </span><span class="cov1" title="1">{
+                        setExitStatus(nil) // Builtin succeeded
+                }</span> else<span class="cov0" title="0"> {
+                        lastExitStatus = 1 // Builtin failed (or exit command)
+                }</span>
+                <span class="cov1" title="1">return success</span>
+        }
+
+        // Execute external command
+        <span class="cov5" title="2">return executeExternal(cmd)</span>
+}
+
+// ExecutePipeline executes a pipeline of commands.
+func ExecutePipeline(pipeline *parser.Pipeline) bool <span class="cov0" title="0">{
+        if len(pipeline.Commands) == 1 </span><span class="cov0" title="0">{
+                return ExecuteCommand(pipeline.Commands[0])
+        }</span>
+
+        <span class="cov0" title="0">return executeMultiCommandPipeline()</span>
+}
+
+func executeExternal(cmd *parser.Command) bool <span class="cov5" title="2">{
+        ctx := context.Background()
+        execCmd := exec.CommandContext(ctx, cmd.Args[0], cmd.Args[1:]...) //nolint:gosec
+
+        // Handle I/O redirection
+        if cmd.InputFile != "" </span><span class="cov0" title="0">{
+                file, err := os.Open(cmd.InputFile)
+                if err != nil </span><span class="cov0" title="0">{
+                        _, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+
+                        return true
+                }</span>
+                <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{ _ = file.Close() }</span>()
+
+                <span class="cov0" title="0">execCmd.Stdin = file</span>
+        } else<span class="cov5" title="2"> {
+                execCmd.Stdin = os.Stdin
+        }</span>
+
+        <span class="cov5" title="2">if cmd.OutputFile != "" </span><span class="cov0" title="0">{
+                file, err := openOutputFile(cmd.OutputFile, cmd.AppendMode)
+                if err != nil </span><span class="cov0" title="0">{
+                        _, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+
+                        return true
+                }</span>
+                <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{ _ = file.Close() }</span>()
+
+                <span class="cov0" title="0">execCmd.Stdout = file</span>
+        } else<span class="cov5" title="2"> {
+                execCmd.Stdout = os.Stdout
+        }</span>
+
+        <span class="cov5" title="2">execCmd.Stderr = os.Stderr
+
+        if cmd.Background </span><span class="cov0" title="0">{
+                startBackgroundProcess(execCmd)
+
+                return true
+        }</span>
+
+        <span class="cov5" title="2">runForegroundProcess(execCmd)
+        return true</span>
+}
+
+func openOutputFile(filename string, appendMode bool) (*os.File, error) <span class="cov0" title="0">{
+        if appendMode </span><span class="cov0" title="0">{
+                file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600) //nolint:gosec
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to open file for append %s: %w", filename, err)
+                }</span>
+
+                <span class="cov0" title="0">return file, nil</span>
+        }
+
+        <span class="cov0" title="0">file, err := os.Create(filename) //nolint:gosec
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create file %s: %w", filename, err)
+        }</span>
+
+        <span class="cov0" title="0">return file, nil</span>
+}
+
+func startBackgroundProcess(execCmd *exec.Cmd) <span class="cov0" title="0">{
+        err := execCmd.Start()
+        if err != nil </span><span class="cov0" title="0">{
+                _, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+
+                return
+        }</span>
+
+        <span class="cov0" title="0">_, _ = fmt.Fprintf(os.Stdout, "[%d]\n", execCmd.Process.Pid)</span>
+}
+
+func runForegroundProcess(execCmd *exec.Cmd) <span class="cov5" title="2">{
+        err := execCmd.Run()
+        setExitStatus(err)
+
+        if err != nil </span><span class="cov1" title="1">{
+                var exitError *exec.ExitError
+                if !errors.As(err, &amp;exitError) </span><span class="cov1" title="1">{
+                        // Not an exit error, print the error message
+                        _, _ = fmt.Fprintf(os.Stderr, "dsh: %v\n", err)
+                }</span>
+                // Command failed, but continue processing (don't exit shell)
+        }
+}
+
+func executeMultiCommandPipeline() bool <span class="cov0" title="0">{
+        _, _ = fmt.Fprintf(os.Stderr, "dsh: multi-command pipelines not yet implemented\n")
+
+        return true
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Package lexer provides tokenization of shell input with quote and escape handling.
+package lexer
+
+import (
+        "errors"
+        "strings"
+)
+
+// TokenType represents different types of shell tokens.
+type TokenType int
+
+const (
+        // Word represents a command word or argument.
+        Word TokenType = iota
+        // Pipe represents the pipe operator |.
+        Pipe
+        // RedirectOut represents the output redirection operator &gt;.
+        RedirectOut
+        // RedirectIn represents the input redirection operator &lt;.
+        RedirectIn
+        // RedirectAppend represents the append redirection operator &gt;&gt;.
+        RedirectAppend
+        // Background represents the background operator &amp;.
+        Background
+        // Semicolon represents the command separator ;.
+        Semicolon
+        // EOF represents end of file.
+        EOF
+)
+
+// Token represents a lexical token with its type and value.
+type Token struct {
+        Type  TokenType
+        Value string
+}
+
+// Lexer tokenizes shell input.
+type Lexer struct {
+        input    string
+        position int
+        current  rune
+}
+
+var (
+        // ErrUnexpectedEOF indicates unexpected end of file in quoted string.
+        ErrUnexpectedEOF = errors.New("unexpected EOF in quoted string")
+        // ErrUnterminatedString indicates an unterminated quoted string.
+        ErrUnterminatedString = errors.New("unterminated quoted string")
+)
+
+// New creates a new lexer for the given input.
+func New(input string) *Lexer <span class="cov4" title="9">{
+        lexer := &amp;Lexer{
+                input:    input,
+                position: 0,
+                current:  0,
+        }
+        lexer.readChar()
+
+        return lexer
+}</span>
+
+// NextToken returns the next token from the input.
+func (lexer *Lexer) NextToken() Token <span class="cov7" title="34">{
+        lexer.skipWhitespace()
+
+        switch lexer.current </span>{
+        case 0:<span class="cov4" title="9">
+                return Token{Type: EOF, Value: ""}</span>
+        case '#':<span class="cov1" title="1">
+                lexer.skipComment()
+
+                return lexer.NextToken()</span>
+        case '|':<span class="cov0" title="0">
+                lexer.readChar()
+
+                return Token{Type: Pipe, Value: "|"}</span>
+        case ';':<span class="cov1" title="1">
+                lexer.readChar()
+
+                return Token{Type: Semicolon, Value: ";"}</span>
+        case '&amp;':<span class="cov1" title="1">
+                lexer.readChar()
+
+                return Token{Type: Background, Value: "&amp;"}</span>
+        case '&gt;':<span class="cov2" title="2">
+                if lexer.peekChar() == '&gt;' </span><span class="cov1" title="1">{
+                        lexer.readChar()
+                        lexer.readChar()
+
+                        return Token{Type: RedirectAppend, Value: "&gt;&gt;"}
+                }</span>
+                <span class="cov1" title="1">lexer.readChar()
+
+                return Token{Type: RedirectOut, Value: "&gt;"}</span>
+        case '&lt;':<span class="cov1" title="1">
+                lexer.readChar()
+
+                return Token{Type: RedirectIn, Value: "&lt;"}</span>
+        default:<span class="cov6" title="19">
+                word := lexer.readWord()
+
+                return Token{Type: Word, Value: word}</span>
+        }
+}
+
+func (lexer *Lexer) readChar() <span class="cov10" title="175">{
+        if lexer.position &gt;= len(lexer.input) </span><span class="cov4" title="9">{
+                lexer.current = 0 // EOF
+        }</span> else<span class="cov9" title="166"> {
+                lexer.current = rune(lexer.input[lexer.position])
+        }</span>
+        <span class="cov10" title="175">lexer.position++</span>
+}
+
+func (lexer *Lexer) peekChar() rune <span class="cov2" title="2">{
+        if lexer.position &gt;= len(lexer.input) </span><span class="cov0" title="0">{
+                return 0
+        }</span>
+
+        <span class="cov2" title="2">return rune(lexer.input[lexer.position])</span>
+}
+
+func (lexer *Lexer) skipWhitespace() <span class="cov7" title="34">{
+        for lexer.current == ' ' || lexer.current == '\t' || lexer.current == '\n' || lexer.current == '\r' </span><span class="cov6" title="26">{
+                lexer.readChar()
+        }</span>
+}
+
+func (lexer *Lexer) skipComment() <span class="cov1" title="1">{
+        for lexer.current != 0 &amp;&amp; lexer.current != '\n' </span><span class="cov6" title="19">{
+                lexer.readChar()
+        }</span>
+}
+
+func (lexer *Lexer) readQuotedString(quote rune) (string, error) <span class="cov2" title="2">{
+        var result strings.Builder
+        lexer.readChar() // skip opening quote
+
+        for lexer.current != 0 &amp;&amp; lexer.current != quote </span><span class="cov6" title="24">{
+                if quote == '"' &amp;&amp; lexer.current == '\\' </span><span class="cov0" title="0">{
+                        lexer.readChar()
+                        if lexer.current == 0 </span><span class="cov0" title="0">{
+                                return "", ErrUnexpectedEOF
+                        }</span>
+
+                        <span class="cov0" title="0">result.WriteRune(lexer.handleEscapeSequence())</span>
+                } else<span class="cov6" title="24"> {
+                        result.WriteRune(lexer.current)
+                }</span>
+                <span class="cov6" title="24">lexer.readChar()</span>
+        }
+
+        <span class="cov2" title="2">if lexer.current != quote </span><span class="cov0" title="0">{
+                return "", ErrUnterminatedString
+        }</span>
+        <span class="cov2" title="2">lexer.readChar() // skip closing quote
+
+        return result.String(), nil</span>
+}
+
+func (lexer *Lexer) handleEscapeSequence() rune <span class="cov0" title="0">{
+        switch lexer.current </span>{
+        case 'n':<span class="cov0" title="0">
+                return '\n'</span>
+        case 't':<span class="cov0" title="0">
+                return '\t'</span>
+        case 'r':<span class="cov0" title="0">
+                return '\r'</span>
+        case '\\':<span class="cov0" title="0">
+                return '\\'</span>
+        case '"':<span class="cov0" title="0">
+                return '"'</span>
+        case '$':<span class="cov0" title="0">
+                return '$'</span>
+        default:<span class="cov0" title="0">
+                // For unknown escape sequences, return both backslash and character
+                return lexer.current</span>
+        }
+}
+
+func (lexer *Lexer) readWord() string <span class="cov6" title="19">{
+        var result strings.Builder
+
+        for lexer.current != 0 &amp;&amp; !isWhitespace(lexer.current) &amp;&amp; !isSpecialChar(lexer.current) </span><span class="cov8" title="89">{
+                switch lexer.current </span>{
+                case '\'', '"':<span class="cov2" title="2">
+                        quoted, err := lexer.readQuotedString(lexer.current)
+                        if err != nil </span><span class="cov0" title="0">{
+                                result.WriteRune(lexer.current)
+                                lexer.readChar()
+                        }</span> else<span class="cov2" title="2"> {
+                                result.WriteString(quoted)
+                        }</span>
+                case '\\':<span class="cov0" title="0">
+                        lexer.readChar()
+                        if lexer.current != 0 </span><span class="cov0" title="0">{
+                                result.WriteRune(lexer.current)
+                                lexer.readChar()
+                        }</span>
+                default:<span class="cov8" title="87">
+                        result.WriteRune(lexer.current)
+                        lexer.readChar()</span>
+                }
+        }
+
+        <span class="cov6" title="19">return result.String()</span>
+}
+
+func isWhitespace(ch rune) bool <span class="cov9" title="103">{
+        return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+}</span>
+
+func isSpecialChar(ch rune) bool <span class="cov8" title="90">{
+        return ch == '|' || ch == '&gt;' || ch == '&lt;' || ch == ';' || ch == '&amp;'
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package parser
+
+import (
+        "os"
+        "os/user"
+        "strings"
+)
+
+// expandTilde expands tilde (~) in paths according to POSIX rules.
+func expandTilde(path string) string <span class="cov10" title="32">{
+        if !strings.HasPrefix(path, "~") </span><span class="cov9" title="26">{
+                return path
+        }</span>
+
+        // Handle ~ alone or ~/...
+        <span class="cov5" title="6">if path == "~" || strings.HasPrefix(path, "~/") </span><span class="cov3" title="3">{
+                home := os.Getenv("HOME")
+                if home == "" </span><span class="cov0" title="0">{
+                        return path // Return unchanged if HOME not set
+                }</span>
+                <span class="cov3" title="3">return strings.Replace(path, "~", home, 1)</span>
+        }
+
+        // Handle ~username or ~username/...
+        <span class="cov3" title="3">slashIndex := strings.Index(path, "/")
+        var username string
+        if slashIndex == -1 </span><span class="cov2" title="2">{
+                username = path[1:] // Everything after ~
+        }</span> else<span class="cov1" title="1"> {
+                username = path[1:slashIndex] // Between ~ and /
+        }</span>
+
+        <span class="cov3" title="3">u, err := user.Lookup(username)
+        if err != nil </span><span class="cov1" title="1">{
+                return path // Return unchanged if user not found
+        }</span>
+
+        <span class="cov2" title="2">return strings.Replace(path, "~"+username, u.HomeDir, 1)</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// Package parser converts tokens into command structures for execution.
+package parser
+
+import (
+        "errors"
+
+        "dsh/internal/lexer"
+)
+
+var (
+        // ErrExpectedCommandAfterPipe indicates missing command after pipe operator.
+        ErrExpectedCommandAfterPipe = errors.New("expected command after pipe")
+        // ErrExpectedFilenameAfterOut indicates missing filename after &gt; operator.
+        ErrExpectedFilenameAfterOut = errors.New("expected filename after &gt;")
+        // ErrExpectedFilenameAfterAppend indicates missing filename after &gt;&gt; operator.
+        ErrExpectedFilenameAfterAppend = errors.New("expected filename after &gt;&gt;")
+        // ErrExpectedFilenameAfterIn indicates missing filename after &lt; operator.
+        ErrExpectedFilenameAfterIn = errors.New("expected filename after &lt;")
+        // ErrNoCommand indicates no command was found in input.
+        ErrNoCommand = errors.New("no command found")
+        // ErrEmptyPipeline indicates an empty pipeline.
+        ErrEmptyPipeline = errors.New("empty pipeline")
+        // ErrNoTokens indicates no tokens to parse.
+        ErrNoTokens = errors.New("no tokens to parse")
+)
+
+// Command represents a single command with its arguments and redirections.
+type Command struct {
+        Args       []string
+        InputFile  string
+        OutputFile string
+        AppendMode bool
+        Background bool
+}
+
+// Pipeline represents a sequence of commands connected by pipes.
+type Pipeline struct {
+        Commands []*Command
+}
+
+// Parser parses tokens into command structures.
+type Parser struct {
+        lexer        *lexer.Lexer
+        currentToken lexer.Token
+        peekToken    lexer.Token
+}
+
+// New creates a new parser with the given lexer.
+func New(l *lexer.Lexer) *Parser <span class="cov5" title="8">{
+        parser := &amp;Parser{
+                lexer:        l,
+                currentToken: lexer.Token{Type: lexer.EOF, Value: ""},
+                peekToken:    lexer.Token{Type: lexer.EOF, Value: ""},
+        }
+        parser.nextToken()
+        parser.nextToken()
+
+        return parser
+}</span>
+
+// ParseCommandLine parses a complete command line into pipelines.
+func (parser *Parser) ParseCommandLine() ([]*Pipeline, error) <span class="cov5" title="8">{
+        var pipelines []*Pipeline
+
+        for parser.currentToken.Type != lexer.EOF </span><span class="cov5" title="8">{
+                pipeline, err := parser.parsePipeline()
+                if err != nil </span><span class="cov0" title="0">{
+                        if errors.Is(err, ErrEmptyPipeline) </span><span class="cov0" title="0">{
+                                // Skip empty pipelines, continue parsing
+                                if parser.currentToken.Type == lexer.Semicolon </span><span class="cov0" title="0">{
+                                        parser.nextToken()
+                                }</span>
+
+                                <span class="cov0" title="0">continue</span>
+                        }
+
+                        <span class="cov0" title="0">return nil, err</span>
+                }
+
+                <span class="cov5" title="8">if pipeline != nil </span><span class="cov5" title="8">{
+                        pipelines = append(pipelines, pipeline)
+                }</span>
+
+                <span class="cov5" title="8">if parser.currentToken.Type == lexer.Semicolon </span><span class="cov1" title="1">{
+                        parser.nextToken()
+                }</span>
+        }
+
+        <span class="cov5" title="8">return pipelines, nil</span>
+}
+
+func (parser *Parser) nextToken() <span class="cov10" title="48">{
+        parser.currentToken = parser.peekToken
+        parser.peekToken = parser.lexer.NextToken()
+}</span>
+
+func (parser *Parser) parsePipeline() (*Pipeline, error) <span class="cov5" title="8">{
+        pipeline := &amp;Pipeline{
+                Commands: []*Command{},
+        }
+
+        cmd, err := parser.parseCommand()
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, ErrNoTokens) </span><span class="cov0" title="0">{
+                        return nil, ErrEmptyPipeline // Use sentinel error instead of nil
+                }</span>
+
+                <span class="cov0" title="0">return nil, err</span>
+        }
+
+        <span class="cov5" title="8">if cmd == nil </span><span class="cov0" title="0">{
+                return nil, ErrEmptyPipeline // Use sentinel error instead of nil
+        }</span>
+
+        <span class="cov5" title="8">pipeline.Commands = append(pipeline.Commands, cmd)
+
+        for parser.currentToken.Type == lexer.Pipe </span><span class="cov1" title="1">{
+                parser.nextToken()
+
+                cmd, err := parser.parseCommand()
+                if err != nil </span><span class="cov0" title="0">{
+                        if errors.Is(err, ErrNoTokens) </span><span class="cov0" title="0">{
+                                return nil, ErrExpectedCommandAfterPipe
+                        }</span>
+
+                        <span class="cov0" title="0">return nil, err</span>
+                }
+
+                <span class="cov1" title="1">if cmd == nil </span><span class="cov0" title="0">{
+                        return nil, ErrExpectedCommandAfterPipe
+                }</span>
+
+                <span class="cov1" title="1">pipeline.Commands = append(pipeline.Commands, cmd)</span>
+        }
+
+        <span class="cov5" title="8">return pipeline, nil</span>
+}
+
+func (parser *Parser) parseCommand() (*Command, error) <span class="cov6" title="9">{
+        if parser.currentToken.Type != lexer.Word </span><span class="cov0" title="0">{
+                return nil, ErrNoTokens
+        }</span>
+
+        <span class="cov6" title="9">cmd := &amp;Command{
+                Args:       []string{},
+                InputFile:  "",
+                OutputFile: "",
+                AppendMode: false,
+                Background: false,
+        }
+
+        err := parser.processCommandTokens(cmd)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov6" title="9">if parser.currentToken.Type == lexer.Background </span><span class="cov2" title="2">{
+                cmd.Background = true
+                parser.nextToken()
+        }</span>
+
+        <span class="cov6" title="9">if len(cmd.Args) == 0 </span><span class="cov0" title="0">{
+                return nil, ErrNoCommand
+        }</span>
+
+        <span class="cov6" title="9">return cmd, nil</span>
+}
+
+func (parser *Parser) processCommandTokens(cmd *Command) error <span class="cov6" title="9">{
+        for parser.isCommandToken() </span><span class="cov8" title="23">{
+                switch parser.currentToken.Type </span>{
+                case lexer.Word:<span class="cov7" title="18">
+                        cmd.Args = append(cmd.Args, expandTilde(parser.currentToken.Value))
+                        parser.nextToken()</span>
+                case lexer.RedirectOut:<span class="cov2" title="2">
+                        err := parser.handleOutputRedirect(cmd, false)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                case lexer.RedirectAppend:<span class="cov1" title="1">
+                        err := parser.handleOutputRedirect(cmd, true)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                case lexer.RedirectIn:<span class="cov2" title="2">
+                        err := parser.handleInputRedirect(cmd)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                case lexer.Pipe, lexer.Background, lexer.Semicolon, lexer.EOF:<span class="cov0" title="0">
+                        return nil</span>
+                }
+        }
+
+        <span class="cov6" title="9">return nil</span>
+}
+
+func (parser *Parser) isCommandToken() bool <span class="cov9" title="32">{
+        return parser.currentToken.Type == lexer.Word ||
+                parser.currentToken.Type == lexer.RedirectOut ||
+                parser.currentToken.Type == lexer.RedirectIn ||
+                parser.currentToken.Type == lexer.RedirectAppend
+}</span>
+
+func (parser *Parser) handleOutputRedirect(cmd *Command, appendMode bool) error <span class="cov3" title="3">{
+        parser.nextToken()
+        if parser.currentToken.Type != lexer.Word </span><span class="cov0" title="0">{
+                if appendMode </span><span class="cov0" title="0">{
+                        return ErrExpectedFilenameAfterAppend
+                }</span>
+
+                <span class="cov0" title="0">return ErrExpectedFilenameAfterOut</span>
+        }
+
+        <span class="cov3" title="3">cmd.OutputFile = expandTilde(parser.currentToken.Value)
+        cmd.AppendMode = appendMode
+        parser.nextToken()
+
+        return nil</span>
+}
+
+func (parser *Parser) handleInputRedirect(cmd *Command) error <span class="cov2" title="2">{
+        parser.nextToken()
+        if parser.currentToken.Type != lexer.Word </span><span class="cov0" title="0">{
+                return ErrExpectedFilenameAfterIn
+        }</span>
+
+        <span class="cov2" title="2">cmd.InputFile = expandTilde(parser.currentToken.Value)
+        parser.nextToken()
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package readline
+
+import (
+        "strings"
+
+        "dsh/internal/terminal"
+)
+
+// CursorTracker interface for terminals that can track cursor position.
+type CursorTracker interface {
+        GetCursorPosition() (int, int)
+}
+
+// TemporaryBuffer represents a temporary screen buffer for menus, completions, etc.
+type TemporaryBuffer struct {
+        ID        string
+        content   strings.Builder
+        linesUsed int
+        startX    int
+        startY    int
+        active    bool
+}
+
+// WriteString writes content to the buffer.
+func (tb *TemporaryBuffer) WriteString(s string) <span class="cov2" title="2">{
+        tb.content.WriteString(s)
+        // Count newlines to track lines used
+        tb.linesUsed += strings.Count(s, "\n")
+}</span>
+
+// GetContent returns the buffer content.
+func (tb *TemporaryBuffer) GetContent() string <span class="cov2" title="2">{
+        return tb.content.String()
+}</span>
+
+// Clear clears the buffer content.
+func (tb *TemporaryBuffer) Clear() <span class="cov0" title="0">{
+        tb.content.Reset()
+        tb.linesUsed = 0
+}</span>
+
+// BufferManager manages temporary screen buffers and cursor state.
+type BufferManager struct {
+        terminal      terminal.TerminalInterface
+        activeBuffers map[string]*TemporaryBuffer
+        savedCursor   bool
+}
+
+// NewBufferManager creates a new buffer manager.
+func NewBufferManager(term terminal.TerminalInterface) *BufferManager <span class="cov10" title="25">{
+        return &amp;BufferManager{
+                terminal:      term,
+                activeBuffers: make(map[string]*TemporaryBuffer),
+                savedCursor:   false,
+        }
+}</span>
+
+// SaveState saves the current cursor position and terminal state.
+func (bm *BufferManager) SaveState() <span class="cov6" title="6">{
+        if !bm.savedCursor </span><span class="cov6" title="6">{
+                bm.terminal.SaveCursor()
+                bm.savedCursor = true
+        }</span>
+}
+
+// RestoreState restores the saved cursor position and terminal state.
+func (bm *BufferManager) RestoreState() <span class="cov4" title="4">{
+        if bm.savedCursor </span><span class="cov4" title="3">{
+                bm.terminal.RestoreCursor()
+                bm.savedCursor = false
+        }</span>
+}
+
+// CreateTemporaryBuffer creates a new temporary buffer.
+func (bm *BufferManager) CreateTemporaryBuffer(id string) *TemporaryBuffer <span class="cov7" title="11">{
+        buffer := &amp;TemporaryBuffer{
+                ID:     id,
+                active: true,
+                startX: 0, // Default position
+                startY: 0, // Default position
+        }
+
+        bm.activeBuffers[id] = buffer
+        return buffer
+}</span>
+
+// CreateTemporaryBufferAtCursor creates a new temporary buffer at the current cursor position.
+func (bm *BufferManager) CreateTemporaryBufferAtCursor(id string) *TemporaryBuffer <span class="cov4" title="4">{
+        buffer := &amp;TemporaryBuffer{
+                ID:     id,
+                active: true,
+                startX: 0,
+                startY: 0,
+        }
+
+        // If terminal supports cursor tracking, get current position
+        if tracker, ok := bm.terminal.(CursorTracker); ok </span><span class="cov4" title="4">{
+                buffer.startX, buffer.startY = tracker.GetCursorPosition()
+        }</span>
+
+        <span class="cov4" title="4">bm.activeBuffers[id] = buffer
+        return buffer</span>
+}
+
+// CreateTemporaryBufferAfterCursor creates a buffer positioned after the current cursor.
+func (bm *BufferManager) CreateTemporaryBufferAfterCursor(id string) *TemporaryBuffer <span class="cov0" title="0">{
+        buffer := &amp;TemporaryBuffer{
+                ID:     id,
+                active: true,
+                startX: 0, // Always start at beginning of line
+        }
+
+        // Position buffer on the line after current cursor
+        if tracker, ok := bm.terminal.(CursorTracker); ok </span><span class="cov0" title="0">{
+                _, currentY := tracker.GetCursorPosition()
+                buffer.startY = currentY + 1
+        }</span> else<span class="cov0" title="0"> {
+                buffer.startY = 1 // Default to line 1 if no tracking
+        }</span>
+
+        <span class="cov0" title="0">bm.activeBuffers[id] = buffer
+        return buffer</span>
+}
+
+// RenderBuffer renders a temporary buffer to the terminal.
+func (bm *BufferManager) RenderBuffer(buffer *TemporaryBuffer) <span class="cov2" title="2">{
+        if buffer == nil || !buffer.active </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Move to buffer start position (don't clear - just write over)
+        <span class="cov2" title="2">bm.terminal.MoveCursor(buffer.startX, buffer.startY)
+
+        content := buffer.GetContent()
+        if content != "" </span><span class="cov2" title="2">{
+                bm.terminal.WriteString(content)
+        }</span>
+}
+
+// ClearBuffer clears a temporary buffer from the screen.
+func (bm *BufferManager) ClearBuffer(buffer *TemporaryBuffer) <span class="cov6" title="6">{
+        if buffer == nil || !buffer.active </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Move cursor to buffer start position
+        <span class="cov6" title="6">bm.terminal.MoveCursor(buffer.startX, buffer.startY)
+
+        // Clear only the lines used by this buffer
+        for i := 0; i &lt;= buffer.linesUsed; i++ </span><span class="cov8" title="17">{
+                bm.terminal.ClearLine()
+                if i &lt; buffer.linesUsed </span><span class="cov7" title="11">{
+                        bm.terminal.MoveCursor(0, buffer.startY+i+1)
+                }</span>
+        }
+
+        // Mark buffer as inactive
+        <span class="cov6" title="6">buffer.active = false
+        delete(bm.activeBuffers, buffer.ID)</span>
+}
+
+// CleanupAll clears all active buffers and restores state.
+func (bm *BufferManager) CleanupAll() <span class="cov4" title="3">{
+        // Clear all active buffers
+        for _, buffer := range bm.activeBuffers </span><span class="cov4" title="4">{
+                if buffer.active </span><span class="cov4" title="4">{
+                        bm.ClearBuffer(buffer)
+                }</span>
+        }
+
+        // Clear the map
+        <span class="cov4" title="3">bm.activeBuffers = make(map[string]*TemporaryBuffer)
+
+        // Restore cursor state
+        bm.RestoreState()</span>
+}
+
+// GetBuffer retrieves a buffer by ID.
+func (bm *BufferManager) GetBuffer(id string) *TemporaryBuffer <span class="cov0" title="0">{
+        return bm.activeBuffers[id]
+}</span>
+
+// HasActiveBuffers returns true if there are any active buffers.
+func (bm *BufferManager) HasActiveBuffers() bool <span class="cov4" title="4">{
+        return len(bm.activeBuffers) &gt; 0
+}</span>
+
+// ClearAt clears text at specific position (for selective redraw)
+func (bm *BufferManager) ClearAt(line, col int, text string) error <span class="cov0" title="0">{
+        bm.terminal.MoveCursor(col, line)
+        // Clear the text by overwriting with spaces
+        spaces := strings.Repeat(" ", len(text))
+        bm.terminal.WriteString(spaces)
+        return nil
+}</span>
+
+// DrawAt draws text at specific position with optional highlighting
+func (bm *BufferManager) DrawAt(line, col int, text string, highlight bool) error <span class="cov0" title="0">{
+        bm.terminal.MoveCursor(col, line)
+        if highlight </span><span class="cov0" title="0">{
+                bm.terminal.WriteString("\033[7m" + text + "\033[0m") // Reverse video
+        }</span> else<span class="cov0" title="0"> {
+                bm.terminal.WriteString(text)
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package readline
+
+import (
+        "os"
+        "os/user"
+        "path/filepath"
+        "sort"
+        "strings"
+
+        "dsh/internal/terminal"
+)
+
+// Completion handles tab completion for commands and files.
+type Completion struct {
+        commands []string
+}
+
+// NewCompletion creates a new completion instance.
+func NewCompletion() *Completion <span class="cov3" title="20">{
+        c := &amp;Completion{
+                commands: make([]string, 0),
+        }
+        c.loadCommands()
+        return c
+}</span>
+
+// CompletionItem represents a completion with its type.
+type CompletionItem struct {
+        Text string
+        Type string // "builtin", "command", "file", "directory"
+}
+
+// Complete performs tab completion.
+func (c *Completion) Complete(input string, _ int) ([]CompletionItem, string) <span class="cov2" title="13">{
+        if input == "" </span><span class="cov1" title="1">{
+                return nil, ""
+        }</span>
+
+        // Split input into words
+        <span class="cov2" title="12">words := strings.Fields(input)
+        if len(words) == 0 </span><span class="cov0" title="0">{
+                return nil, ""
+        }</span>
+
+        // Determine what we're completing
+        <span class="cov2" title="12">if len(words) == 1 &amp;&amp; !strings.HasSuffix(input, " ") </span><span class="cov2" title="10">{
+                // Completing command name
+                return c.completeCommand(words[0])
+        }</span>
+
+        // Completing file/directory name
+        <span class="cov1" title="2">lastWord := ""
+        if len(words) &gt; 0 </span><span class="cov1" title="2">{
+                if strings.HasSuffix(input, " ") </span><span class="cov1" title="1">{
+                        lastWord = ""
+                }</span> else<span class="cov1" title="1"> {
+                        lastWord = words[len(words)-1]
+                }</span>
+        }
+
+        <span class="cov1" title="2">return c.completeFile(lastWord)</span>
+}
+
+// loadCommands loads available commands from PATH and builtins.
+func (c *Completion) loadCommands() <span class="cov3" title="20">{
+        var commands []string
+
+        // Add builtin commands
+        builtinNames := []string{"cd", "pwd", "help", "exit", "todo"}
+        commands = append(commands, builtinNames...)
+
+        // Add commands from PATH
+        pathCommands := c.getPathCommands()
+        commands = append(commands, pathCommands...)
+
+        // Sort and deduplicate
+        sort.Strings(commands)
+        c.commands = c.deduplicate(commands)
+}</span>
+
+// getPathCommands gets executable commands from PATH.
+func (c *Completion) getPathCommands() []string <span class="cov3" title="20">{
+        var commands []string
+        pathEnv := os.Getenv("PATH")
+        if pathEnv == "" </span><span class="cov0" title="0">{
+                return commands
+        }</span>
+
+        <span class="cov3" title="20">paths := strings.Split(pathEnv, ":")
+        for _, path := range paths </span><span class="cov5" title="580">{
+                if path == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov5" title="580">entries, err := os.ReadDir(path)
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov5" title="580">for _, entry := range entries </span><span class="cov10" title="186180">{
+                        if !entry.IsDir() </span><span class="cov9" title="186120">{
+                                info, err := entry.Info()
+                                if err == nil &amp;&amp; info.Mode()&amp;0111 != 0 </span><span class="cov9" title="185920">{ // Executable
+                                        commands = append(commands, entry.Name())
+                                }</span>
+                        }
+                }
+        }
+
+        <span class="cov3" title="20">return commands</span>
+}
+
+// completeCommand completes command names.
+func (c *Completion) completeCommand(prefix string) ([]CompletionItem, string) <span class="cov2" title="10">{
+        var matches []CompletionItem
+        builtins := []string{"cd", "pwd", "help", "exit", "todo"}
+
+        // Add builtin matches
+        for _, cmd := range builtins </span><span class="cov3" title="50">{
+                if strings.HasPrefix(cmd, prefix) </span><span class="cov2" title="7">{
+                        matches = append(matches, CompletionItem{Text: cmd, Type: itemTypeBuiltin})
+                }</span>
+        }
+
+        // Add command matches
+        <span class="cov2" title="10">for _, cmd := range c.commands </span><span class="cov8" title="33170">{
+                if strings.HasPrefix(cmd, prefix) </span><span class="cov6" title="887">{
+                        // Skip if already added as builtin
+                        isBuiltin := false
+                        for _, builtin := range builtins </span><span class="cov7" title="4425">{
+                                if cmd == builtin </span><span class="cov2" title="7">{
+                                        isBuiltin = true
+                                        break</span>
+                                }
+                        }
+                        <span class="cov6" title="887">if !isBuiltin </span><span class="cov6" title="880">{
+                                matches = append(matches, CompletionItem{Text: cmd, Type: itemTypeCommand})
+                        }</span>
+                }
+        }
+
+        <span class="cov2" title="10">if len(matches) == 1 </span><span class="cov1" title="3">{
+                return matches, matches[0].Text[len(prefix):]
+        }</span>
+
+        <span class="cov2" title="7">return matches, c.commonPrefixItems(matches, prefix)</span>
+}
+
+// completeFile completes file and directory names.
+func (c *Completion) completeFile(prefix string) ([]CompletionItem, string) <span class="cov1" title="2">{
+        // Expand tilde in prefix
+        expandedPrefix := expandTilde(prefix)
+
+        dir := "."
+        filename := expandedPrefix
+
+        if strings.Contains(expandedPrefix, "/") </span><span class="cov0" title="0">{
+                // Handle trailing slash case - show all files in directory
+                if strings.HasSuffix(expandedPrefix, "/") </span><span class="cov0" title="0">{
+                        dir = expandedPrefix
+                        filename = ""
+                }</span> else<span class="cov0" title="0"> {
+                        // Partial path - get directory and filename to match
+                        dir = filepath.Dir(expandedPrefix)
+                        filename = filepath.Base(expandedPrefix)
+                }</span>
+        }
+
+        <span class="cov1" title="2">entries, err := os.ReadDir(dir)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, ""
+        }</span>
+
+        <span class="cov1" title="2">var matches []CompletionItem
+        for _, entry := range entries </span><span class="cov3" title="25">{
+                name := entry.Name()
+                // Skip hidden files unless explicitly requested
+                if strings.HasPrefix(name, ".") &amp;&amp; !strings.HasPrefix(filename, ".") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov3" title="25">if strings.HasPrefix(name, filename) </span><span class="cov3" title="25">{
+                        // For tilde expansion, we need to preserve the original tilde in the display
+                        var displayText string
+                        if dir == "." </span><span class="cov3" title="25">{
+                                displayText = name
+                        }</span> else<span class="cov0" title="0"> {
+                                // If we expanded a tilde, keep the tilde format in display
+                                if strings.HasPrefix(prefix, "~") &amp;&amp; expandedPrefix != prefix </span><span class="cov0" title="0">{
+                                        // Special case: if prefix is just "~", show as "~/"
+                                        if prefix == "~" &amp;&amp; name == "" </span><span class="cov0" title="0">{
+                                                displayText = "~"
+                                        }</span> else<span class="cov0" title="0"> {
+                                                // Replace the expanded home directory back with tilde
+                                                homeDir := os.Getenv("HOME")
+                                                if homeDir != "" &amp;&amp; strings.HasPrefix(dir, homeDir) </span><span class="cov0" title="0">{
+                                                        tildeDir := strings.Replace(dir, homeDir, "~", 1)
+                                                        if name == "" </span><span class="cov0" title="0">{
+                                                                displayText = tildeDir
+                                                        }</span> else<span class="cov0" title="0"> {
+                                                                displayText = filepath.Join(tildeDir, name)
+                                                        }</span>
+                                                } else<span class="cov0" title="0"> {
+                                                        displayText = filepath.Join(dir, name)
+                                                }</span>
+                                        }
+                                } else<span class="cov0" title="0"> {
+                                        // Replace the filename part with the matched name
+                                        displayText = filepath.Join(filepath.Dir(expandedPrefix), name)
+                                }</span>
+                        }
+
+                        <span class="cov3" title="25">if entry.IsDir() </span><span class="cov1" title="1">{
+                                matches = append(matches, CompletionItem{Text: displayText + "/", Type: itemTypeDirectory})
+                        }</span> else<span class="cov3" title="24"> {
+                                matches = append(matches, CompletionItem{Text: displayText, Type: "file"})
+                        }</span>
+                }
+        }
+
+        <span class="cov1" title="2">if len(matches) == 1 </span><span class="cov0" title="0">{
+                // Special handling for tilde expansion
+                if strings.HasPrefix(prefix, "~") &amp;&amp; expandedPrefix != prefix </span><span class="cov0" title="0">{
+                        // If user typed just "~", complete to "~/"
+                        if prefix == "~" </span><span class="cov0" title="0">{
+                                return matches, "/"
+                        }</span>
+                }
+                // Calculate completion from the original prefix
+                <span class="cov0" title="0">completion := matches[0].Text[len(prefix):]
+                return matches, completion</span>
+        }
+
+        <span class="cov1" title="2">return matches, c.commonPrefixItems(matches, prefix)</span>
+}
+
+// commonPrefixItems finds the common prefix of CompletionItems.
+func (c *Completion) commonPrefixItems(matches []CompletionItem, current string) string <span class="cov2" title="9">{
+        if len(matches) == 0 </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov2" title="9">if len(matches) == 1 </span><span class="cov0" title="0">{
+                return matches[0].Text[len(current):]
+        }</span>
+
+        // Find common prefix among all matches
+        <span class="cov2" title="9">prefix := matches[0].Text
+        for _, match := range matches[1:] </span><span class="cov6" title="900">{
+                for i := 0; i &lt; len(prefix) &amp;&amp; i &lt; len(match.Text); i++ </span><span class="cov6" title="905">{
+                        if prefix[i] != match.Text[i] </span><span class="cov2" title="10">{
+                                prefix = prefix[:i]
+                                break</span>
+                        }
+                }
+        }
+
+        // Return the part that extends beyond the current input
+        <span class="cov2" title="9">if len(prefix) &gt; len(current) </span><span class="cov0" title="0">{
+                return prefix[len(current):]
+        }</span>
+
+        <span class="cov2" title="9">return ""</span>
+}
+
+// expandTilde expands tilde (~) in paths according to POSIX rules.
+func expandTilde(path string) string <span class="cov2" title="8">{
+        if !strings.HasPrefix(path, "~") </span><span class="cov2" title="5">{
+                return path
+        }</span>
+
+        // Handle ~ alone or ~/...
+        <span class="cov1" title="3">if path == "~" || strings.HasPrefix(path, "~/") </span><span class="cov1" title="3">{
+                home := os.Getenv("HOME")
+                if home == "" </span><span class="cov0" title="0">{
+                        return path // Return unchanged if HOME not set
+                }</span>
+                <span class="cov1" title="3">return strings.Replace(path, "~", home, 1)</span>
+        }
+
+        // Handle ~username or ~username/...
+        <span class="cov0" title="0">slashIndex := strings.Index(path, "/")
+        var username string
+        if slashIndex == -1 </span><span class="cov0" title="0">{
+                username = path[1:] // Everything after ~
+        }</span> else<span class="cov0" title="0"> {
+                username = path[1:slashIndex] // Between ~ and /
+        }</span>
+
+        <span class="cov0" title="0">u, err := user.Lookup(username)
+        if err != nil </span><span class="cov0" title="0">{
+                return path // Return unchanged if user not found
+        }</span>
+
+        <span class="cov0" title="0">return strings.Replace(path, "~"+username, u.HomeDir, 1)</span>
+}
+
+// CompletionMenu represents the tab completion menu.
+type CompletionMenu struct {
+        items       []CompletionItem
+        selected    int
+        oldSelected int // Track previous selection for selective redraw
+        active      bool
+        renderer    *CompletionRenderer // Use zsh-style renderer
+}
+
+// NewCompletionMenu creates a new completion menu.
+func NewCompletionMenu(term terminal.TerminalInterface) *CompletionMenu <span class="cov3" title="24">{
+        return &amp;CompletionMenu{
+                items:       make([]CompletionItem, 0),
+                selected:    0,
+                oldSelected: -1,
+                active:      false,
+                renderer:    NewCompletionRenderer(term),
+        }
+}</span>
+
+// Show displays the completion menu with given items.
+func (cm *CompletionMenu) Show(items []CompletionItem) <span class="cov2" title="5">{
+        cm.items = items
+        cm.selected = 0
+        cm.active = true
+}</span>
+
+// IsActive returns whether the menu is currently active.
+func (cm *CompletionMenu) IsActive() bool <span class="cov3" title="16">{
+        return cm.active
+}</span>
+
+// GetSelected returns the currently selected item.
+func (cm *CompletionMenu) GetSelected() (CompletionItem, bool) <span class="cov1" title="3">{
+        if !cm.active || cm.selected &gt;= len(cm.items) </span><span class="cov0" title="0">{
+                return CompletionItem{}, false
+        }</span>
+        <span class="cov1" title="3">return cm.items[cm.selected], true</span>
+}
+
+// GetSelectedIndex returns the currently selected index.
+func (cm *CompletionMenu) GetSelectedIndex() int <span class="cov0" title="0">{
+        return cm.selected
+}</span>
+
+// UpdateSelection updates only the selection highlighting without full re-render.
+func (cm *CompletionMenu) UpdateSelection(oldSelected, newSelected int) <span class="cov0" title="0">{
+        if !cm.active </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">cm.renderer.UpdateSelection(cm.items, oldSelected, newSelected)</span>
+}
+
+// UpdateSelectionOnly updates just the selection highlighting efficiently.
+func (cm *CompletionMenu) UpdateSelectionOnly() <span class="cov1" title="2">{
+        if !cm.active </span><span class="cov0" title="0">{
+                return
+        }</span>
+        // Only update the visual selection, don't re-render entire menu
+        <span class="cov1" title="2">cm.renderer.UpdateSelectionHighlight(cm.oldSelected, cm.selected)
+        cm.oldSelected = cm.selected</span>
+}
+
+// Next moves to the next item.
+func (cm *CompletionMenu) Next() <span class="cov1" title="2">{
+        if len(cm.items) &gt; 0 </span><span class="cov1" title="2">{
+                newPos := (cm.selected + 1) % len(cm.items)
+                cm.updateSelection(newPos)
+        }</span>
+}
+
+// Prev moves to the previous item.
+func (cm *CompletionMenu) Prev() <span class="cov0" title="0">{
+        if len(cm.items) &gt; 0 </span><span class="cov0" title="0">{
+                newPos := (cm.selected - 1 + len(cm.items)) % len(cm.items)
+                cm.updateSelection(newPos)
+        }</span>
+}
+
+// Render renders the completion menu using zsh-style video buffer system.
+func (cm *CompletionMenu) Render(bm *BufferManager, term terminal.TerminalInterface) <span class="cov2" title="5">{
+        if !cm.active || len(cm.items) == 0 </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Create a temporary buffer for the completion menu
+        <span class="cov2" title="5">buffer := bm.CreateTemporaryBuffer("completion_menu")
+        if buffer != nil </span><span class="cov2" title="5">{
+                // Use the buffer manager for proper cleanup and cursor management
+                bm.SaveState()
+        }</span>
+
+        <span class="cov2" title="5">cm.renderer.ShowCompletion(cm.items, cm.selected)</span>
+}
+
+// deduplicate removes duplicate strings.
+func (c *Completion) deduplicate(strs []string) []string <span class="cov3" title="20">{
+        seen := make(map[string]bool)
+        var result []string
+
+        for _, str := range strs </span><span class="cov9" title="186020">{
+                if !seen[str] </span><span class="cov9" title="66340">{
+                        seen[str] = true
+                        result = append(result, str)
+                }</span>
+        }
+
+        <span class="cov3" title="20">return result</span>
+}
+
+// updateSelection changes selection and triggers selective redraw using zsh-style approach
+func (cm *CompletionMenu) updateSelection(newPos int) <span class="cov1" title="2">{
+        if newPos == cm.selected </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov1" title="2">cm.renderer.UpdateSelection(cm.items, cm.selected, newPos)
+        cm.oldSelected = cm.selected
+        cm.selected = newPos</span>
+}
+
+// Hide hides the completion menu.
+func (cm *CompletionMenu) Hide() <span class="cov1" title="2">{
+        cm.active = false
+        cm.items = nil
+        cm.renderer.HideCompletion()
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package readline
+
+import (
+        "fmt"
+        "strings"
+
+        "dsh/internal/terminal"
+)
+
+// CompletionRenderer handles completion display using zsh-style video buffers
+type CompletionRenderer struct {
+        videoBuf     *VideoBuffer
+        terminal     terminal.TerminalInterface
+        savedCursorX int
+        savedCursorY int
+        menuStartY   int
+        menuLines    int
+        active       bool
+        lastItems    []CompletionItem // Store items for redraw
+}
+
+// NewCompletionRenderer creates a new completion renderer
+func NewCompletionRenderer(term terminal.TerminalInterface) *CompletionRenderer <span class="cov6" title="24">{
+        return &amp;CompletionRenderer{
+                videoBuf: NewVideoBuffer(term),
+                terminal: term,
+        }
+}</span>
+
+// ShowCompletion displays completion menu with minimal rendering
+func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected int) <span class="cov3" title="5">{
+        if len(items) == 0 </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Store items for redraw
+        <span class="cov3" title="5">cr.lastItems = items
+
+        // Save cursor and move to next line
+        cr.terminal.WriteString("\033[s") // Save cursor
+        cr.terminal.WriteString("\r\n")   // New line
+
+        // Simple menu rendering - just show items in columns
+        maxItems := 10 // Limit items to prevent excessive output
+        if len(items) &gt; maxItems </span><span class="cov3" title="5">{
+                items = items[:maxItems]
+        }</span>
+
+        <span class="cov3" title="5">cols := 2
+        for i, item := range items </span><span class="cov7" title="50">{
+                if i &gt; 0 &amp;&amp; i%cols == 0 </span><span class="cov5" title="20">{
+                        cr.terminal.WriteString("\r\n")
+                }</span>
+
+                // Highlight selected item
+                <span class="cov7" title="50">if i == selected </span><span class="cov3" title="5">{
+                        cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
+                }</span> else<span class="cov7" title="45"> {
+                        cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
+                }</span>
+
+                <span class="cov7" title="50">if i%cols != cols-1 </span><span class="cov6" title="25">{
+                        cr.terminal.WriteString("  ")
+                }</span>
+        }
+
+        <span class="cov3" title="5">cr.terminal.WriteString("\r\n")
+        cr.active = true</span>
+}
+
+// UpdateSelection updates the selected item (like zsh's singledraw)
+func (cr *CompletionRenderer) UpdateSelection(items []CompletionItem, oldSelected, newSelected int) <span class="cov2" title="2">{
+        if !cr.active || oldSelected == newSelected </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Calculate layout (same as ShowCompletion)
+        <span class="cov2" title="2">maxWidth := 0
+        for _, item := range items </span><span class="cov10" title="236">{
+                if len(item.Text) &gt; maxWidth </span><span class="cov5" title="14">{
+                        maxWidth = len(item.Text)
+                }</span>
+        }
+
+        <span class="cov2" title="2">itemWidth := maxWidth + 2
+        cols := cr.videoBuf.width / itemWidth
+        if cols &lt; 1 </span><span class="cov0" title="0">{
+                cols = 1
+        }</span>
+
+        // Update old selection (remove highlight)
+        <span class="cov2" title="2">if oldSelected &gt;= 0 &amp;&amp; oldSelected &lt; len(items) </span><span class="cov2" title="2">{
+                cr.updateItem(items[oldSelected], oldSelected, cols, itemWidth, false)
+        }</span>
+
+        // Update new selection (add highlight)
+        <span class="cov2" title="2">if newSelected &gt;= 0 &amp;&amp; newSelected &lt; len(items) </span><span class="cov2" title="2">{
+                cr.updateItem(items[newSelected], newSelected, cols, itemWidth, true)
+        }</span>
+
+        // Refresh only changed areas
+        <span class="cov2" title="2">cr.refreshMenuArea()
+
+        // Restore cursor
+        cr.terminal.MoveCursor(cr.savedCursorX, cr.savedCursorY)</span>
+}
+
+// updateItem updates a single completion item in the video buffer
+func (cr *CompletionRenderer) updateItem(item CompletionItem, index, cols, itemWidth int, selected bool) <span class="cov3" title="4">{
+        row := index / cols
+        col := index % cols
+
+        y := cr.menuStartY + row
+        x := col * itemWidth
+
+        if y &gt;= cr.videoBuf.height </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Determine attributes
+        <span class="cov3" title="4">attr := 0
+        if selected </span><span class="cov2" title="2">{
+                attr = 1 // Highlighted
+        }</span> else<span class="cov2" title="2"> {
+                switch item.Type </span>{
+                case "command":<span class="cov0" title="0">
+                        attr = 2</span>
+                case "directory":<span class="cov0" title="0">
+                        attr = 3</span>
+                case "builtin":<span class="cov2" title="2">
+                        attr = 4</span>
+                }
+        }
+
+        // Update video buffer
+        <span class="cov3" title="4">text := item.Text + strings.Repeat(" ", itemWidth-len(item.Text))
+        for i, char := range text </span><span class="cov9" title="156">{
+                if x+i &lt; cr.videoBuf.width </span><span class="cov9" title="156">{
+                        cr.videoBuf.newBuf[y][x+i] = VideoElement{Char: char, Attr: attr}
+                }</span>
+        }
+}
+
+// refreshMenuArea refreshes only the menu area (optimized like zsh)
+func (cr *CompletionRenderer) refreshMenuArea() <span class="cov2" title="2">{
+        for y := cr.menuStartY; y &lt; cr.menuStartY+cr.menuLines &amp;&amp; y &lt; cr.videoBuf.height; y++ </span><span class="cov0" title="0">{
+                cr.videoBuf.refreshLine(y)
+        }</span>
+        <span class="cov2" title="2">cr.videoBuf.swapBuffers()</span>
+}
+
+// HideCompletion clears the completion menu
+func (cr *CompletionRenderer) HideCompletion() <span class="cov2" title="2">{
+        cr.active = false
+}</span>
+
+// IsActive returns whether completion menu is currently active
+func (cr *CompletionRenderer) IsActive() bool <span class="cov0" title="0">{
+        return cr.active
+}</span>
+
+// UpdateSelectionHighlight updates only the selection highlighting efficiently
+func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected int) <span class="cov2" title="2">{
+        if !cr.active || cr.lastItems == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Clear from cursor and redraw menu with new selection
+        <span class="cov2" title="2">cr.terminal.WriteString("\033[u") // Restore cursor
+        cr.terminal.WriteString("\033[J") // Clear from cursor to end
+        cr.terminal.WriteString("\033[s") // Save cursor again for next time
+        cr.terminal.WriteString("\r\n")   // New line
+
+        // Calculate which page of items to show based on selection
+        maxItems := 10
+        pageStart := (newSelected / maxItems) * maxItems
+        pageEnd := pageStart + maxItems
+        if pageEnd &gt; len(cr.lastItems) </span><span class="cov0" title="0">{
+                pageEnd = len(cr.lastItems)
+        }</span>
+
+        // Show the correct page of items
+        <span class="cov2" title="2">pageItems := cr.lastItems[pageStart:pageEnd]
+        cols := 2
+
+        for i, item := range pageItems </span><span class="cov5" title="20">{
+                if i &gt; 0 &amp;&amp; i%cols == 0 </span><span class="cov4" title="8">{
+                        cr.terminal.WriteString("\r\n")
+                }</span>
+
+                // Highlight selected item (adjust index for page)
+                <span class="cov5" title="20">globalIndex := pageStart + i
+                if globalIndex == newSelected </span><span class="cov2" title="2">{
+                        cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
+                }</span> else<span class="cov5" title="18"> {
+                        cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
+                }</span>
+
+                <span class="cov5" title="20">if i%cols != cols-1 </span><span class="cov4" title="10">{
+                        cr.terminal.WriteString("  ")
+                }</span>
+        }
+
+        <span class="cov2" title="2">cr.terminal.WriteString("\r\n")</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package readline
+
+// Movement and editing functions.
+func (r *Readline) moveCursorLeft() <span class="cov8" title="21">{
+        if r.cursor &gt; 0 </span><span class="cov8" title="20">{
+                r.cursor--
+                if r.terminal != nil </span><span class="cov8" title="20">{
+                        r.terminal.WriteString("\b")
+                }</span>
+        }
+}
+
+func (r *Readline) moveCursorRight() <span class="cov10" title="32">{
+        if r.cursor &lt; len(r.buffer) </span><span class="cov9" title="31">{
+                if r.terminal != nil </span><span class="cov9" title="31">{
+                        r.terminal.WriteString(string(r.buffer[r.cursor]))
+                }</span>
+                <span class="cov9" title="31">r.cursor++</span>
+        }
+}
+
+func (r *Readline) moveCursorToStart() <span class="cov2" title="2">{
+        for r.cursor &gt; 0 </span><span class="cov7" title="11">{
+                r.moveCursorLeft()
+        }</span>
+}
+
+func (r *Readline) moveCursorToEnd() <span class="cov2" title="2">{
+        for r.cursor &lt; len(r.buffer) </span><span class="cov8" title="16">{
+                r.moveCursorRight()
+        }</span>
+}
+
+func (r *Readline) setCursorPosition() <span class="cov7" title="14">{
+        if r.terminal == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        // Move cursor to correct position using ANSI escape sequences
+        <span class="cov7" title="14">promptLen := len(r.prompt)
+        totalPos := promptLen + r.cursor + 1
+        r.terminal.Printf("\033[%dG", totalPos)</span>
+}
+
+// Word movement.
+func (r *Readline) moveWordForward() <span class="cov2" title="2">{
+        for r.cursor &lt; len(r.buffer) &amp;&amp; r.buffer[r.cursor] != ' ' </span><span class="cov6" title="10">{
+                r.moveCursorRight()
+        }</span>
+        <span class="cov2" title="2">for r.cursor &lt; len(r.buffer) &amp;&amp; r.buffer[r.cursor] == ' ' </span><span class="cov2" title="2">{
+                r.moveCursorRight()
+        }</span>
+}
+
+func (r *Readline) moveWordBackward() <span class="cov1" title="1">{
+        if r.cursor == 0 </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Move back one position first
+        <span class="cov1" title="1">r.moveCursorLeft()
+
+        // Skip spaces
+        for r.cursor &gt; 0 &amp;&amp; r.buffer[r.cursor] == ' ' </span><span class="cov1" title="1">{
+                r.moveCursorLeft()
+        }</span>
+
+        // Move to start of word
+        <span class="cov1" title="1">for r.cursor &gt; 0 &amp;&amp; r.buffer[r.cursor-1] != ' ' </span><span class="cov4" title="4">{
+                r.moveCursorLeft()
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package readline
+
+import (
+        "errors"
+        "strings"
+
+        "dsh/internal/terminal"
+        "github.com/sahilm/fuzzy"
+)
+
+var (
+        // ErrNoSelection indicates no item was selected during fuzzy search.
+        ErrNoSelection = errors.New("no selection")
+        // ErrCancelled indicates the fuzzy search was cancelled by user.
+        ErrCancelled = errors.New("cancelled")
+)
+
+// CustomFzf implements a custom fzf-style interface.
+type CustomFzf struct {
+        items          []string
+        matches        []fuzzy.Match
+        query          string
+        selected       int
+        offset         int
+        terminal       terminal.TerminalInterface
+        lastDrawnLines int
+}
+
+// NewCustomFzf creates a new custom fzf interface.
+func NewCustomFzf(items []string) *CustomFzf <span class="cov7" title="3">{
+        return NewCustomFzfWithTerminal(items, terminal.NewInterface())
+}</span>
+
+// NewCustomFzfWithTerminal creates a new custom fzf interface with a specific terminal.
+func NewCustomFzfWithTerminal(items []string, term terminal.TerminalInterface) *CustomFzf <span class="cov7" title="3">{
+        return &amp;CustomFzf{
+                items:    items,
+                matches:  make([]fuzzy.Match, len(items)),
+                selected: 0,
+                offset:   0,
+                terminal: term,
+        }
+}</span>
+
+// Run starts the custom fzf interface.
+func (f *CustomFzf) Run() (string, error) <span class="cov0" title="0">{
+        // Initialize matches with all items
+        for i, item := range f.items </span><span class="cov0" title="0">{
+                f.matches[i] = fuzzy.Match{Str: item, Index: i}
+        }</span>
+
+        // Enter raw mode
+        <span class="cov0" title="0">err := f.terminal.EnableRawMode()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">defer f.terminal.DisableRawMode()
+
+        for </span><span class="cov0" title="0">{
+                f.drawInline()
+
+                // Read key
+                keyEvent, err := f.terminal.ReadKey()
+                if err != nil </span><span class="cov0" title="0">{
+                        return "", err
+                }</span>
+
+                <span class="cov0" title="0">switch keyEvent.Key </span>{
+                case terminal.KeyEnter:<span class="cov0" title="0">
+                        f.clearInline()
+                        if len(f.matches) &gt; 0 &amp;&amp; f.selected &lt; len(f.matches) </span><span class="cov0" title="0">{
+                                return f.matches[f.selected].Str, nil
+                        }</span>
+                        <span class="cov0" title="0">return "", ErrNoSelection</span>
+                case terminal.KeyCtrlC, terminal.KeyEscape:<span class="cov0" title="0">
+                        f.clearInline()
+                        return "", ErrCancelled</span>
+                case terminal.KeyCtrlP, terminal.KeyArrowUp:<span class="cov0" title="0">
+                        if f.selected &gt; 0 </span><span class="cov0" title="0">{
+                                f.selected--
+                                f.adjustOffset()
+                        }</span>
+                case terminal.KeyCtrlN, terminal.KeyArrowDown:<span class="cov0" title="0">
+                        if f.selected &lt; len(f.matches)-1 </span><span class="cov0" title="0">{
+                                f.selected++
+                                f.adjustOffset()
+                        }</span>
+                case terminal.KeyCtrlR:<span class="cov0" title="0">
+                        if len(f.matches) &gt; 0 </span><span class="cov0" title="0">{
+                                f.selected = (f.selected + 1) % len(f.matches)
+                                f.adjustOffset()
+                        }</span>
+                case terminal.KeyBackspace:<span class="cov0" title="0">
+                        if len(f.query) &gt; 0 </span><span class="cov0" title="0">{
+                                f.query = f.query[:len(f.query)-1]
+                                f.updateMatches()
+                        }</span>
+                default:<span class="cov0" title="0">
+                        if keyEvent.Rune != 0 &amp;&amp; keyEvent.Rune &gt;= 32 &amp;&amp; keyEvent.Rune &lt; 127 </span><span class="cov0" title="0">{
+                                f.query += string(keyEvent.Rune)
+                                f.updateMatches()
+                        }</span>
+                }
+        }
+}
+
+// updateMatches performs fuzzy search and updates matches.
+func (f *CustomFzf) updateMatches() <span class="cov7" title="3">{
+        if f.query == "" </span><span class="cov1" title="1">{
+                // Show all items when no query
+                f.matches = make([]fuzzy.Match, len(f.items))
+                for i, item := range f.items </span><span class="cov10" title="5">{
+                        f.matches[i] = fuzzy.Match{Str: item, Index: i}
+                }</span>
+        } else<span class="cov4" title="2"> {
+                f.matches = fuzzy.Find(f.query, f.items)
+        }</span>
+
+        // Reset selection
+        <span class="cov7" title="3">f.selected = 0
+        f.offset = 0</span>
+}
+
+// adjustOffset adjusts scroll offset to keep selected item visible.
+func (f *CustomFzf) adjustOffset() <span class="cov7" title="3">{
+        maxVisible := 5
+
+        if f.selected &lt; f.offset </span><span class="cov1" title="1">{
+                f.offset = f.selected
+        }</span> else<span class="cov4" title="2"> if f.selected &gt;= f.offset+maxVisible </span><span class="cov1" title="1">{
+                f.offset = f.selected - maxVisible + 1
+        }</span>
+}
+
+// drawInline renders the interface inline below current position.
+func (f *CustomFzf) drawInline() <span class="cov0" title="0">{
+        // Always clear exactly 6 lines (header + 5 matches) if we've drawn before
+        if f.lastDrawnLines &gt; 0 </span><span class="cov0" title="0">{
+                for range 6 </span><span class="cov0" title="0">{
+                        f.terminal.WriteString("\033[1A\033[2K")
+                }</span>
+        }
+
+        <span class="cov0" title="0">lines := 0
+
+        // Header line
+        if len(f.matches) == 0 </span><span class="cov0" title="0">{
+                f.terminal.Printf("🔍 %s (no matches)\r\n", f.query)
+                lines++
+        }</span> else<span class="cov0" title="0"> {
+                f.terminal.Printf("🔍 %s (%d/%d)\r\n", f.query, len(f.matches), len(f.items))
+                lines++
+
+                // Show max 5 matches
+                maxVisible := 5
+                endIdx := f.offset + maxVisible
+                if endIdx &gt; len(f.matches) </span><span class="cov0" title="0">{
+                        endIdx = len(f.matches)
+                }</span>
+
+                <span class="cov0" title="0">for i := f.offset; i &lt; endIdx; i++ </span><span class="cov0" title="0">{
+                        // Truncate long commands to prevent wrapping
+                        cmd := f.matches[i].Str
+                        if len(cmd) &gt; 70 </span><span class="cov0" title="0">{
+                                cmd = cmd[:67] + "..."
+                        }</span>
+
+                        <span class="cov0" title="0">if i == f.selected </span><span class="cov0" title="0">{
+                                f.terminal.WriteString(f.terminal.StyleText("&gt; "+cmd, terminal.Style{Reverse: true}) + "\r\n")
+                        }</span> else<span class="cov0" title="0"> {
+                                f.terminal.Printf("  %s\r\n", cmd)
+                        }</span>
+                        <span class="cov0" title="0">lines++</span>
+                }
+
+                // Fill remaining lines with empty lines to maintain consistent clearing
+                <span class="cov0" title="0">for i := lines; i &lt; 6; i++ </span><span class="cov0" title="0">{
+                        f.terminal.WriteString("\r\n")
+                        lines++
+                }</span>
+        }
+
+        <span class="cov0" title="0">f.lastDrawnLines = lines</span>
+}
+
+// clearInline clears the inline display.
+func (f *CustomFzf) clearInline() <span class="cov0" title="0">{
+        if f.lastDrawnLines &gt; 0 </span><span class="cov0" title="0">{
+                for range 6 </span><span class="cov0" title="0">{
+                        f.terminal.WriteString("\033[1A\033[2K")
+                }</span>
+        }
+}
+
+// FuzzyHistorySearchCustom uses the custom fzf implementation.
+func (r *Readline) FuzzyHistorySearchCustom() string <span class="cov0" title="0">{
+        if len(r.history.items) == 0 </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        // Get unique history items (most recent first)
+        <span class="cov0" title="0">items := make([]string, 0, len(r.history.items))
+        seen := make(map[string]bool)
+
+        for i := len(r.history.items) - 1; i &gt;= 0; i-- </span><span class="cov0" title="0">{
+                item := strings.TrimSpace(r.history.items[i])
+                if item != "" &amp;&amp; !seen[item] </span><span class="cov0" title="0">{
+                        items = append(items, item)
+                        seen[item] = true
+                }</span>
+        }
+
+        <span class="cov0" title="0">if len(items) == 0 </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        // Use the terminal interface
+        <span class="cov0" title="0">fzf := NewCustomFzfWithTerminal(items, r.terminal)
+
+        result, err := fzf.Run()
+        if err != nil </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">return result</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package readline
+
+import "dsh/internal/terminal"
+
+func (r *Readline) insertRune(ch rune) <span class="cov4" title="3">{
+        if r.cursor == len(r.buffer) </span><span class="cov3" title="2">{
+                r.buffer = append(r.buffer, ch)
+        }</span> else<span class="cov1" title="1"> {
+                r.buffer = append(r.buffer[:r.cursor+1], r.buffer[r.cursor:]...)
+                r.buffer[r.cursor] = ch
+        }</span>
+        <span class="cov4" title="3">r.cursor++
+        r.redraw()</span>
+}
+
+func (r *Readline) deleteChar() <span class="cov4" title="3">{
+        if r.cursor &lt; len(r.buffer) </span><span class="cov3" title="2">{
+                r.buffer = append(r.buffer[:r.cursor], r.buffer[r.cursor+1:]...)
+                r.redraw()
+        }</span>
+}
+
+func (r *Readline) backspace() <span class="cov4" title="3">{
+        if r.cursor &gt; 0 </span><span class="cov3" title="2">{
+                r.buffer = append(r.buffer[:r.cursor-1], r.buffer[r.cursor:]...)
+                r.cursor--
+                r.redraw()
+        }</span>
+}
+
+func (r *Readline) clearLine() <span class="cov1" title="1">{
+        r.buffer = r.buffer[:0]
+        r.cursor = 0
+        r.redraw()
+}</span>
+
+func (r *Readline) clearScreen() <span class="cov1" title="1">{
+        if r.terminal != nil </span><span class="cov1" title="1">{
+                r.terminal.WriteString("\033[2J\033[H") // Clear screen and move to top
+                r.displayPrompt()
+        }</span>
+        <span class="cov1" title="1">r.redraw()</span>
+}
+
+func (r *Readline) redraw() <span class="cov10" title="13">{
+        if r.terminal == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Update suggestion before drawing
+        <span class="cov10" title="13">r.updateSuggestion()
+
+        // Clear line and redraw
+        r.terminal.WriteString("\r\033[K")
+        r.displayPrompt()
+
+        // Print buffer with suggestion
+        r.terminal.WriteString(string(r.buffer))
+        if r.suggestion != "" </span><span class="cov0" title="0">{
+                r.terminal.WriteString(r.terminal.Colorize(r.suggestion, terminal.ColorBrightBlack))
+        }</span>
+
+        // Position cursor correctly
+        <span class="cov10" title="13">r.setCursorPosition()</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package readline
+
+import (
+        "strings"
+
+        "github.com/ktr0731/go-fuzzyfinder"
+)
+
+// FuzzyHistorySearch opens fzf-style window for history search.
+func (r *Readline) FuzzyHistorySearch() string <span class="cov0" title="0">{
+        if len(r.history.items) == 0 </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        // Get unique history items (most recent first)
+        <span class="cov0" title="0">items := make([]string, 0, len(r.history.items))
+        seen := make(map[string]bool)
+
+        for i := len(r.history.items) - 1; i &gt;= 0; i-- </span><span class="cov0" title="0">{
+                item := strings.TrimSpace(r.history.items[i])
+                if item != "" &amp;&amp; !seen[item] </span><span class="cov0" title="0">{
+                        items = append(items, item)
+                        seen[item] = true
+                }</span>
+        }
+
+        <span class="cov0" title="0">if len(items) == 0 </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        // Use fuzzyfinder with enhanced visuals
+        <span class="cov0" title="0">idx, err := fuzzyfinder.Find(
+                items,
+                func(i int) string </span><span class="cov0" title="0">{
+                        return items[i]
+                }</span>,
+                fuzzyfinder.WithPromptString("🔍 "),
+                fuzzyfinder.WithHeader("History Search - Press Ctrl-C to cancel"),
+        )
+
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                // User cancelled or error occurred
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">return items[idx]</span>
+}
+
+// FuzzyFileSearch opens fzf-style window for file search.
+func (r *Readline) FuzzyFileSearch() string <span class="cov0" title="0">{
+        // TODO: Implement Ctrl-T file search
+        return ""
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package readline
+
+import (
+        "bufio"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+        "time"
+)
+
+// History manages command history with persistent storage.
+type History struct {
+        items    []string
+        pos      int
+        file     string
+        maxSize  int
+        modified bool
+}
+
+// NewHistory creates a new history manager with persistent storage.
+func NewHistory() *History <span class="cov2" title="8">{
+        homeDir, _ := os.UserHomeDir()
+        histFile := filepath.Join(homeDir, ".dsh_history")
+
+        h := &amp;History{
+                items:    make([]string, 0, 1000),
+                pos:      0,
+                file:     histFile,
+                maxSize:  1000,
+                modified: false,
+        }
+
+        h.load()
+
+        return h
+}</span>
+
+// NewEmptyHistory creates a new history manager without loading from disk (for testing).
+func NewEmptyHistory() *History <span class="cov2" title="10">{
+        return &amp;History{
+                items:    make([]string, 0, 1000),
+                pos:      0,
+                file:     "", // No file for testing
+                maxSize:  1000,
+                modified: false,
+        }
+}</span>
+
+// Add adds a command to history and saves to disk.
+func (h *History) Add(line string) <span class="cov5" title="1224">{
+        line = strings.TrimSpace(line)
+        if line == "" || strings.HasPrefix(line, "#") </span><span class="cov1" title="2">{
+                return
+        }</span>
+
+        // Remove any existing occurrence of this command
+        <span class="cov5" title="1222">for i := len(h.items) - 1; i &gt;= 0; i-- </span><span class="cov10" title="699533">{
+                if h.items[i] == line </span><span class="cov1" title="3">{
+                        h.items = append(h.items[:i], h.items[i+1:]...)
+                        break</span>
+                }
+        }
+
+        // Add to end (most recent)
+        <span class="cov5" title="1222">h.items = append(h.items, line)
+        h.pos = len(h.items)
+        h.modified = true
+
+        // Trim history if too large
+        if len(h.items) &gt; h.maxSize </span><span class="cov4" title="200">{
+                h.items = h.items[len(h.items)-h.maxSize:]
+                h.pos = len(h.items)
+        }</span>
+
+        // Save immediately for shared sessions
+        <span class="cov5" title="1222">h.save()</span>
+}
+
+// Previous moves to previous history item.
+func (h *History) Previous() string <span class="cov2" title="8">{
+        if h.pos &gt; 0 </span><span class="cov2" title="6">{
+                h.pos--
+                return h.items[h.pos]
+        }</span>
+
+        // Return first item if we're at the beginning
+        <span class="cov1" title="2">if len(h.items) &gt; 0 </span><span class="cov1" title="1">{
+                return h.items[0]
+        }</span>
+
+        <span class="cov1" title="1">return ""</span>
+}
+
+// Next moves to next history item.
+func (h *History) Next() string <span class="cov1" title="4">{
+        if h.pos &lt; len(h.items) </span><span class="cov1" title="3">{
+                h.pos++
+                if h.pos &lt; len(h.items) </span><span class="cov1" title="2">{
+                        return h.items[h.pos]
+                }</span>
+        }
+
+        <span class="cov1" title="2">return ""</span>
+}
+
+// Search performs substring search in history (zsh-like).
+func (h *History) Search(query string) []string <span class="cov0" title="0">{
+        var matches []string
+        query = strings.ToLower(query)
+
+        // Search backwards through history
+        for i := len(h.items) - 1; i &gt;= 0; i-- </span><span class="cov0" title="0">{
+                if strings.Contains(strings.ToLower(h.items[i]), query) </span><span class="cov0" title="0">{
+                        matches = append(matches, h.items[i])
+                        if len(matches) &gt;= 10 </span><span class="cov0" title="0">{ // Limit results
+                                break</span>
+                        }
+                }
+        }
+
+        <span class="cov0" title="0">return matches</span>
+}
+
+// GetSuggestion returns auto-suggestion based on current input.
+func (h *History) GetSuggestion(input string) string <span class="cov0" title="0">{
+        if input == "" </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">input = strings.ToLower(input)
+
+        // Find most recent command starting with input
+        for i := len(h.items) - 1; i &gt;= 0; i-- </span><span class="cov0" title="0">{
+                cmd := strings.ToLower(h.items[i])
+                if strings.HasPrefix(cmd, input) &amp;&amp; len(h.items[i]) &gt; len(input) </span><span class="cov0" title="0">{
+                        return h.items[i][len(input):] // Return the suggestion part
+                }</span>
+        }
+
+        <span class="cov0" title="0">return ""</span>
+}
+
+// Reload refreshes history from disk (for shared sessions).
+func (h *History) Reload() <span class="cov0" title="0">{
+        currentPos := h.pos
+        h.items = h.items[:0] // Clear current items
+        h.load()
+
+        // Restore position if possible
+        if currentPos &lt; len(h.items) </span><span class="cov0" title="0">{
+                h.pos = currentPos
+        }</span> else<span class="cov0" title="0"> {
+                h.pos = len(h.items)
+        }</span>
+}
+
+// ResetPosition resets history position to end.
+func (h *History) ResetPosition() <span class="cov1" title="1">{
+        h.pos = len(h.items)
+}</span>
+
+// PreviousWithPrefix finds previous history item starting with prefix.
+func (h *History) PreviousWithPrefix(prefix string) string <span class="cov0" title="0">{
+        if prefix == "" </span><span class="cov0" title="0">{
+                return h.Previous()
+        }</span>
+
+        <span class="cov0" title="0">for i := h.pos - 1; i &gt;= 0; i-- </span><span class="cov0" title="0">{
+                if strings.HasPrefix(h.items[i], prefix) </span><span class="cov0" title="0">{
+                        h.pos = i
+
+                        return h.items[i]
+                }</span>
+        }
+
+        <span class="cov0" title="0">return ""</span>
+}
+
+// NextWithPrefix finds next history item starting with prefix.
+func (h *History) NextWithPrefix(prefix string) string <span class="cov0" title="0">{
+        if prefix == "" </span><span class="cov0" title="0">{
+                return h.Next()
+        }</span>
+
+        <span class="cov0" title="0">for i := h.pos + 1; i &lt; len(h.items); i++ </span><span class="cov0" title="0">{
+                if strings.HasPrefix(h.items[i], prefix) </span><span class="cov0" title="0">{
+                        h.pos = i
+
+                        return h.items[i]
+                }</span>
+        }
+
+        // If no match found, go to end
+        <span class="cov0" title="0">h.pos = len(h.items)
+
+        return ""</span>
+}
+
+// load reads history from disk.
+func (h *History) load() <span class="cov2" title="8">{
+        file, err := os.Open(h.file)
+        if err != nil </span><span class="cov0" title="0">{
+                return // File doesn't exist yet
+        }</span>
+        <span class="cov2" title="8">defer func() </span><span class="cov2" title="8">{
+                _ = file.Close() // Ignore close error on read-only file
+        }</span>()
+
+        <span class="cov2" title="8">scanner := bufio.NewScanner(file)
+        for scanner.Scan() </span><span class="cov8" title="46448">{
+                line := strings.TrimSpace(scanner.Text())
+                if line != "" &amp;&amp; !strings.HasPrefix(line, "#") </span><span class="cov7" title="23224">{
+                        h.items = append(h.items, line)
+                }</span>
+        }
+
+        <span class="cov2" title="8">h.pos = len(h.items)</span>
+}
+
+// save writes history to disk.
+func (h *History) save() <span class="cov5" title="1222">{
+        if !h.modified </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Create directory if it doesn't exist
+        <span class="cov5" title="1222">dir := filepath.Dir(h.file)
+        err := os.MkdirAll(dir, 0750)
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Write with timestamp for shared sessions
+        <span class="cov5" title="1222">file, err := os.OpenFile(h.file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+        if err != nil </span><span class="cov5" title="1222">{
+                return
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                _ = file.Close() // Ignore close error after successful write
+        }</span>()
+
+        // Only write the last item (newly added)
+        <span class="cov0" title="0">if len(h.items) &gt; 0 </span><span class="cov0" title="0">{
+                lastItem := h.items[len(h.items)-1]
+                timestamp := time.Now().Format("2006-01-02 15:04:05")
+                _, _ = fmt.Fprintf(file, "# %s\n%s\n", timestamp, lastItem)
+        }</span>
+
+        <span class="cov0" title="0">h.modified = false</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package readline
+
+import (
+        "fmt"
+        "strings"
+
+        "dsh/internal/terminal"
+)
+
+const (
+        itemTypeBuiltin   = "builtin"
+        itemTypeCommand   = "command"
+        itemTypeDirectory = "directory"
+)
+
+func (r *Readline) handleKeyEvent(keyEvent terminal.KeyEvent) bool <span class="cov10" title="19">{ //nolint:cyclop,funlen // Key handling naturally requires many branches and statements
+        // Handle printable characters first
+        if keyEvent.Rune != 0 &amp;&amp; keyEvent.Key == terminal.KeyNone </span><span class="cov3" title="2">{
+                r.killRing.ResetYank()
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.clearTabCompletion()
+                }</span>
+                <span class="cov3" title="2">r.insertRune(keyEvent.Rune)
+                r.updateSuggestion()
+                return true</span>
+        }
+
+        <span class="cov9" title="17">switch keyEvent.Key </span>{
+        case terminal.KeyEnter:<span class="cov1" title="1">
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.acceptTabCompletion()
+                        return true
+                }</span>
+                <span class="cov1" title="1">return false</span> // Signal completion
+        case terminal.KeyCtrlA:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.moveCursorToStart()</span>
+        case terminal.KeyCtrlE:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.moveCursorToEnd()</span>
+        case terminal.KeyCtrlB:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.moveCursorLeft()</span>
+        case terminal.KeyCtrlC:<span class="cov0" title="0">
+                r.killRing.ResetYank()
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.clearTabCompletion()
+                }</span>
+                <span class="cov0" title="0">r.clearLine()
+                r.terminal.WriteString("^C\r\n")
+                r.displayPrompt()</span>
+        case terminal.KeyCtrlF:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                if r.suggestion != "" </span><span class="cov0" title="0">{
+                        r.acceptSuggestion()
+                }</span> else<span class="cov1" title="1"> {
+                        r.moveCursorRight()
+                }</span>
+        case terminal.KeyCtrlD:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                if len(r.buffer) == 0 </span><span class="cov0" title="0">{
+                        // EOF case - let ReadLine handle it
+                        return false
+                }</span>
+                <span class="cov1" title="1">r.deleteChar()</span>
+        case terminal.KeyCtrlK:<span class="cov1" title="1">
+                r.killToEnd()</span>
+        case terminal.KeyCtrlL:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.clearScreen()</span>
+        case terminal.KeyCtrlN:<span class="cov0" title="0">
+                r.killRing.ResetYank()
+                r.historyNext()</span>
+        case terminal.KeyCtrlP:<span class="cov0" title="0">
+                r.killRing.ResetYank()
+                r.historyPrevious()</span>
+        case terminal.KeyCtrlR:<span class="cov0" title="0">
+                r.killRing.ResetYank()
+                // Clear current line before fuzzy search
+                r.moveCursorToStart()
+                r.terminal.WriteString("\033[K") // Clear line
+                if selected := r.FuzzyHistorySearchCustom(); selected != "" </span><span class="cov0" title="0">{
+                        r.buffer = []rune(selected)
+                        r.cursor = len(r.buffer)
+                        r.redraw()
+                }</span> else<span class="cov0" title="0"> {
+                        // Restore prompt if cancelled
+                        r.redraw()
+                }</span>
+        case terminal.KeyCtrlU:<span class="cov1" title="1">
+                r.killLine()</span>
+        case terminal.KeyCtrlW:<span class="cov1" title="1">
+                r.killWordBackward()</span>
+        case terminal.KeyCtrlY:<span class="cov1" title="1">
+                r.yank()</span>
+        case terminal.KeyCtrlZ:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.terminal.WriteString("^Z\r\n")
+                r.displayPrompt()</span>
+        case terminal.KeyTab:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.navigateTabCompletion(1)
+                }</span> else<span class="cov1" title="1"> {
+                        r.handleTabCompletion()
+                }</span>
+        case terminal.KeyEscape:<span class="cov1" title="1">
+                // Always try to handle escape sequences first (including shift-tab)
+                err := r.handleEscapeSequence()
+                if err != nil </span><span class="cov0" title="0">{
+                        // If escape sequence handling fails and we're in menu mode, exit menu
+                        if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                                r.clearTabCompletion()
+                                r.redraw()
+                        }</span>
+                }
+        case terminal.KeyBackspace:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.backspace()
+                r.searchPrefix = ""
+                r.browseMode = false // Exit browse mode when editing
+                r.updateSuggestion()</span>
+        case terminal.KeyArrowUp:<span class="cov0" title="0">
+                r.killRing.ResetYank()
+                r.historyPrevious()</span>
+        case terminal.KeyArrowDown:<span class="cov0" title="0">
+                r.killRing.ResetYank()
+                r.historyNext()</span>
+        case terminal.KeyArrowLeft:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                r.moveCursorLeft()</span>
+        case terminal.KeyArrowRight:<span class="cov1" title="1">
+                r.killRing.ResetYank()
+                if r.suggestion != "" </span><span class="cov0" title="0">{
+                        r.acceptSuggestion()
+                }</span> else<span class="cov1" title="1"> {
+                        r.moveCursorRight()
+                }</span>
+        }
+
+        <span class="cov9" title="16">return true</span>
+}
+
+func (r *Readline) handleEscapeSequence() error <span class="cov1" title="1">{ //nolint:gocognit,cyclop,funlen // Terminal input handling requires complexity
+        // Read additional key events for complex sequences
+        keyEvent, err := r.terminal.ReadKey()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to read escape sequence: %w", err)
+        }</span>
+
+        // Handle Alt+key combinations
+        <span class="cov1" title="1">if keyEvent.Alt </span><span class="cov0" title="0">{
+                switch keyEvent.Rune </span>{
+                case 127:<span class="cov0" title="0"> // Alt+Backspace
+                        r.killRing.ResetYank()
+                        r.killWordBackward()</span>
+                case 'd':<span class="cov0" title="0"> // Alt+D
+                        r.killWordForward()</span>
+                case 'y':<span class="cov0" title="0"> // Alt+Y
+                        r.yankPop()</span>
+                }
+                <span class="cov0" title="0">return nil</span>
+        }
+
+        // Handle special sequences
+        <span class="cov1" title="1">switch keyEvent.Key </span>{
+        case terminal.KeyArrowUp:<span class="cov0" title="0">
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.navigateTabCompletion(-1)
+                }</span> else<span class="cov0" title="0"> {
+                        r.historyPrevious()
+                }</span>
+        case terminal.KeyArrowDown:<span class="cov0" title="0">
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.navigateTabCompletion(1)
+                }</span> else<span class="cov0" title="0"> {
+                        r.historyNext()
+                }</span>
+        case terminal.KeyArrowLeft:<span class="cov0" title="0">
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.navigateTabCompletion(-1)
+                }</span> else<span class="cov0" title="0"> {
+                        r.moveCursorLeft()
+                }</span>
+        case terminal.KeyArrowRight:<span class="cov0" title="0">
+                if r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                        r.navigateTabCompletion(1)
+                }</span> else<span class="cov0" title="0"> {
+                        r.moveCursorRight()
+                }</span>
+        }
+
+        <span class="cov1" title="1">return nil</span>
+}
+
+// handleTabCompletion handles tab key press for completion.
+func (r *Readline) handleTabCompletion() <span class="cov7" title="8">{
+        input := string(r.buffer)
+        matches, completion := r.completion.Complete(input, r.cursor)
+
+        if len(matches) == 1 &amp;&amp; completion != "" </span><span class="cov3" title="2">{
+                // Single match - apply directly
+                completionRunes := []rune(completion)
+                r.buffer = append(r.buffer, completionRunes...)
+                r.cursor = len(r.buffer)
+        }</span> else<span class="cov6" title="6"> if len(matches) &gt; 1 </span><span class="cov6" title="6">{
+                if r.completionMenu.IsActive() </span><span class="cov1" title="1">{
+                        // Menu already active - just navigate, don't re-render everything
+                        r.navigateTabCompletion(1)
+                }</span> else<span class="cov5" title="5"> {
+                        // Show menu for first time only
+                        r.completionMenu.Show(matches)
+                        r.completionMenu.Render(r.bufferManager, r.terminal)
+                }</span>
+        }
+}
+
+// clearTabCompletion clears the tab completion menu.
+func (r *Readline) clearTabCompletion() <span class="cov1" title="1">{
+        if r.completionMenu.IsActive() </span><span class="cov1" title="1">{
+                r.completionMenu.Hide()
+                if r.bufferManager != nil </span><span class="cov1" title="1">{
+                        r.bufferManager.CleanupAll()
+                }</span>
+
+                // Just restore cursor and clear menu area - don't redraw prompt
+                <span class="cov1" title="1">r.terminal.WriteString("\033[u")         // Restore cursor to saved position
+                r.terminal.WriteString("\033[J")         // Clear from cursor to end of screen
+                r.terminal.WriteString(string(r.buffer)) // Redraw just the buffer
+                r.setCursorPosition()</span>
+        }
+}
+
+// navigateTabCompletion navigates the completion menu.
+func (r *Readline) navigateTabCompletion(direction int) <span class="cov3" title="2">{
+        if !r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov3" title="2">if direction &gt; 0 </span><span class="cov3" title="2">{
+                r.completionMenu.Next()
+        }</span> else<span class="cov0" title="0"> {
+                r.completionMenu.Prev()
+        }</span>
+
+        // Use incremental update instead of full re-render
+        <span class="cov3" title="2">r.completionMenu.UpdateSelectionOnly()</span>
+}
+
+// acceptTabCompletion accepts the current completion selection.
+func (r *Readline) acceptTabCompletion() <span class="cov1" title="1">{
+        if !r.completionMenu.IsActive() </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov1" title="1">selected, ok := r.completionMenu.GetSelected()
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Apply completion
+        <span class="cov1" title="1">input := string(r.buffer)
+        words := strings.Fields(input)
+
+        if len(words) == 1 &amp;&amp; !strings.HasSuffix(input, " ") </span><span class="cov1" title="1">{
+                // Completing command
+                r.buffer = []rune(selected.Text)
+        }</span> else<span class="cov0" title="0"> {
+                // Completing file/argument
+                if strings.HasSuffix(input, " ") </span><span class="cov0" title="0">{
+                        r.buffer = []rune(input + selected.Text)
+                }</span> else<span class="cov0" title="0"> {
+                        lastWord := ""
+                        if len(words) &gt; 0 </span><span class="cov0" title="0">{
+                                lastWord = words[len(words)-1]
+                        }</span>
+                        <span class="cov0" title="0">r.buffer = []rune(input[:len(input)-len(lastWord)] + selected.Text)</span>
+                }
+        }
+
+        <span class="cov1" title="1">r.cursor = len(r.buffer)
+
+        // Hide completion menu and cleanup buffers
+        r.completionMenu.Hide()
+        if r.bufferManager != nil </span><span class="cov1" title="1">{
+                r.bufferManager.CleanupAll()
+        }</span>
+
+        // Only clear the completion menu area, not the entire screen
+        // Move cursor back to the input line and clear from there down
+        <span class="cov1" title="1">r.terminal.WriteString("\033[u") // Restore to saved cursor position (input line)
+        r.terminal.WriteString("\033[J") // Clear from cursor to end of screen (removes menu)
+        // Redraw the current input line cleanly
+        r.terminal.WriteString("\033[2K") // Clear the current line
+        r.terminal.WriteString("\r")      // Move to beginning of line
+        fullLine := r.prompt + string(r.buffer)
+        r.terminal.WriteString(fullLine)</span>
+}
+
+// History operations.
+func (r *Readline) historyPrevious() <span class="cov0" title="0">{
+        if len(r.buffer) == 0 &amp;&amp; r.searchPrefix == "" </span><span class="cov0" title="0">{
+                r.browseMode = true
+                r.searchPrefix = ""
+        }</span>
+
+        <span class="cov0" title="0">var line string
+        if r.browseMode </span><span class="cov0" title="0">{
+                line = r.history.Previous()
+        }</span> else<span class="cov0" title="0"> {
+                if r.searchPrefix == "" </span><span class="cov0" title="0">{
+                        r.searchPrefix = string(r.buffer)
+                }</span>
+                <span class="cov0" title="0">line = r.history.Previous()</span>
+        }
+
+        <span class="cov0" title="0">if line != "" </span><span class="cov0" title="0">{
+                r.setBufferFromHistory(line)
+        }</span>
+}
+
+func (r *Readline) historyNext() <span class="cov0" title="0">{
+        if r.browseMode </span><span class="cov0" title="0">{
+                line := r.history.Next()
+                if line != "" </span><span class="cov0" title="0">{
+                        r.setBufferFromHistory(line)
+                }</span> else<span class="cov0" title="0"> {
+                        r.buffer = r.buffer[:0]
+                        r.cursor = 0
+                        r.browseMode = false
+                        r.searchPrefix = ""
+                        r.redraw()
+                }</span>
+        } else<span class="cov0" title="0"> if r.searchPrefix != "" </span><span class="cov0" title="0">{
+                line := r.history.Next()
+                if line != "" </span><span class="cov0" title="0">{
+                        r.setBufferFromHistory(line)
+                }</span>
+        }
+}
+
+func (r *Readline) setBufferFromHistory(line string) <span class="cov0" title="0">{
+        r.buffer = []rune(line)
+        r.cursor = len(r.buffer)
+        r.redraw()
+}</span>
+
+func (r *Readline) updateSuggestion() <span class="cov9" title="16">{
+        r.suggestion = ""
+}</span>
+
+func (r *Readline) acceptSuggestion() <span class="cov0" title="0">{
+        if r.suggestion != "" </span><span class="cov0" title="0">{
+                r.buffer = append(r.buffer, []rune(r.suggestion)...)
+                r.cursor = len(r.buffer)
+                r.suggestion = ""
+                r.redraw()
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package readline
+
+// KillRing manages killed text for yank operations.
+type KillRing struct {
+        items    []string
+        index    int
+        lastYank int
+}
+
+// NewKillRing creates a new kill ring.
+func NewKillRing() *KillRing <span class="cov10" title="27">{
+        return &amp;KillRing{
+                items:    make([]string, 0, 10),
+                index:    0,
+                lastYank: 0,
+        }
+}</span>
+
+// Add adds text to the kill ring.
+func (k *KillRing) Add(text string) <span class="cov8" title="14">{
+        if text == "" </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Add to front of kill ring
+        <span class="cov8" title="14">k.items = append([]string{text}, k.items...)
+
+        // Limit kill ring size
+        if len(k.items) &gt; 10 </span><span class="cov0" title="0">{
+                k.items = k.items[:10]
+        }</span>
+
+        <span class="cov8" title="14">k.index = 0</span>
+}
+
+// Yank returns the current kill ring item.
+func (k *KillRing) Yank() string <span class="cov5" title="6">{
+        if len(k.items) == 0 </span><span class="cov1" title="1">{
+                return ""
+        }</span>
+
+        <span class="cov5" title="5">k.index = 0
+
+        return k.items[k.index]</span>
+}
+
+// Cycle moves to the next item in the kill ring.
+func (k *KillRing) Cycle(direction int) string <span class="cov6" title="7">{
+        if len(k.items) &lt;= 1 </span><span class="cov2" title="2">{
+                return ""
+        }</span>
+
+        // Cycle through kill ring (with proper wrap-around)
+        <span class="cov5" title="5">newIndex := k.index + direction
+        if newIndex &lt; 0 </span><span class="cov1" title="1">{
+                newIndex = len(k.items) - 1
+        }</span> else<span class="cov4" title="4"> if newIndex &gt;= len(k.items) </span><span class="cov1" title="1">{
+                newIndex = 0
+        }</span>
+        <span class="cov5" title="5">k.index = newIndex
+
+        return k.items[k.index]</span>
+}
+
+// SetLastYank sets the length of the last yanked text.
+func (k *KillRing) SetLastYank(length int) <span class="cov2" title="2">{
+        k.lastYank = length
+}</span>
+
+// GetLastYank returns the length of the last yanked text.
+func (k *KillRing) GetLastYank() int <span class="cov4" title="3">{
+        return k.lastYank
+}</span>
+
+// ResetYank resets the yank state.
+func (k *KillRing) ResetYank() <span class="cov8" title="14">{
+        k.lastYank = 0
+}</span>
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package readline
+
+// Kill and yank operations.
+func (r *Readline) killToEnd() <span class="cov1" title="1">{
+        if r.cursor &lt; len(r.buffer) </span><span class="cov1" title="1">{
+                killed := string(r.buffer[r.cursor:])
+                r.killRing.Add(killed)
+                r.buffer = r.buffer[:r.cursor]
+                r.redraw()
+        }</span>
+}
+
+func (r *Readline) killLine() <span class="cov1" title="1">{
+        killed := string(r.buffer)
+        r.killRing.Add(killed)
+        r.buffer = r.buffer[:0]
+        r.cursor = 0
+        r.redraw()
+}</span>
+
+func (r *Readline) killWordBackward() <span class="cov1" title="1">{
+        if r.cursor == 0 </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov1" title="1">start := r.cursor
+        // Move back to find word boundary
+        for r.cursor &gt; 0 &amp;&amp; r.buffer[r.cursor-1] == ' ' </span><span class="cov0" title="0">{
+                r.cursor--
+        }</span>
+        <span class="cov1" title="1">for r.cursor &gt; 0 &amp;&amp; r.buffer[r.cursor-1] != ' ' </span><span class="cov10" title="5">{
+                r.cursor--
+        }</span>
+
+        <span class="cov1" title="1">if r.cursor &lt; start </span><span class="cov1" title="1">{
+                killed := string(r.buffer[r.cursor:start])
+                r.killRing.Add(killed)
+                r.buffer = append(r.buffer[:r.cursor], r.buffer[start:]...)
+                r.redraw()
+        }</span>
+}
+
+func (r *Readline) killWordForward() <span class="cov0" title="0">{
+        if r.cursor &gt;= len(r.buffer) </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">start := r.cursor
+        // Move forward to find word boundary
+        for r.cursor &lt; len(r.buffer) &amp;&amp; r.buffer[r.cursor] != ' ' </span><span class="cov0" title="0">{
+                r.cursor++
+        }</span>
+        <span class="cov0" title="0">for r.cursor &lt; len(r.buffer) &amp;&amp; r.buffer[r.cursor] == ' ' </span><span class="cov0" title="0">{
+                r.cursor++
+        }</span>
+
+        <span class="cov0" title="0">if r.cursor &gt; start </span><span class="cov0" title="0">{
+                killed := string(r.buffer[start:r.cursor])
+                r.killRing.Add(killed)
+                r.buffer = append(r.buffer[:start], r.buffer[r.cursor:]...)
+                r.cursor = start
+                r.redraw()
+        }</span>
+}
+
+func (r *Readline) yank() <span class="cov1" title="1">{
+        yankText := r.killRing.Yank()
+        if yankText == "" </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Insert yanked text at cursor
+        <span class="cov1" title="1">yankRunes := []rune(yankText)
+        if r.cursor == len(r.buffer) </span><span class="cov1" title="1">{
+                r.buffer = append(r.buffer, yankRunes...)
+        }</span> else<span class="cov0" title="0"> {
+                // Insert in middle
+                newBuffer := make([]rune, len(r.buffer)+len(yankRunes))
+                copy(newBuffer, r.buffer[:r.cursor])
+                copy(newBuffer[r.cursor:], yankRunes)
+                copy(newBuffer[r.cursor+len(yankRunes):], r.buffer[r.cursor:])
+                r.buffer = newBuffer
+        }</span>
+
+        <span class="cov1" title="1">r.cursor += len(yankRunes)
+        r.killRing.SetLastYank(len(yankRunes))
+        r.redraw()</span>
+}
+
+func (r *Readline) yankPop() <span class="cov0" title="0">{
+        r.yankCycle(1) // Forward direction
+}</span>
+
+func (r *Readline) yankCycle(direction int) <span class="cov0" title="0">{
+        lastYank := r.killRing.GetLastYank()
+        if lastYank == 0 </span><span class="cov0" title="0">{
+                return // No previous yank
+        }</span>
+
+        // Remove the previously yanked text
+        <span class="cov0" title="0">start := r.cursor - lastYank
+        if start &lt; 0 </span><span class="cov0" title="0">{
+                start = 0
+        }</span>
+        <span class="cov0" title="0">r.buffer = append(r.buffer[:start], r.buffer[r.cursor:]...)
+        r.cursor = start
+
+        // Get next item from kill ring using Cycle
+        yankText := r.killRing.Cycle(direction)
+
+        if yankText == "" </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        // Insert new yanked text
+        <span class="cov0" title="0">yankRunes := []rune(yankText)
+        if r.cursor == len(r.buffer) </span><span class="cov0" title="0">{
+                r.buffer = append(r.buffer, yankRunes...)
+        }</span> else<span class="cov0" title="0"> {
+                newBuffer := make([]rune, len(r.buffer)+len(yankRunes))
+                copy(newBuffer, r.buffer[:r.cursor])
+                copy(newBuffer[r.cursor:], yankRunes)
+                copy(newBuffer[r.cursor+len(yankRunes):], r.buffer[r.cursor:])
+                r.buffer = newBuffer
+        }</span>
+
+        <span class="cov0" title="0">r.cursor += len(yankRunes)
+        r.killRing.SetLastYank(len(yankRunes))
+        r.redraw()</span>
+}
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">// Package readline provides emacs-like line editing functionality.
+package readline
+
+import (
+        "errors"
+        "fmt"
+
+        "dsh/internal/terminal"
+)
+
+var (
+        // ErrEOF indicates end of file condition.
+        ErrEOF = errors.New("EOF")
+)
+
+// Readline provides emacs-like line editing functionality.
+type Readline struct {
+        prompt         string
+        terminal       terminal.TerminalInterface
+        rawTerminal    *Terminal
+        history        *History
+        killRing       *KillRing
+        buffer         []rune
+        cursor         int
+        suggestion     string
+        searchPrefix   string
+        browseMode     bool
+        completion     *Completion
+        completionMenu *CompletionMenu
+        bufferManager  *BufferManager
+}
+
+// New creates a new readline instance.
+func New(prompt string) (*Readline, error) <span class="cov7" title="8">{
+        termInterface := terminal.NewInterface()
+
+        rawTerminal, err := NewTerminal()
+        if err != nil </span><span class="cov7" title="8">{
+                return nil, fmt.Errorf("failed to initialize terminal: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">bufferManager := NewBufferManager(termInterface)
+
+        return &amp;Readline{
+                prompt:         prompt,
+                terminal:       termInterface,
+                rawTerminal:    rawTerminal,
+                history:        NewHistory(),
+                killRing:       NewKillRing(),
+                buffer:         make([]rune, 0, 256),
+                cursor:         0,
+                suggestion:     "",
+                searchPrefix:   "",
+                browseMode:     false,
+                completion:     NewCompletion(),
+                completionMenu: NewCompletionMenu(termInterface),
+                bufferManager:  bufferManager,
+        }, nil</span>
+}
+
+// ReadLine reads a line with emacs-like editing.
+func (r *Readline) ReadLine() (string, error) <span class="cov0" title="0">{
+        err := r.rawTerminal.SetRawMode()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to set raw mode: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                // Clean up any temporary buffers before restoring terminal
+                r.bufferManager.CleanupAll()
+                _ = r.rawTerminal.Restore()
+        }</span>()
+
+        <span class="cov0" title="0">r.buffer = r.buffer[:0]
+        r.cursor = 0
+        r.history.ResetPosition()
+
+        r.displayPrompt()
+
+        for </span><span class="cov0" title="0">{
+                keyEvent, err := r.terminal.ReadKey()
+                if err != nil </span><span class="cov0" title="0">{
+                        return "", fmt.Errorf("failed to read key: %w", err)
+                }</span>
+
+                <span class="cov0" title="0">if r.handleKeyEvent(keyEvent) </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // Check for EOF case
+                <span class="cov0" title="0">if keyEvent.Key == terminal.KeyCtrlD &amp;&amp; len(r.buffer) == 0 </span><span class="cov0" title="0">{
+                        return "", ErrEOF
+                }</span>
+
+                // Return completed line
+                <span class="cov0" title="0">r.moveCursorToEnd()
+                r.terminal.WriteString("\r\n")
+                line := string(r.buffer)
+                if line != "" </span><span class="cov0" title="0">{
+                        r.history.Add(line)
+                }</span>
+
+                <span class="cov0" title="0">return line, nil</span>
+        }
+}
+
+// GetBuffer returns the current input buffer (for testing)
+func (r *Readline) GetBuffer() string <span class="cov0" title="0">{
+        return string(r.buffer)
+}</span>
+
+// SetBuffer sets the input buffer (for testing)
+func (r *Readline) SetBuffer(text string) <span class="cov0" title="0">{
+        r.buffer = []rune(text)
+        r.cursor = len(r.buffer)
+}</span>
+
+// GetHistory returns the history manager (for testing)
+func (r *Readline) GetHistory() *History <span class="cov0" title="0">{
+        return r.history
+}</span>
+
+// ProcessKey processes a key event (for testing)
+func (r *Readline) ProcessKey(keyEvent terminal.KeyEvent) bool <span class="cov0" title="0">{
+        return r.handleKeyEvent(keyEvent)
+}</span>
+
+// NewTestReadline creates a readline instance for testing with a mock terminal
+func NewTestReadline(mockTerm terminal.TerminalInterface) *Readline <span class="cov8" title="10">{
+        return &amp;Readline{
+                prompt:         "dsh&gt; ", // Initialize with default prompt
+                buffer:         make([]rune, 0, 256),
+                cursor:         0,
+                completion:     NewCompletion(),
+                bufferManager:  NewBufferManager(mockTerm),
+                killRing:       NewKillRing(),
+                history:        NewEmptyHistory(), // Use empty history for testing
+                completionMenu: NewCompletionMenu(mockTerm),
+                terminal:       mockTerm, // Use the same terminal field
+        }
+}</span>
+
+func (r *Readline) displayPrompt() <span class="cov10" title="15">{
+        if r.terminal != nil </span><span class="cov10" title="15">{
+                r.terminal.WriteString(r.prompt)
+        }</span>
+}
+
+// SetPrompt sets the prompt string
+func (r *Readline) SetPrompt(prompt string) <span class="cov0" title="0">{
+        r.prompt = prompt
+}</span>
+
+// GetPrompt returns the current prompt string
+func (r *Readline) GetPrompt() string <span class="cov0" title="0">{
+        return r.prompt
+}</span>
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package readline
+
+import (
+        "fmt"
+        "os"
+        "syscall"
+        "unsafe"
+
+        "dsh/internal/terminal"
+)
+
+// Terminal handles raw terminal operations with foundation.
+type Terminal struct {
+        fd            int
+        original      syscall.Termios
+        termInterface *terminal.Interface
+}
+
+// NewTerminal initializes terminal for raw mode.
+func NewTerminal() (*Terminal, error) <span class="cov10" title="8">{
+        fd := int(os.Stdin.Fd())
+
+        var original syscall.Termios
+        err := getTermios(fd, &amp;original)
+        if err != nil </span><span class="cov10" title="8">{
+                return nil, fmt.Errorf("failed to get terminal attributes: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;Terminal{
+                fd:            fd,
+                original:      original,
+                termInterface: terminal.NewInterface(),
+        }, nil</span>
+}
+
+// SetRawMode enables raw terminal mode.
+func (t *Terminal) SetRawMode() error <span class="cov0" title="0">{
+        raw := t.original
+        raw.Iflag &amp;^= syscall.BRKINT | syscall.ICRNL | syscall.INPCK | syscall.ISTRIP | syscall.IXON
+        raw.Oflag &amp;^= syscall.OPOST
+        raw.Cflag |= syscall.CS8
+        raw.Lflag &amp;^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
+        raw.Cc[syscall.VMIN] = 1
+        raw.Cc[syscall.VTIME] = 0
+
+        err := setTermios(t.fd, &amp;raw)
+        if err == nil </span><span class="cov0" title="0">{
+                t.termInterface.EnableRawMode()
+        }</span>
+        <span class="cov0" title="0">return err</span>
+}
+
+// Restore restores original terminal mode.
+func (t *Terminal) Restore() error <span class="cov0" title="0">{
+        t.termInterface.DisableRawMode()
+        return setTermios(t.fd, &amp;t.original)
+}</span>
+
+// Read reads from terminal.
+func (t *Terminal) Read(buf []byte) (int, error) <span class="cov0" title="0">{
+        n, err := os.Stdin.Read(buf)
+        if err != nil </span><span class="cov0" title="0">{
+                return n, fmt.Errorf("terminal read error: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return n, nil</span>
+}
+
+// GetTerminalSize returns terminal width and height.
+func (t *Terminal) GetTerminalSize() (int, int) <span class="cov0" title="0">{
+        var ws struct {
+                Row    uint16
+                Col    uint16
+                Xpixel uint16
+                Ypixel uint16
+        }
+
+        _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(0), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&amp;ws))) //nolint:gosec // Required for terminal size detection
+        if errno != 0 </span><span class="cov0" title="0">{
+                return 80, 24 // Default fallback
+        }</span>
+
+        <span class="cov0" title="0">return int(ws.Col), int(ws.Row)</span>
+}
+
+// Interface returns the terminal interface for advanced operations.
+func (t *Terminal) Interface() *terminal.Interface <span class="cov0" title="0">{
+        return t.termInterface
+}</span>
+
+func getTermios(fd int, termios *syscall.Termios) error <span class="cov10" title="8">{
+        _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd), syscall.TCGETS, uintptr(unsafe.Pointer(termios))) //nolint:gosec
+        if errno != 0 </span><span class="cov10" title="8">{
+                return errno
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func setTermios(fd int, termios *syscall.Termios) error <span class="cov0" title="0">{
+        _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd), syscall.TCSETS, uintptr(unsafe.Pointer(termios))) //nolint:gosec
+        if errno != 0 </span><span class="cov0" title="0">{
+                return errno
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file20" style="display: none">package readline
+
+import (
+        "dsh/internal/terminal"
+)
+
+// VideoElement represents a single character on screen with attributes
+type VideoElement struct {
+        Char rune
+        Attr int // Color/style attributes
+}
+
+// VideoBuffer represents the screen state (like zsh's nbuf/obuf)
+type VideoBuffer struct {
+        terminal terminal.TerminalInterface
+        width    int
+        height   int
+        newBuf   [][]VideoElement // New screen state (like zsh's nbuf)
+        oldBuf   [][]VideoElement // Old screen state (like zsh's obuf)
+        cursorX  int
+        cursorY  int
+}
+
+// NewVideoBuffer creates a new video buffer system
+func NewVideoBuffer(term terminal.TerminalInterface) *VideoBuffer <span class="cov5" title="24">{
+        width, height := term.Size()
+
+        vb := &amp;VideoBuffer{
+                terminal: term,
+                width:    width,
+                height:   height,
+                newBuf:   make([][]VideoElement, height),
+                oldBuf:   make([][]VideoElement, height),
+        }
+
+        // Initialize buffers
+        for i := 0; i &lt; height; i++ </span><span class="cov10" title="576">{
+                vb.newBuf[i] = make([]VideoElement, width)
+                vb.oldBuf[i] = make([]VideoElement, width)
+        }</span>
+
+        <span class="cov5" title="24">return vb</span>
+}
+
+// Clear clears the new buffer
+func (vb *VideoBuffer) Clear() <span class="cov0" title="0">{
+        for y := 0; y &lt; vb.height; y++ </span><span class="cov0" title="0">{
+                for x := 0; x &lt; vb.width; x++ </span><span class="cov0" title="0">{
+                        vb.newBuf[y][x] = VideoElement{Char: ' ', Attr: 0}
+                }</span>
+        }
+}
+
+// WriteString writes text to the video buffer at current cursor position
+func (vb *VideoBuffer) WriteString(text string, attr int) <span class="cov0" title="0">{
+        for _, char := range text </span><span class="cov0" title="0">{
+                if char == '\n' </span><span class="cov0" title="0">{
+                        vb.cursorY++
+                        vb.cursorX = 0
+                        continue</span>
+                }
+                <span class="cov0" title="0">if char == '\r' </span><span class="cov0" title="0">{
+                        vb.cursorX = 0
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">if vb.cursorY &lt; vb.height &amp;&amp; vb.cursorX &lt; vb.width </span><span class="cov0" title="0">{
+                        vb.newBuf[vb.cursorY][vb.cursorX] = VideoElement{Char: char, Attr: attr}
+                        vb.cursorX++
+                }</span>
+        }
+}
+
+// MoveCursor moves the cursor position in the buffer
+func (vb *VideoBuffer) MoveCursor(x, y int) <span class="cov0" title="0">{
+        vb.cursorX = x
+        vb.cursorY = y
+}</span>
+
+// Refresh updates the terminal to match the new buffer (like zsh's refreshline)
+func (vb *VideoBuffer) Refresh() <span class="cov0" title="0">{
+        for y := 0; y &lt; vb.height; y++ </span><span class="cov0" title="0">{
+                vb.refreshLine(y)
+        }</span>
+        <span class="cov0" title="0">vb.swapBuffers()</span>
+}
+
+// refreshLine refreshes a single line (like zsh's refreshline function)
+func (vb *VideoBuffer) refreshLine(line int) <span class="cov0" title="0">{
+        if line &gt;= vb.height </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">newLine := vb.newBuf[line]
+        oldLine := vb.oldBuf[line]
+
+        // Find first difference
+        start := 0
+        for start &lt; vb.width &amp;&amp; newLine[start] == oldLine[start] </span><span class="cov0" title="0">{
+                start++
+        }</span>
+
+        // Find last difference
+        <span class="cov0" title="0">end := vb.width - 1
+        for end &gt;= start &amp;&amp; newLine[end] == oldLine[end] </span><span class="cov0" title="0">{
+                end--
+        }</span>
+
+        <span class="cov0" title="0">if start &gt; end </span><span class="cov0" title="0">{
+                return // No changes on this line
+        }</span>
+
+        // Move to start of changes
+        <span class="cov0" title="0">vb.terminal.MoveCursor(start, line)
+
+        // Write changed characters
+        currentAttr := -1
+        for x := start; x &lt;= end; x++ </span><span class="cov0" title="0">{
+                elem := newLine[x]
+
+                // Handle attribute changes
+                if elem.Attr != currentAttr </span><span class="cov0" title="0">{
+                        vb.applyAttributes(elem.Attr)
+                        currentAttr = elem.Attr
+                }</span>
+
+                <span class="cov0" title="0">vb.terminal.WriteString(string(elem.Char))</span>
+        }
+
+        // Reset attributes
+        <span class="cov0" title="0">if currentAttr != 0 </span><span class="cov0" title="0">{
+                vb.terminal.WriteString("\033[0m")
+        }</span>
+}
+
+// applyAttributes applies color/style attributes
+func (vb *VideoBuffer) applyAttributes(attr int) <span class="cov0" title="0">{
+        switch attr </span>{
+        case 1:<span class="cov0" title="0"> // Selected/highlighted
+                vb.terminal.WriteString("\033[7m")</span> // Reverse video
+        case 2:<span class="cov0" title="0"> // Command
+                vb.terminal.WriteString("\033[32m")</span> // Green
+        case 3:<span class="cov0" title="0"> // Directory
+                vb.terminal.WriteString("\033[34m")</span> // Blue
+        case 4:<span class="cov0" title="0"> // Builtin
+                vb.terminal.WriteString("\033[36m")</span> // Cyan
+        default:<span class="cov0" title="0">
+                vb.terminal.WriteString("\033[0m")</span> // Reset
+        }
+}
+
+// swapBuffers swaps new and old buffers (like zsh's bufswap)
+func (vb *VideoBuffer) swapBuffers() <span class="cov1" title="2">{
+        vb.newBuf, vb.oldBuf = vb.oldBuf, vb.newBuf
+}</span>
+
+// ClearFromLine clears from specified line to end of screen
+func (vb *VideoBuffer) ClearFromLine(line int) <span class="cov0" title="0">{
+        for y := line; y &lt; vb.height; y++ </span><span class="cov0" title="0">{
+                for x := 0; x &lt; vb.width; x++ </span><span class="cov0" title="0">{
+                        vb.newBuf[y][x] = VideoElement{Char: ' ', Attr: 0}
+                }</span>
+        }
+}
+
+// GetCursorPosition returns current cursor position
+func (vb *VideoBuffer) GetCursorPosition() (int, int) <span class="cov0" title="0">{
+        return vb.cursorX, vb.cursorY
+}</span>
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package terminal
+
+import (
+        "fmt"
+        "os"
+        "strconv"
+        "strings"
+)
+
+// Color represents terminal colors.
+type Color int
+
+// Terminal color constants.
+const (
+        ColorReset Color = iota
+        ColorBlack
+        ColorRed
+        ColorGreen
+        ColorYellow
+        ColorBlue
+        ColorMagenta
+        ColorCyan
+        ColorWhite
+        ColorBrightBlack
+        ColorBrightRed
+        ColorBrightGreen
+        ColorBrightYellow
+        ColorBrightBlue
+        ColorBrightMagenta
+        ColorBrightCyan
+        ColorBrightWhite
+)
+
+// Style represents text styling.
+type Style struct {
+        Foreground Color
+        Background Color
+        Bold       bool
+        Italic     bool
+        Underline  bool
+        Reverse    bool
+}
+
+// ColorManager handles color operations.
+type ColorManager struct {
+        enabled bool
+}
+
+// NewColorManager creates a color manager.
+func NewColorManager() *ColorManager <span class="cov10" title="2">{
+        return &amp;ColorManager{
+                enabled: supportsColor(),
+        }
+}</span>
+
+// supportsColor detects color support.
+func supportsColor() bool <span class="cov10" title="2">{
+        term := os.Getenv("TERM")
+        if term == "" || term == "dumb" </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov10" title="2">colorTerms := []string{"xterm", "screen", "tmux", "color", "ansi"}
+        for _, ct := range colorTerms </span><span class="cov10" title="2">{
+                if strings.Contains(term, ct) </span><span class="cov10" title="2">{
+                        return true
+                }</span>
+        }
+
+        <span class="cov0" title="0">return os.Getenv("COLORTERM") != ""</span>
+}
+
+// Colorize applies color to text.
+func (c *ColorManager) Colorize(text string, fg Color) string <span class="cov1" title="1">{
+        if !c.enabled </span><span class="cov0" title="0">{
+                return text
+        }</span>
+        <span class="cov1" title="1">return c.colorCode(fg) + text + c.resetCode()</span>
+}
+
+// StyleText applies full styling to text.
+func (c *ColorManager) StyleText(text string, style Style) string <span class="cov1" title="1">{
+        if !c.enabled </span><span class="cov0" title="0">{
+                return text
+        }</span>
+
+        <span class="cov1" title="1">codes := []string{}
+
+        if style.Bold </span><span class="cov1" title="1">{
+                codes = append(codes, "1")
+        }</span>
+        <span class="cov1" title="1">if style.Italic </span><span class="cov0" title="0">{
+                codes = append(codes, "3")
+        }</span>
+        <span class="cov1" title="1">if style.Underline </span><span class="cov0" title="0">{
+                codes = append(codes, "4")
+        }</span>
+        <span class="cov1" title="1">if style.Reverse </span><span class="cov0" title="0">{
+                codes = append(codes, "7")
+        }</span>
+
+        <span class="cov1" title="1">if style.Foreground != ColorReset </span><span class="cov1" title="1">{
+                codes = append(codes, c.fgCode(style.Foreground))
+        }</span>
+        <span class="cov1" title="1">if style.Background != ColorReset </span><span class="cov0" title="0">{
+                codes = append(codes, c.bgCode(style.Background))
+        }</span>
+
+        <span class="cov1" title="1">if len(codes) == 0 </span><span class="cov0" title="0">{
+                return text
+        }</span>
+
+        <span class="cov1" title="1">return fmt.Sprintf("\033[%sm%s\033[0m", strings.Join(codes, ";"), text)</span>
+}
+
+// colorCode returns ANSI color code.
+func (c *ColorManager) colorCode(color Color) string <span class="cov1" title="1">{
+        return "\033[" + c.fgCode(color) + "m"
+}</span>
+
+// fgCode returns foreground color code.
+func (c *ColorManager) fgCode(color Color) string <span class="cov10" title="2">{
+        switch color </span>{
+        case ColorBlack:<span class="cov0" title="0">
+                return "30"</span>
+        case ColorRed:<span class="cov1" title="1">
+                return "31"</span>
+        case ColorGreen:<span class="cov1" title="1">
+                return "32"</span>
+        case ColorYellow:<span class="cov0" title="0">
+                return "33"</span>
+        case ColorBlue:<span class="cov0" title="0">
+                return "34"</span>
+        case ColorMagenta:<span class="cov0" title="0">
+                return "35"</span>
+        case ColorCyan:<span class="cov0" title="0">
+                return "36"</span>
+        case ColorWhite:<span class="cov0" title="0">
+                return "37"</span>
+        case ColorBrightBlack:<span class="cov0" title="0">
+                return "90"</span>
+        case ColorBrightRed:<span class="cov0" title="0">
+                return "91"</span>
+        case ColorBrightGreen:<span class="cov0" title="0">
+                return "92"</span>
+        case ColorBrightYellow:<span class="cov0" title="0">
+                return "93"</span>
+        case ColorBrightBlue:<span class="cov0" title="0">
+                return "94"</span>
+        case ColorBrightMagenta:<span class="cov0" title="0">
+                return "95"</span>
+        case ColorBrightCyan:<span class="cov0" title="0">
+                return "96"</span>
+        case ColorBrightWhite:<span class="cov0" title="0">
+                return "97"</span>
+        default:<span class="cov0" title="0">
+                return "39"</span> // default
+        }
+}
+
+// bgCode returns background color code.
+func (c *ColorManager) bgCode(color Color) string <span class="cov0" title="0">{
+        fg := c.fgCode(color)
+        if code, err := strconv.Atoi(fg); err == nil </span><span class="cov0" title="0">{
+                return strconv.Itoa(code + 10)
+        }</span>
+        <span class="cov0" title="0">return "49"</span> // default
+}
+
+// resetCode returns reset sequence.
+func (c *ColorManager) resetCode() string <span class="cov1" title="1">{
+        return "\033[0m"
+}</span>
+</pre>
+		
+		<pre class="file" id="file22" style="display: none">package terminal
+
+import (
+        "bufio"
+        "io"
+)
+
+// Key represents special keys.
+type Key int
+
+const (
+        KeyNone Key = iota
+        KeyEnter
+        KeyTab
+        KeyBackspace
+        KeyDelete
+        KeyArrowUp
+        KeyArrowDown
+        KeyArrowLeft
+        KeyArrowRight
+        KeyHome
+        KeyEnd
+        KeyPageUp
+        KeyPageDown
+        KeyEscape
+        KeyCtrlA
+        KeyCtrlB
+        KeyCtrlC
+        KeyCtrlD
+        KeyCtrlE
+        KeyCtrlF
+        KeyCtrlK
+        KeyCtrlL
+        KeyCtrlN
+        KeyCtrlP
+        KeyCtrlR
+        KeyCtrlU
+        KeyCtrlW
+        KeyCtrlY
+        KeyCtrlZ
+)
+
+// KeyEvent represents a key press.
+type KeyEvent struct {
+        Key  Key
+        Rune rune
+        Alt  bool
+        Ctrl bool
+}
+
+// InputReader handles terminal input.
+type InputReader struct {
+        reader *bufio.Reader
+}
+
+// NewInputReader creates an input reader.
+func NewInputReader(r io.Reader) *InputReader <span class="cov10" title="13">{
+        return &amp;InputReader{
+                reader: bufio.NewReader(r),
+        }
+}</span>
+
+// ReadKey reads a single key event.
+func (r *InputReader) ReadKey() (KeyEvent, error) <span class="cov9" title="12">{
+        b, err := r.reader.ReadByte()
+        if err != nil </span><span class="cov0" title="0">{
+                return KeyEvent{}, err
+        }</span>
+
+        // Handle escape sequences
+        <span class="cov9" title="12">if b == 27 </span><span class="cov0" title="0">{ // ESC
+                return r.readEscapeSequence()
+        }</span>
+
+        // Handle control characters and DEL
+        <span class="cov9" title="12">if b &lt; 32 || b == 127 </span><span class="cov7" title="6">{
+                return KeyEvent{Key: r.ctrlKey(b)}, nil
+        }</span>
+
+        // Handle printable characters
+        <span class="cov7" title="6">return KeyEvent{Rune: rune(b)}, nil</span>
+}
+
+// readEscapeSequence reads ANSI escape sequences.
+func (r *InputReader) readEscapeSequence() (KeyEvent, error) <span class="cov0" title="0">{
+        // Peek next byte
+        next, err := r.reader.Peek(1)
+        if err != nil || len(next) == 0 </span><span class="cov0" title="0">{
+                return KeyEvent{Key: KeyEscape}, nil
+        }</span>
+
+        <span class="cov0" title="0">if next[0] == '[' </span><span class="cov0" title="0">{
+                r.reader.ReadByte() // consume '['
+                return r.readCSISequence()
+        }</span>
+
+        // Alt + key
+        <span class="cov0" title="0">b, err := r.reader.ReadByte()
+        if err != nil </span><span class="cov0" title="0">{
+                return KeyEvent{Key: KeyEscape}, nil
+        }</span>
+
+        <span class="cov0" title="0">return KeyEvent{Rune: rune(b), Alt: true}, nil</span>
+}
+
+// readCSISequence reads Control Sequence Introducer sequences.
+func (r *InputReader) readCSISequence() (KeyEvent, error) <span class="cov0" title="0">{
+        b, err := r.reader.ReadByte()
+        if err != nil </span><span class="cov0" title="0">{
+                return KeyEvent{}, err
+        }</span>
+
+        <span class="cov0" title="0">switch b </span>{
+        case 'A':<span class="cov0" title="0">
+                return KeyEvent{Key: KeyArrowUp}, nil</span>
+        case 'B':<span class="cov0" title="0">
+                return KeyEvent{Key: KeyArrowDown}, nil</span>
+        case 'C':<span class="cov0" title="0">
+                return KeyEvent{Key: KeyArrowRight}, nil</span>
+        case 'D':<span class="cov0" title="0">
+                return KeyEvent{Key: KeyArrowLeft}, nil</span>
+        case 'H':<span class="cov0" title="0">
+                return KeyEvent{Key: KeyHome}, nil</span>
+        case 'F':<span class="cov0" title="0">
+                return KeyEvent{Key: KeyEnd}, nil</span>
+        default:<span class="cov0" title="0">
+                return KeyEvent{Rune: rune(b)}, nil</span>
+        }
+}
+
+// ctrlKey maps control characters to keys.
+func (r *InputReader) ctrlKey(b byte) Key <span class="cov7" title="6">{
+        switch b </span>{
+        case 1:<span class="cov1" title="1">
+                return KeyCtrlA</span>
+        case 2:<span class="cov0" title="0">
+                return KeyCtrlB</span>
+        case 3:<span class="cov0" title="0">
+                return KeyCtrlC</span>
+        case 4:<span class="cov0" title="0">
+                return KeyCtrlD</span>
+        case 5:<span class="cov0" title="0">
+                return KeyCtrlE</span>
+        case 6:<span class="cov0" title="0">
+                return KeyCtrlF</span>
+        case 8, 127:<span class="cov5" title="4">
+                return KeyBackspace</span>
+        case 9:<span class="cov0" title="0">
+                return KeyTab</span>
+        case 10, 13:<span class="cov0" title="0">
+                return KeyEnter</span>
+        case 11:<span class="cov0" title="0">
+                return KeyCtrlK</span>
+        case 12:<span class="cov0" title="0">
+                return KeyCtrlL</span>
+        case 14:<span class="cov0" title="0">
+                return KeyCtrlN</span>
+        case 16:<span class="cov0" title="0">
+                return KeyCtrlP</span>
+        case 18:<span class="cov0" title="0">
+                return KeyCtrlR</span>
+        case 21:<span class="cov0" title="0">
+                return KeyCtrlU</span>
+        case 23:<span class="cov0" title="0">
+                return KeyCtrlW</span>
+        case 25:<span class="cov0" title="0">
+                return KeyCtrlY</span>
+        case 26:<span class="cov0" title="0">
+                return KeyCtrlZ</span>
+        default:<span class="cov1" title="1">
+                return KeyNone</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file23" style="display: none">package terminal
+
+import (
+        "os"
+)
+
+// TerminalInterface defines the methods needed for terminal operations.
+type TerminalInterface interface {
+        // Terminal methods
+        Write(data []byte) (int, error)
+        WriteString(s string) (int, error)
+        Printf(format string, args ...interface{}) (int, error)
+        Size() (width, height int)
+        MoveCursor(x, y int)
+        ClearLine()
+        ClearToEnd()
+        ClearFromCursor()
+        SaveCursor()
+        RestoreCursor()
+        HideCursor()
+        ShowCursor()
+
+        // ColorManager methods
+        Colorize(text string, color Color) string
+        StyleText(text string, style Style) string
+
+        // InputReader methods
+        ReadKey() (KeyEvent, error)
+
+        // Interface methods
+        EnableRawMode() error
+        DisableRawMode() error
+        IsRawMode() bool
+        Cleanup()
+}
+
+// Interface provides a unified terminal abstraction.
+type Interface struct {
+        *Terminal
+        *ColorManager
+        *InputReader
+
+        rawMode bool
+}
+
+// NewInterface creates a complete terminal interface.
+func NewInterface() *Interface <span class="cov8" title="1">{
+        return &amp;Interface{
+                Terminal:     New(),
+                ColorManager: NewColorManager(),
+                InputReader:  NewInputReader(os.Stdin),
+                rawMode:      false,
+        }
+}</span>
+
+// EnableRawMode enables raw terminal mode for character-by-character input.
+func (i *Interface) EnableRawMode() error <span class="cov0" title="0">{
+        // TODO: Implement proper raw mode using syscalls
+        i.rawMode = true
+        return nil
+}</span>
+
+// DisableRawMode restores normal terminal mode.
+func (i *Interface) DisableRawMode() error <span class="cov0" title="0">{
+        // TODO: Implement proper mode restoration
+        i.rawMode = false
+        return nil
+}</span>
+
+// IsRawMode returns whether raw mode is enabled.
+func (i *Interface) IsRawMode() bool <span class="cov0" title="0">{
+        return i.rawMode
+}</span>
+
+// Cleanup performs terminal cleanup.
+func (i *Interface) Cleanup() <span class="cov0" title="0">{
+        i.ShowCursor()
+        _ = i.DisableRawMode() // Ignore error during cleanup
+}</span>
+</pre>
+		
+		<pre class="file" id="file24" style="display: none">// Package terminal provides a robust abstraction for terminal I/O operations.
+package terminal
+
+import (
+        "fmt"
+        "io"
+        "os"
+)
+
+// Terminal provides safe terminal operations.
+type Terminal struct {
+        input  io.Reader
+        output io.Writer
+        width  int
+        height int
+}
+
+// New creates a new terminal instance.
+func New() *Terminal <span class="cov6" title="2">{
+        t := &amp;Terminal{
+                input:  os.Stdin,
+                output: os.Stdout,
+        }
+        t.updateSize()
+        return t
+}</span>
+
+// Write writes data to terminal.
+func (t *Terminal) Write(data []byte) (int, error) <span class="cov0" title="0">{
+        return t.output.Write(data)
+}</span>
+
+// WriteString writes a string to terminal.
+func (t *Terminal) WriteString(s string) (int, error) <span class="cov0" title="0">{
+        return io.WriteString(t.output, s)
+}</span>
+
+// Printf writes formatted output.
+func (t *Terminal) Printf(format string, args ...interface{}) (int, error) <span class="cov0" title="0">{
+        return fmt.Fprintf(t.output, format, args...)
+}</span>
+
+// Size returns terminal dimensions.
+func (t *Terminal) Size() (width, height int) <span class="cov1" title="1">{
+        t.updateSize()
+        return t.width, t.height
+}</span>
+
+// MoveCursor moves cursor to position.
+func (t *Terminal) MoveCursor(x, y int) <span class="cov0" title="0">{
+        t.WriteString(fmt.Sprintf("\033[%d;%dH", y+1, x+1))
+}</span>
+
+// ClearLine clears current line.
+func (t *Terminal) ClearLine() <span class="cov0" title="0">{
+        t.WriteString("\033[2K")
+}</span>
+
+// ClearToEnd clears from cursor to end of line.
+func (t *Terminal) ClearToEnd() <span class="cov0" title="0">{
+        t.WriteString("\033[K")
+}</span>
+
+// SaveCursor saves cursor position.
+func (t *Terminal) SaveCursor() <span class="cov0" title="0">{
+        t.WriteString("\033[7")
+}</span>
+
+// RestoreCursor restores cursor position.
+func (t *Terminal) RestoreCursor() <span class="cov0" title="0">{
+        t.WriteString("\033[8")
+}</span>
+
+// HideCursor hides the cursor.
+func (t *Terminal) HideCursor() <span class="cov0" title="0">{
+        t.WriteString("\033[?25l")
+}</span>
+
+// ShowCursor shows the cursor.
+func (t *Terminal) ShowCursor() <span class="cov0" title="0">{
+        t.WriteString("\033[?25h")
+}</span>
+
+// ClearFromCursor clears from cursor to end of screen.
+func (t *Terminal) ClearFromCursor() <span class="cov0" title="0">{
+        t.WriteString("\033[0J")
+}</span>
+
+// updateSize gets current terminal size.
+func (t *Terminal) updateSize() <span class="cov10" title="3">{
+        // Simple fallback - could be enhanced with proper syscalls
+        t.width = 80
+        t.height = 24
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

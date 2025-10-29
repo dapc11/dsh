@@ -32,7 +32,7 @@ func TestKeyBindings_CtrlKeys(t *testing.T) {
 			rl.buffer = []rune("hello world")
 			rl.cursor = 6
 			rl.handleKeyEvent(terminal.KeyEvent{Key: tt.key})
-			
+
 			if string(rl.buffer) != tt.expected {
 				t.Errorf("Expected buffer %q, got %q", tt.expected, string(rl.buffer))
 			}
@@ -62,7 +62,7 @@ func TestKeyBindings_ArrowKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rl.cursor = 2
 			rl.handleKeyEvent(terminal.KeyEvent{Key: tt.key})
-			
+
 			if rl.cursor != tt.cursor {
 				t.Errorf("Expected cursor %d, got %d", tt.cursor, rl.cursor)
 			}
@@ -78,7 +78,7 @@ func TestKeyBindings_BackspaceDelete(t *testing.T) {
 		rl.buffer = []rune("hello")
 		rl.cursor = 3
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyBackspace})
-		
+
 		if string(rl.buffer) != "helo" {
 			t.Errorf("Expected buffer %q, got %q", "helo", string(rl.buffer))
 		}
@@ -91,7 +91,7 @@ func TestKeyBindings_BackspaceDelete(t *testing.T) {
 		rl.buffer = []rune("hello")
 		rl.cursor = 2
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlD})
-		
+
 		if string(rl.buffer) != "helo" {
 			t.Errorf("Expected buffer %q, got %q", "helo", string(rl.buffer))
 		}
@@ -111,7 +111,7 @@ func TestKeyBindings_WordMovement(t *testing.T) {
 		rl.buffer = []rune("hello world")
 		rl.cursor = 11
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlW})
-		
+
 		if string(rl.buffer) != "hello " {
 			t.Errorf("Expected buffer %q, got %q", "hello ", string(rl.buffer))
 		}
@@ -127,7 +127,7 @@ func TestKeyBindings_KillYank(t *testing.T) {
 		rl.cursor = 5
 		rl.killRing.Add("world")
 		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlY})
-		
+
 		if string(rl.buffer) != "helloworld" {
 			t.Errorf("Expected buffer %q, got %q", "helloworld", string(rl.buffer))
 		}
@@ -157,7 +157,7 @@ func TestKeyBindings_PrintableChars(t *testing.T) {
 
 	rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyNone, Rune: ' '})
 	rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyNone, Rune: 'w'})
-	
+
 	if string(rl.buffer) != "hello w" {
 		t.Errorf("Expected buffer %q, got %q", "hello w", string(rl.buffer))
 	}
@@ -183,7 +183,7 @@ func TestKeyBindings_TabCompletion(t *testing.T) {
 	rl.cursor = 2
 
 	rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyTab})
-	
+
 	if string(rl.buffer) != "echo" {
 		t.Errorf("Expected buffer %q, got %q", "echo", string(rl.buffer))
 	}

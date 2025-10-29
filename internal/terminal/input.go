@@ -72,8 +72,8 @@ func (r *InputReader) ReadKey() (KeyEvent, error) {
 		return r.readEscapeSequence()
 	}
 
-	// Handle control characters
-	if b < 32 {
+	// Handle control characters and DEL
+	if b < 32 || b == 127 {
 		return KeyEvent{Key: r.ctrlKey(b)}, nil
 	}
 
