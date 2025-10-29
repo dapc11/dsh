@@ -48,25 +48,24 @@ func TestTabCompletionExcessiveRendering(t *testing.T) {
 				Message: "Should not render excessively",
 			},
 			{
-				Name: "Should show initial selection but not redraw for navigation",
+				Name: "Should show in-place selection updates",
 				Check: func(f *framework.UITestFramework) bool {
 					output := f.GetOutput()
 					
-					// Look for selection indicators - should only see initial selection
-					firstSelection := strings.Count(output, "> backspace_cursor_test.go")
-					secondSelection := strings.Count(output, "> backspace_delete_test.go")
-					t.Logf("First item selected: %d times", firstSelection)
-					t.Logf("Second item selected: %d times", secondSelection)
+					// Look for in-place cursor positioning updates
+					// Should see cursor moves to update selection indicators
+					cursorMoves := strings.Count(output, "\x1b[2;")
+					t.Logf("Cursor positioning sequences: %d", cursorMoves)
 					
-					// With no redraws for navigation, only initial selection is visible
-					if firstSelection != 1 || secondSelection != 0 {
-						t.Errorf("Expected only initial selection visible, got first=%d, second=%d", firstSelection, secondSelection)
+					// Should have cursor moves for updating selection (old + new position)
+					if cursorMoves < 2 {
+						t.Errorf("Expected at least 2 cursor moves for selection update, got %d", cursorMoves)
 						return false
 					}
 					
 					return true
 				},
-				Message: "Should show only initial selection without navigation redraws",
+				Message: "Should show in-place selection updates",
 			},
 		},
 	}

@@ -161,6 +161,32 @@ func (cr *CompletionRenderer) IsActive() bool {
 
 // UpdateSelectionHighlight updates only the selection highlighting efficiently
 func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected int) {
-	// Do nothing - prevent excessive rendering on navigation
-	// The menu is already displayed, navigation should not trigger redraws
+	if !cr.active || cr.lastItems == nil || oldSelected == newSelected {
+		return
+	}
+
+	// Calculate positions in the 2-column layout
+	cols := 2
+	maxItems := 10
+
+	// Update old selection (remove "> ")
+	if oldSelected >= 0 && oldSelected < len(cr.lastItems) && oldSelected < maxItems {
+		row := (oldSelected / cols) + 2 // +2 for prompt lines
+		col := (oldSelected % cols) * 37 + 1 // 37 chars per column
+		
+		// Move to old position and replace "> " with "  "
+		cr.terminal.WriteString(fmt.Sprintf("\033[%d;%dH  ", row, col))
+	}
+	
+	// Update new selection (add "> ")
+	if newSelected >= 0 && newSelected < len(cr.lastItems) && newSelected < maxItems {
+		row := (newSelected / cols) + 2 // +2 for prompt lines  
+		col := (newSelected % cols) * 37 + 1 // 37 chars per column
+		
+		// Move to new position and add "> "
+		cr.terminal.WriteString(fmt.Sprintf("\033[%d;%dH> ", row, col))
+	}
+	
+	// Restore cursor to input line
+	cr.terminal.WriteString("\033[u")
 }

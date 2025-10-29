@@ -393,8 +393,8 @@ func TestCompletionMenuCleanupAfterAccept(t *testing.T) {
 					output := f.GetOutput()
 					t.Logf("Output after completion: %q", output)
 					// Updated expectation: no full redraws for navigation, just initial menu + cleanup
-					// Updated expectation: no redraws for navigation, just initial menu + cleanup
-					expectedOutput := "\r\ndsh> \r\x1b[Kdsh> l\x1b[7G\r\x1b[Kdsh> ls\x1b[8G\x1b[s\x1b[s\r\n> ls                                   lsattr                           \r\n  lsb_release                          lsblk                            \r\n  lscpu                                lshw                             \r\n  lsinitramfs                          lsipc                            \r\n  lslocks                              lslogins                         \r\n\x1b[1;1H\x1b[1;1H\x1b[1;1H\x1b[2K\x1b[u\x1b[u\x1b[J\x1b[2K\rdsh> lsb_release"
+					// Updated expectation: includes in-place cursor movements for selection updates
+					expectedOutput := "\r\ndsh> \r\x1b[Kdsh> l\x1b[7G\r\x1b[Kdsh> ls\x1b[8G\x1b[s\x1b[s\r\n> ls                                   lsattr                           \r\n  lsb_release                          lsblk                            \r\n  lscpu                                lshw                             \r\n  lsinitramfs                          lsipc                            \r\n  lslocks                              lslogins                         \r\n\x1b[1;1H\x1b[2;1H  \x1b[2;38H> \x1b[u\x1b[1;1H\x1b[2;38H  \x1b[3;1H> \x1b[u\x1b[1;1H\x1b[2K\x1b[u\x1b[u\x1b[J\x1b[2K\rdsh> lsb_release"
 					return output == expectedOutput
 				},
 				Message: "Output should match exact escape sequence pattern",
