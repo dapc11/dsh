@@ -102,7 +102,7 @@ func TestTabCompletion_NavigateMenu(t *testing.T) {
 
 	// Should update menu display
 	output := term.GetOutput()
-	if !strings.Contains(output, "\033[7m") { // Reverse video for selection
+	if !strings.Contains(output, "> ") { // Selection indicator
 		t.Error("Should show selection highlight")
 	}
 }

@@ -52,11 +52,11 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 			cr.terminal.WriteString("\r\n")
 		}
 
-		// Highlight selected item
+		// Show selection indicator for selected item
 		if i == selected {
-			cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
+			cr.terminal.WriteString(fmt.Sprintf("> %-33s", item.Text))
 		} else {
-			cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
+			cr.terminal.WriteString(fmt.Sprintf("  %-33s", item.Text))
 		}
 
 		if i%cols != cols-1 {
@@ -165,7 +165,7 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 		return
 	}
 
-	// Clear from cursor and redraw menu with new selection
+	// Clear from cursor and redraw menu with new selection indicator
 	cr.terminal.WriteString("\033[u") // Restore cursor
 	cr.terminal.WriteString("\033[J") // Clear from cursor to end
 	cr.terminal.WriteString("\033[s") // Save cursor again for next time
@@ -188,12 +188,12 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 			cr.terminal.WriteString("\r\n")
 		}
 
-		// Highlight selected item (adjust index for page)
+		// Show selection indicator for selected item
 		globalIndex := pageStart + i
 		if globalIndex == newSelected {
-			cr.terminal.WriteString(fmt.Sprintf("\033[7m%-35s\033[0m", item.Text))
+			cr.terminal.WriteString(fmt.Sprintf("> %-33s", item.Text))
 		} else {
-			cr.terminal.WriteString(fmt.Sprintf("%-35s", item.Text))
+			cr.terminal.WriteString(fmt.Sprintf("  %-33s", item.Text))
 		}
 
 		if i%cols != cols-1 {
