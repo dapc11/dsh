@@ -93,7 +93,7 @@ func (r *Readline) ReadLine() (string, error) {
 
 		// Return completed line
 		r.moveCursorToEnd()
-		r.terminal.WriteString("\r\n")
+		_, _ = r.terminal.WriteString("\r\n")
 		line := string(r.buffer)
 		if line != "" {
 			r.history.Add(line)
@@ -141,7 +141,7 @@ func NewTestReadline(mockTerm terminal.TerminalInterface) *Readline {
 
 func (r *Readline) displayPrompt() {
 	if r.terminal != nil {
-		r.terminal.WriteString(r.prompt)
+		_, _ = r.terminal.WriteString(r.prompt)
 	}
 }
 

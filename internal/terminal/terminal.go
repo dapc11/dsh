@@ -78,12 +78,12 @@ func (t *Terminal) HideCursor() {
 
 // ShowCursor shows the cursor.
 func (t *Terminal) ShowCursor() {
-	t.WriteString("\033[?25h")
+	_, _ = t.WriteString("\033[?25h")
 }
 
 // ClearFromCursor clears from cursor to end of screen.
 func (t *Terminal) ClearFromCursor() {
-	t.WriteString("\033[0J")
+	_, _ = t.WriteString("\033[0J")
 }
 
 // updateSize gets current terminal size.

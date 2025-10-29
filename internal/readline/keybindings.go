@@ -47,7 +47,7 @@ func (r *Readline) handleKeyEvent(keyEvent terminal.KeyEvent) bool { //nolint:cy
 			r.clearTabCompletion()
 		}
 		r.clearLine()
-		r.terminal.WriteString("^C\r\n")
+		_, _ = r.terminal.WriteString("^C\r\n")
 		r.displayPrompt()
 	case terminal.KeyCtrlF:
 		r.killRing.ResetYank()
@@ -78,7 +78,7 @@ func (r *Readline) handleKeyEvent(keyEvent terminal.KeyEvent) bool { //nolint:cy
 		r.killRing.ResetYank()
 		// Clear current line before fuzzy search
 		r.moveCursorToStart()
-		r.terminal.WriteString("\033[K") // Clear line
+		_, _ = r.terminal.WriteString("\033[K") // Clear line
 		if selected := r.FuzzyHistorySearchCustom(); selected != "" {
 			r.buffer = []rune(selected)
 			r.cursor = len(r.buffer)
@@ -95,7 +95,7 @@ func (r *Readline) handleKeyEvent(keyEvent terminal.KeyEvent) bool { //nolint:cy
 		r.yank()
 	case terminal.KeyCtrlZ:
 		r.killRing.ResetYank()
-		r.terminal.WriteString("^Z\r\n")
+		_, _ = r.terminal.WriteString("^Z\r\n")
 		r.displayPrompt()
 	case terminal.KeyTab:
 		r.killRing.ResetYank()
@@ -228,9 +228,9 @@ func (r *Readline) clearTabCompletion() {
 		}
 
 		// Just restore cursor and clear menu area - don't redraw prompt
-		r.terminal.WriteString("\033[u")         // Restore cursor to saved position
-		r.terminal.WriteString("\033[J")         // Clear from cursor to end of screen
-		r.terminal.WriteString(string(r.buffer)) // Redraw just the buffer
+		_, _ = r.terminal.WriteString("\033[u")         // Restore cursor to saved position
+		_, _ = r.terminal.WriteString("\033[J")         // Clear from cursor to end of screen
+		_, _ = r.terminal.WriteString(string(r.buffer)) // Redraw just the buffer
 		r.setCursorPosition()
 	}
 }
@@ -292,13 +292,13 @@ func (r *Readline) acceptTabCompletion() {
 
 	// Only clear the completion menu area, not the entire screen
 	// Move cursor back to the input line and clear from there down
-	r.terminal.WriteString("\033[u") // Restore to saved cursor position (input line)
-	r.terminal.WriteString("\033[J") // Clear from cursor to end of screen (removes menu)
+	_, _ = r.terminal.WriteString("\033[u") // Restore to saved cursor position (input line)
+	_, _ = r.terminal.WriteString("\033[J") // Clear from cursor to end of screen (removes menu)
 	// Redraw the current input line cleanly
-	r.terminal.WriteString("\033[2K") // Clear the current line
-	r.terminal.WriteString("\r")      // Move to beginning of line
+	_, _ = r.terminal.WriteString("\033[2K") // Clear the current line
+	_, _ = r.terminal.WriteString("\r")      // Move to beginning of line
 	fullLine := r.prompt + string(r.buffer)
-	r.terminal.WriteString(fullLine)
+	_, _ = r.terminal.WriteString(fullLine)
 }
 
 // History operations.

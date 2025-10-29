@@ -36,7 +36,7 @@ func (r *Readline) clearLine() {
 
 func (r *Readline) clearScreen() {
 	if r.terminal != nil {
-		r.terminal.WriteString("\033[2J\033[H") // Clear screen and move to top
+		_, _ = r.terminal.WriteString("\033[2J\033[H") // Clear screen and move to top
 		r.displayPrompt()
 	}
 	r.redraw()
@@ -51,13 +51,13 @@ func (r *Readline) redraw() {
 	r.updateSuggestion()
 
 	// Clear line and redraw
-	r.terminal.WriteString("\r\033[K")
+	_, _ = r.terminal.WriteString("\r\033[K")
 	r.displayPrompt()
 
 	// Print buffer with suggestion
-	r.terminal.WriteString(string(r.buffer))
+	_, _ = r.terminal.WriteString(string(r.buffer))
 	if r.suggestion != "" {
-		r.terminal.WriteString(r.terminal.Colorize(r.suggestion, terminal.ColorBrightBlack))
+		_, _ = r.terminal.WriteString(r.terminal.Colorize(r.suggestion, terminal.ColorBrightBlack))
 	}
 
 	// Position cursor correctly
