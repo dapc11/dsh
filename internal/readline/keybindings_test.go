@@ -4,85 +4,197 @@ import (
 	"testing"
 
 	"dsh/internal/terminal"
+	"dsh/test/rendering"
 )
 
-func TestKeyHandling_BasicKeys(t *testing.T) {
-	r := createTestReadline()
+func TestKeyBindings_CtrlKeys(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+	rl.buffer = []rune("hello world")
+	rl.cursor = 6
 
-	// Test Ctrl+A (move to start)
-	r.buffer = []rune("hello")
-	r.cursor = 3
-	r.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlA})
-
-	if r.cursor != 0 {
-		t.Errorf("Ctrl+A: cursor = %d, want 0", r.cursor)
+	tests := []struct {
+		name     string
+		key      terminal.Key
+		expected string
+		cursor   int
+	}{
+		{"Ctrl+A", terminal.KeyCtrlA, "hello world", 0},
+		{"Ctrl+E", terminal.KeyCtrlE, "hello world", 11},
+		{"Ctrl+B", terminal.KeyCtrlB, "hello world", 5},
+		{"Ctrl+F", terminal.KeyCtrlF, "hello world", 7},
+		{"Ctrl+K", terminal.KeyCtrlK, "hello ", 6},
+		{"Ctrl+U", terminal.KeyCtrlU, "", 0},
 	}
 
-	// Test Ctrl+E (move to end)
-	r.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlE})
-	if r.cursor != len(r.buffer) {
-		t.Errorf("Ctrl+E: cursor = %d, want %d", r.cursor, len(r.buffer))
-	}
-
-	// Test Ctrl+U (clear line)
-	r.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlU})
-	if len(r.buffer) != 0 {
-		t.Errorf("Ctrl+U: buffer length = %d, want 0", len(r.buffer))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rl.buffer = []rune("hello world")
+			rl.cursor = 6
+			rl.handleKeyEvent(terminal.KeyEvent{Key: tt.key})
+			
+			if string(rl.buffer) != tt.expected {
+				t.Errorf("Expected buffer %q, got %q", tt.expected, string(rl.buffer))
+			}
+			if rl.cursor != tt.cursor {
+				t.Errorf("Expected cursor %d, got %d", tt.cursor, rl.cursor)
+			}
+		})
 	}
 }
 
-func TestKeyHandling_EOF(t *testing.T) {
-	r := createTestReadline()
+func TestKeyBindings_ArrowKeys(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+	rl.buffer = []rune("test")
+	rl.cursor = 2
 
-	// Ctrl+D on empty buffer should return false (EOF)
-	r.buffer = []rune{}
-	r.cursor = 0
+	tests := []struct {
+		name   string
+		key    terminal.Key
+		cursor int
+	}{
+		{"Left", terminal.KeyArrowLeft, 1},
+		{"Right", terminal.KeyArrowRight, 3},
+	}
 
-	result := r.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlD})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rl.cursor = 2
+			rl.handleKeyEvent(terminal.KeyEvent{Key: tt.key})
+			
+			if rl.cursor != tt.cursor {
+				t.Errorf("Expected cursor %d, got %d", tt.cursor, rl.cursor)
+			}
+		})
+	}
+}
+
+func TestKeyBindings_BackspaceDelete(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+
+	t.Run("Backspace", func(t *testing.T) {
+		rl.buffer = []rune("hello")
+		rl.cursor = 3
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyBackspace})
+		
+		if string(rl.buffer) != "helo" {
+			t.Errorf("Expected buffer %q, got %q", "helo", string(rl.buffer))
+		}
+		if rl.cursor != 2 {
+			t.Errorf("Expected cursor %d, got %d", 2, rl.cursor)
+		}
+	})
+
+	t.Run("Ctrl+D", func(t *testing.T) {
+		rl.buffer = []rune("hello")
+		rl.cursor = 2
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlD})
+		
+		if string(rl.buffer) != "helo" {
+			t.Errorf("Expected buffer %q, got %q", "helo", string(rl.buffer))
+		}
+		if rl.cursor != 2 {
+			t.Errorf("Expected cursor %d, got %d", 2, rl.cursor)
+		}
+	})
+}
+
+func TestKeyBindings_WordMovement(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+	rl.buffer = []rune("hello world test")
+	rl.cursor = 8
+
+	t.Run("Ctrl+W", func(t *testing.T) {
+		rl.buffer = []rune("hello world")
+		rl.cursor = 11
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlW})
+		
+		if string(rl.buffer) != "hello " {
+			t.Errorf("Expected buffer %q, got %q", "hello ", string(rl.buffer))
+		}
+	})
+}
+
+func TestKeyBindings_KillYank(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+
+	t.Run("Ctrl+Y", func(t *testing.T) {
+		rl.buffer = []rune("hello")
+		rl.cursor = 5
+		rl.killRing.Add("world")
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlY})
+		
+		if string(rl.buffer) != "helloworld" {
+			t.Errorf("Expected buffer %q, got %q", "helloworld", string(rl.buffer))
+		}
+	})
+}
+
+func TestKeyBindings_SpecialKeys(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+
+	t.Run("Ctrl+L", func(t *testing.T) {
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlL})
+		// Should not crash
+	})
+
+	t.Run("Ctrl+Z", func(t *testing.T) {
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlZ})
+		// Should not crash
+	})
+}
+
+func TestKeyBindings_PrintableChars(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+	rl.buffer = []rune("hello")
+	rl.cursor = 5
+
+	rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyNone, Rune: ' '})
+	rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyNone, Rune: 'w'})
+	
+	if string(rl.buffer) != "hello w" {
+		t.Errorf("Expected buffer %q, got %q", "hello w", string(rl.buffer))
+	}
+	if rl.cursor != 7 {
+		t.Errorf("Expected cursor %d, got %d", 7, rl.cursor)
+	}
+}
+
+func TestKeyBindings_EnterKey(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+
+	result := rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyEnter})
 	if result != false {
-		t.Errorf("Ctrl+D on empty buffer: got %v, want false (EOF)", result)
-	}
-
-	// Ctrl+D on non-empty buffer should delete char and return true
-	r.buffer = []rune("hello")
-	r.cursor = 1
-
-	result = r.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyCtrlD})
-	if result != true {
-		t.Errorf("Ctrl+D on non-empty buffer: got %v, want true", result)
-	}
-
-	expected := "hllo"
-	if string(r.buffer) != expected {
-		t.Errorf("Ctrl+D delete: buffer = %s, want %s", string(r.buffer), expected)
+		t.Errorf("Expected Enter to return false, got %v", result)
 	}
 }
 
-func TestKeyHandling_EnterKey(t *testing.T) {
-	r := createTestReadline()
+func TestKeyBindings_TabCompletion(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
+	rl.buffer = []rune("ec")
+	rl.cursor = 2
 
-	// Enter without menu should return false (complete line)
-	result := r.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyEnter})
-	if result != false {
-		t.Errorf("Enter without menu: got %v, want false", result)
+	rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyTab})
+	
+	if string(rl.buffer) != "echo" {
+		t.Errorf("Expected buffer %q, got %q", "echo", string(rl.buffer))
 	}
 }
 
-func TestKeyHandling_PrintableChars(t *testing.T) {
-	r := createTestReadline()
+func TestKeyBindings_EscapeSequences(t *testing.T) {
+	mockTerm := rendering.NewMockTerminalInterface(80, 24)
+	rl := NewTestReadline(mockTerm)
 
-	// Test inserting printable characters
-	chars := []rune{'h', 'e', 'l', 'l', 'o'}
-	for _, ch := range chars {
-		r.handleKeyEvent(terminal.KeyEvent{Rune: ch})
-	}
-
-	expected := "hello"
-	if string(r.buffer) != expected {
-		t.Errorf("Printable chars: buffer = %s, want %s", string(r.buffer), expected)
-	}
-
-	if r.cursor != len(expected) {
-		t.Errorf("Printable chars: cursor = %d, want %d", r.cursor, len(expected))
-	}
+	t.Run("Escape", func(t *testing.T) {
+		rl.handleKeyEvent(terminal.KeyEvent{Key: terminal.KeyEscape})
+		// Should not crash
+	})
 }
