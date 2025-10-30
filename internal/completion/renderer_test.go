@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"dsh/internal/terminal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // MockTerminal for testing renderer
@@ -132,19 +134,21 @@ func (m *MockTerminal) Reset() {
 	m.savedX, m.savedY = 0, 0
 }
 
-func TestRenderer_Creation(t *testing.T) {
+func TestNewRenderer(t *testing.T) {
+	// Given
 	term := NewMockTerminal()
+
+	// When
 	renderer := NewRenderer(term)
 
-	if renderer == nil {
-		t.Fatal("Renderer should not be nil")
-	}
+	// Then
+	require.NotNil(t, renderer)
 }
 
-func TestRenderer_RenderMenu(t *testing.T) {
+func TestRender_WithItems(t *testing.T) {
+	// Given
 	term := NewMockTerminal()
 	renderer := NewRenderer(term)
-
 	menu := NewMenu()
 	items := []Item{
 		{Text: "echo", Type: "builtin"},
@@ -153,117 +157,175 @@ func TestRenderer_RenderMenu(t *testing.T) {
 	}
 	menu.Show(items, "")
 
+	// When
 	renderer.Render(menu)
 
+	// Then
 	output := term.GetOutput()
-
-	// Debug: print the actual output
-	t.Logf("Actual output: %q", output)
-
-	// Should contain save cursor
-	if !strings.Contains(output, "\033[s") {
-		t.Error("Output should contain save cursor sequence")
-	}
-
-	// Should contain the items
-	if !strings.Contains(output, "echo") {
-		t.Error("Output should contain 'echo'")
-	}
-
-	if !strings.Contains(output, "ls") {
-		t.Error("Output should contain 'ls'")
-	}
-
-	// Should contain colors for non-selected items
-	if !strings.Contains(output, "\033[32m") { // Green for command
-		t.Error("Output should contain green color for command")
-	}
-
-	if !strings.Contains(output, "\033[34m") { // Blue for directory
-		t.Error("Output should contain blue color for directory")
-	}
-
-	// Should contain selection (reverse video) for first item
-	if !strings.Contains(output, "\033[7m") {
-		t.Error("Output should contain reverse video for selection")
-	}
-
-	// The selected item (echo) should have reverse video, not cyan
-	// Let's test with a different selection to see cyan
-	menu.NextItem() // Move to second item
-	term.Reset()
-	renderer.Render(menu)
-
-	output2 := term.GetOutput()
-	if !strings.Contains(output2, "\033[36m") { // Cyan for builtin when not selected
-		t.Error("Output should contain cyan color for builtin when not selected")
-	}
+	require.Contains(t, output, "\033[s") // save cursor
+	require.Contains(t, output, "echo")
+	require.Contains(t, output, "ls")
+	require.Contains(t, output, "\033[32m") // green for command
+	require.Contains(t, output, "\033[34m") // blue for directory
+	require.Contains(t, output, "\033[7m")  // reverse for selection
 }
 
-func TestRenderer_ClearMenu(t *testing.T) {
+func TestRender_BuiltinColorWhenNotSelected(t *testing.T) {
+	// Given
 	term := NewMockTerminal()
 	renderer := NewRenderer(term)
-
 	menu := NewMenu()
 	items := []Item{
 		{Text: "echo", Type: "builtin"},
+		{Text: "ls", Type: "command"},
 	}
 	menu.Show(items, "")
-	menu.linesDrawn = 3 // Simulate rendered lines
+	menu.NextItem() // Move to second item
 
+	// When
+	renderer.Render(menu)
+
+	// Then
+	output := term.GetOutput()
+	require.Contains(t, output, "\033[36m") // cyan for builtin when not selected
+}
+
+func TestRender_WithPagination(t *testing.T) {
+	// Given
+	term := NewMockTerminal()
+	term.width = 20
+	term.height = 8
+	renderer := NewRenderer(term)
+	menu := NewMenu()
+	items := make([]Item, 20)
+	for i := range items {
+		items[i] = Item{Text: fmt.Sprintf("item%d", i), Type: "command"}
+	}
+	menu.Show(items, "")
+
+	// When
+	renderer.Render(menu)
+
+	// Then
+	output := term.GetOutput()
+	require.Contains(t, output, "Page")
+}
+
+func TestRender_EmptyMenu(t *testing.T) {
+	// Given
+	term := NewMockTerminal()
+	renderer := NewRenderer(term)
+	menu := NewMenu()
+
+	// When
+	renderer.Render(menu)
+
+	// Then
+	output := term.GetOutput()
+	assert.Empty(t, output)
+}
+
+func TestRender_SmallTerminal(t *testing.T) {
+	// Given
+	term := NewMockTerminal()
+	term.width = 5
+	term.height = 2
+	renderer := NewRenderer(term)
+	menu := NewMenu()
+	items := []Item{{Text: "verylongitemname", Type: "command"}}
+	menu.Show(items, "")
+
+	// When
+	renderer.Render(menu)
+
+	// Then
+	output := term.GetOutput()
+	require.Contains(t, output, "verylongitemname")
+}
+
+func TestClear_DisplayedMenu(t *testing.T) {
+	// Given
+	term := NewMockTerminal()
+	renderer := NewRenderer(term)
+	menu := NewMenu()
+	items := []Item{{Text: "echo", Type: "builtin"}}
+	menu.Show(items, "")
+	menu.linesDrawn = 3
+
+	// When
 	renderer.Clear(menu)
 
+	// Then
+	output := term.GetOutput()
+	require.Contains(t, output, "\033[0J") // clear from cursor
+	require.Contains(t, output, "\033[u")  // restore cursor
+}
+
+func TestClear_NotDisplayedMenu(t *testing.T) {
+	// Given
+	term := NewMockTerminal()
+	renderer := NewRenderer(term)
+	menu := NewMenu()
+	menu.displayed = false
+
+	// When
+	renderer.Clear(menu)
+
+	// Then
+	output := term.GetOutput()
+	assert.Empty(t, output)
+}
+
+func TestRenderer_Pagination(t *testing.T) {
+	term := NewMockTerminal()
+	term.width = 20  // Small width to force pagination
+	term.height = 8  // Small height
+	renderer := NewRenderer(term)
+
+	menu := NewMenu()
+	items := make([]Item, 20)
+	for i := range items {
+		items[i] = Item{Text: fmt.Sprintf("item%d", i), Type: "command"}
+	}
+	menu.Show(items, "")
+
+	renderer.Render(menu)
 	output := term.GetOutput()
 
-	// Should contain clear sequence
-	if !strings.Contains(output, "\033[0J") {
-		t.Error("Output should contain clear from cursor sequence")
-	}
-
-	// Should contain restore cursor
-	if !strings.Contains(output, "\033[u") {
-		t.Error("Output should contain restore cursor sequence")
+	// Should show pagination info
+	if !strings.Contains(output, "Page") {
+		t.Error("Should show pagination info")
 	}
 }
 
-func TestRenderer_EmptyMenu(t *testing.T) {
+func TestRenderer_ClearNotDisplayed(t *testing.T) {
 	term := NewMockTerminal()
 	renderer := NewRenderer(term)
 
 	menu := NewMenu()
-	// Don't show menu or add items
+	menu.displayed = false
 
-	renderer.Render(menu)
-
+	renderer.Clear(menu)
 	output := term.GetOutput()
 
-	// Should not render anything for empty menu
+	// Should not output anything for non-displayed menu
 	if output != "" {
-		t.Errorf("Expected empty output for empty menu, got: %q", output)
+		t.Errorf("Expected no output for non-displayed menu, got: %q", output)
 	}
 }
 
-func TestRenderer_SingleItem(t *testing.T) {
+func TestRenderer_LayoutEdgeCases(t *testing.T) {
 	term := NewMockTerminal()
+	term.width = 5   // Very small width
+	term.height = 2  // Very small height
 	renderer := NewRenderer(term)
 
 	menu := NewMenu()
 	items := []Item{
-		{Text: "single", Type: "command"},
+		{Text: "verylongitemname", Type: "command"},
 	}
 	menu.Show(items, "")
 
 	renderer.Render(menu)
-
-	output := term.GetOutput()
-
-	// Should contain the single item
-	if !strings.Contains(output, "single") {
-		t.Error("Output should contain 'single'")
-	}
-
-	// Should be selected (reverse video)
-	if !strings.Contains(output, "\033[7m") {
-		t.Error("Single item should be selected")
-	}
+	// Should not crash with small terminal
 }

@@ -2,171 +2,150 @@ package completion
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMenu_NewMenu(t *testing.T) {
+	// Given/When
 	menu := NewMenu()
 
-	if menu == nil {
-		t.Fatal("NewMenu returned nil")
-	}
-
-	if menu.maxRows != 10 {
-		t.Errorf("Expected maxRows = 10, got %d", menu.maxRows)
-	}
-
-	if menu.IsDisplayed() {
-		t.Error("New menu should not be displayed")
-	}
+	// Then
+	require.NotNil(t, menu)
+	assert.Equal(t, 10, menu.maxRows)
+	assert.False(t, menu.IsDisplayed())
 }
 
 func TestMenu_ShowHide(t *testing.T) {
+	// Given
 	menu := NewMenu()
 	items := []Item{
 		{Text: "item1", Type: "command"},
 		{Text: "item2", Type: "file"},
 	}
 
+	// When
 	menu.Show(items, "test")
 
-	if !menu.IsDisplayed() {
-		t.Error("Menu should be displayed after Show")
-	}
+	// Then
+	assert.True(t, menu.IsDisplayed())
+	assert.Len(t, menu.items, 2)
+	assert.Equal(t, "test", menu.GetBase())
 
-	if len(menu.items) != 2 {
-		t.Errorf("Expected 2 items, got %d", len(menu.items))
-	}
-
-	if menu.GetBase() != "test" {
-		t.Errorf("Expected base 'test', got '%s'", menu.GetBase())
-	}
-
+	// When
 	menu.Hide()
 
-	if menu.IsDisplayed() {
-		t.Error("Menu should not be displayed after Hide")
-	}
-
-	if menu.HasItems() {
-		t.Error("Menu should not have items after Hide")
-	}
+	// Then
+	assert.False(t, menu.IsDisplayed())
+	assert.False(t, menu.HasItems())
 }
 
 func TestMenu_Navigation(t *testing.T) {
+	// Given
 	menu := NewMenu()
 	items := []Item{
 		{Text: "item1", Type: "command"},
 		{Text: "item2", Type: "file"},
 		{Text: "item3", Type: "directory"},
 	}
-
 	menu.Show(items, "test")
 
-	// Test initial selection
+	// When/Then - initial selection
 	item, ok := menu.GetSelected()
-	if !ok {
-		t.Error("Should have selected item")
-	}
-	if item.Text != "item1" {
-		t.Errorf("Expected 'item1', got '%s'", item.Text)
-	}
+	require.True(t, ok)
+	assert.Equal(t, "item1", item.Text)
 
-	// Test next item
+	// When
 	menu.NextItem()
-	item, ok = menu.GetSelected()
-	if !ok {
-		t.Error("Should have selected item")
-	}
-	if item.Text != "item2" {
-		t.Errorf("Expected 'item2', got '%s'", item.Text)
-	}
 
-	// Test previous item
-	menu.PrevItem()
+	// Then
 	item, ok = menu.GetSelected()
-	if !ok {
-		t.Error("Should have selected item")
-	}
-	if item.Text != "item1" {
-		t.Errorf("Expected 'item1', got '%s'", item.Text)
-	}
+	require.True(t, ok)
+	assert.Equal(t, "item2", item.Text)
+
+	// When
+	menu.PrevItem()
+
+	// Then
+	item, ok = menu.GetSelected()
+	require.True(t, ok)
+	assert.Equal(t, "item1", item.Text)
 }
 
 func TestMenu_NavigationWrapAround(t *testing.T) {
+	// Given
 	menu := NewMenu()
 	items := []Item{
 		{Text: "item1", Type: "command"},
 		{Text: "item2", Type: "file"},
 	}
-
 	menu.Show(items, "test")
 
-	// Go to last item
+	// When - go to last item
 	menu.NextItem()
+
+	// Then
 	item, _ := menu.GetSelected()
-	if item.Text != "item2" {
-		t.Errorf("Expected 'item2', got '%s'", item.Text)
-	}
+	assert.Equal(t, "item2", item.Text)
 
-	// Should wrap to first item
+	// When - should wrap to first item
 	menu.NextItem()
-	item, _ = menu.GetSelected()
-	if item.Text != "item1" {
-		t.Errorf("Expected wrap to 'item1', got '%s'", item.Text)
-	}
 
-	// Should wrap to last item
-	menu.PrevItem()
+	// Then
 	item, _ = menu.GetSelected()
-	if item.Text != "item2" {
-		t.Errorf("Expected wrap to 'item2', got '%s'", item.Text)
-	}
+	assert.Equal(t, "item1", item.Text)
+
+	// When - should wrap to last item
+	menu.PrevItem()
+
+	// Then
+	item, _ = menu.GetSelected()
+	assert.Equal(t, "item2", item.Text)
 }
 
 func TestMenu_EmptyMenu(t *testing.T) {
+	// Given
 	menu := NewMenu()
 
-	// Test empty menu
-	if menu.HasItems() {
-		t.Error("Empty menu should not have items")
-	}
+	// When/Then
+	assert.False(t, menu.HasItems())
 
 	_, ok := menu.GetSelected()
-	if ok {
-		t.Error("Empty menu should not have selected item")
-	}
+	assert.False(t, ok)
 
-	// Navigation on empty menu should not panic
+	// When - navigation on empty menu should not panic
 	menu.NextItem()
 	menu.PrevItem()
+
+	// Then - should still be empty
+	assert.False(t, menu.HasItems())
 }
 
 func TestMenu_SingleItem(t *testing.T) {
+	// Given
 	menu := NewMenu()
 	items := []Item{
 		{Text: "only", Type: "command"},
 	}
-
 	menu.Show(items, "test")
 
+	// When/Then - initial selection
 	item, ok := menu.GetSelected()
-	if !ok {
-		t.Error("Should have selected item")
-	}
-	if item.Text != "only" {
-		t.Errorf("Expected 'only', got '%s'", item.Text)
-	}
+	require.True(t, ok)
+	assert.Equal(t, "only", item.Text)
 
-	// Navigation should stay on same item
+	// When - navigation should stay on same item
 	menu.NextItem()
-	item, _ = menu.GetSelected()
-	if item.Text != "only" {
-		t.Errorf("Expected 'only' after NextItem, got '%s'", item.Text)
-	}
 
-	menu.PrevItem()
+	// Then
 	item, _ = menu.GetSelected()
-	if item.Text != "only" {
-		t.Errorf("Expected 'only' after PrevItem, got '%s'", item.Text)
-	}
+	assert.Equal(t, "only", item.Text)
+
+	// When
+	menu.PrevItem()
+
+	// Then
+	item, _ = menu.GetSelected()
+	assert.Equal(t, "only", item.Text)
 }
