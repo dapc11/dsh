@@ -205,6 +205,7 @@ func (cr *CompletionRenderer) clearMenu() {
 	// Move back to saved cursor position and clear menu area
 	_, _ = cr.terminal.WriteString("\033[u") // Restore cursor
 	_, _ = cr.terminal.WriteString("\033[J") // Clear from cursor to end of screen
+	_, _ = cr.terminal.WriteString("\r\n")   // Move to next line for new menu
 }
 
 // updateSelectionOnSamePage updates selection when staying on the same page
