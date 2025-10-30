@@ -49,7 +49,7 @@ func TestTabCompletionUI(t *testing.T) {
 		f := framework.NewUITestFramework()
 		runner := framework.NewScenarioRunner(f)
 		var firstItem string
-		
+
 		test := framework.UITest{
 			Name: "Cursor movement test",
 			Setup: func(f *framework.UITestFramework) {
@@ -93,7 +93,7 @@ func TestTabCompletionUI(t *testing.T) {
 		// Given
 		f := framework.NewUITestFramework()
 		runner := framework.NewScenarioRunner(f)
-		
+
 		test := framework.UITest{
 			Name: "Pagination test",
 			Setup: func(f *framework.UITestFramework) {
@@ -150,7 +150,7 @@ func TestTabCompletionUI(t *testing.T) {
 			Check: func(f *framework.UITestFramework) bool {
 				output := f.GetOutput()
 				lines := strings.Split(output, "\n")
-				
+
 				for _, line := range lines {
 					cleanLine := cleanANSI(line)
 					if strings.Contains(cleanLine, "dsh>") && strings.Contains(cleanLine, "> ") {
@@ -172,7 +172,7 @@ func TestTabCompletionUI(t *testing.T) {
 		// Given
 		f := framework.NewUITestFramework()
 		runner := framework.NewScenarioRunner(f)
-		
+
 		test := framework.UITest{
 			Name: "Escape clears menu test",
 			Setup: func(f *framework.UITestFramework) {
@@ -233,7 +233,7 @@ func getSelectedItem(output string) string {
 func cleanANSI(input string) string {
 	result := ""
 	inEscape := false
-	
+
 	for _, char := range input {
 		if char == '\033' {
 			inEscape = true
@@ -243,6 +243,6 @@ func cleanANSI(input string) string {
 			result += string(char)
 		}
 	}
-	
+
 	return result
 }

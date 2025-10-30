@@ -39,9 +39,9 @@ func TestCompletionPagination(t *testing.T) {
 		mockTerm.ClearOutput()
 		renderer.ShowCompletion(items, 0)
 		mockTerm.ClearOutput()
-		
+
 		renderer.UpdateSelectionHighlight(0, 5) // Same page
-		
+
 		output := mockTerm.GetOutput()
 		if !contains(output, "\033[u") {
 			t.Error("Should use cursor positioning for same page")
@@ -55,9 +55,9 @@ func TestCompletionPagination(t *testing.T) {
 		mockTerm.ClearOutput()
 		renderer.ShowCompletion(items, 0)
 		mockTerm.ClearOutput()
-		
+
 		renderer.UpdateSelectionHighlight(5, 15) // Page 0 to page 1
-		
+
 		output := mockTerm.GetOutput()
 		if !contains(output, "itemK") {
 			t.Error("Should show items from page 1")
@@ -86,7 +86,7 @@ func TestCompletionPagination(t *testing.T) {
 	t.Run("Third page displays correctly", func(t *testing.T) {
 		mockTerm.ClearOutput()
 		renderer.ShowCompletion(items, 22) // Item on page 2
-		
+
 		output := mockTerm.GetOutput()
 		if !contains(output, "itemU") {
 			t.Error("Should show 21st item")
@@ -112,7 +112,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 
 	t.Run("Show initializes menu correctly", func(t *testing.T) {
 		menu.Show(items)
-		
+
 		if !menu.IsActive() {
 			t.Error("Menu should be active after Show")
 		}
@@ -127,7 +127,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 	t.Run("Next advances selection", func(t *testing.T) {
 		menu.Show(items)
 		menu.Next()
-		
+
 		if menu.selected != 1 {
 			t.Errorf("Expected selection 1, got %d", menu.selected)
 		}
@@ -137,7 +137,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 		menu.Show(items)
 		menu.selected = 2 // Last item
 		menu.Next()
-		
+
 		if menu.selected != 0 {
 			t.Errorf("Expected wrap to 0, got %d", menu.selected)
 		}
@@ -147,7 +147,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 		menu.Show(items)
 		menu.selected = 1
 		menu.Prev()
-		
+
 		if menu.selected != 0 {
 			t.Errorf("Expected selection 0, got %d", menu.selected)
 		}
@@ -156,7 +156,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 	t.Run("Prev wraps at beginning", func(t *testing.T) {
 		menu.Show(items)
 		menu.Prev()
-		
+
 		if menu.selected != 2 {
 			t.Errorf("Expected wrap to 2, got %d", menu.selected)
 		}
@@ -165,7 +165,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 	t.Run("GetSelected returns correct item", func(t *testing.T) {
 		menu.Show(items)
 		menu.selected = 1
-		
+
 		item, ok := menu.GetSelected()
 		if !ok {
 			t.Error("Should return selected item")
@@ -178,7 +178,7 @@ func TestCompletionMenuNavigation(t *testing.T) {
 	t.Run("Hide deactivates menu", func(t *testing.T) {
 		menu.Show(items)
 		menu.Hide()
-		
+
 		if menu.IsActive() {
 			t.Error("Menu should be inactive after Hide")
 		}
@@ -209,9 +209,9 @@ func TestCompletionRenderer(t *testing.T) {
 		mockTerm.ClearOutput()
 		renderer.ShowCompletion(items, 0)
 		mockTerm.ClearOutput()
-		
+
 		renderer.UpdateSelection(items, 0, 1)
-		
+
 		output := mockTerm.GetOutput()
 		// UpdateSelection uses video buffer, not cursor positioning
 		if len(output) == 0 {
@@ -224,13 +224,13 @@ func TestCompletionRenderer(t *testing.T) {
 		for i := 0; i < 15; i++ {
 			items[i] = CompletionItem{Text: "item" + string(rune('A'+i)), Type: "file"}
 		}
-		
+
 		mockTerm.ClearOutput()
 		renderer.ShowCompletion(items, 0)
 		mockTerm.ClearOutput()
-		
+
 		renderer.UpdateSelection(items, 5, 12) // Cross page boundary
-		
+
 		output := mockTerm.GetOutput()
 		// UpdateSelection uses video buffer approach, not clearing
 		if len(output) == 0 {

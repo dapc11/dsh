@@ -53,7 +53,7 @@ func TestTabCompletionRegression(t *testing.T) {
 		// Given
 		f := framework.NewUITestFramework()
 		runner := framework.NewScenarioRunner(f)
-		
+
 		test := framework.UITest{
 			Name: "Cursor movement regression test",
 			Setup: func(f *framework.UITestFramework) {
@@ -80,7 +80,7 @@ func TestTabCompletionRegression(t *testing.T) {
 		for i := 0; i < 5; i++ {
 			test.Scenario = append(test.Scenario, framework.Press(terminal.KeyTab))
 		}
-		
+
 		test.Assertions = append(test.Assertions, framework.UIAssertion{
 			Name: "Navigation occurred",
 			Check: func(f *framework.UITestFramework) bool {
@@ -118,7 +118,7 @@ func TestTabCompletionRegression(t *testing.T) {
 			Name: "Menu should not overwrite prompt after pagination",
 			Check: func(f *framework.UITestFramework) bool {
 				output := f.GetOutput()
-				
+
 				// Check that prompt and menu are properly separated
 				lines := strings.Split(output, "\n")
 				for _, line := range lines {
@@ -129,7 +129,7 @@ func TestTabCompletionRegression(t *testing.T) {
 						return false
 					}
 				}
-				
+
 				return true
 			},
 			Message: "Menu should not overwrite prompt line",

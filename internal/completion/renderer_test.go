@@ -278,8 +278,8 @@ func TestClear_NotDisplayedMenu(t *testing.T) {
 
 func TestRenderer_Pagination(t *testing.T) {
 	term := NewMockTerminal()
-	term.width = 20  // Small width to force pagination
-	term.height = 8  // Small height
+	term.width = 20 // Small width to force pagination
+	term.height = 8 // Small height
 	renderer := NewRenderer(term)
 
 	menu := NewMenu()
@@ -316,8 +316,8 @@ func TestRenderer_ClearNotDisplayed(t *testing.T) {
 
 func TestRenderer_LayoutEdgeCases(t *testing.T) {
 	term := NewMockTerminal()
-	term.width = 5   // Very small width
-	term.height = 2  // Very small height
+	term.width = 5  // Very small width
+	term.height = 2 // Very small height
 	renderer := NewRenderer(term)
 
 	menu := NewMenu()
