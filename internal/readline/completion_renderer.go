@@ -17,13 +17,17 @@ type CompletionRenderer struct {
 	menuLines    int
 	active       bool
 	lastItems    []CompletionItem // Store items for redraw
+	currentPage  int              // Current page number (0-based)
+	itemsPerPage int              // Items per page (default 10)
 }
 
 // NewCompletionRenderer creates a new completion renderer
 func NewCompletionRenderer(term terminal.TerminalInterface) *CompletionRenderer {
 	return &CompletionRenderer{
-		videoBuf: NewVideoBuffer(term),
-		terminal: term,
+		videoBuf:     NewVideoBuffer(term),
+		terminal:     term,
+		itemsPerPage: 10,
+		currentPage:  0,
 	}
 }
 
@@ -33,27 +37,43 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 		return
 	}
 
-	// Store items for redraw
+	// Store all items for pagination
 	cr.lastItems = items
+	cr.currentPage = selected / cr.itemsPerPage // Calculate which page the selected item is on
 
 	// Save cursor position and move to next line
 	_, _ = cr.terminal.WriteString("\033[s") // Save cursor for UpdateSelectionHighlight
 	_, _ = cr.terminal.WriteString("\r\n")   // New line
 
-	// Simple menu rendering - just show items in columns
-	maxItems := 10 // Limit items to prevent excessive output
-	if len(items) > maxItems {
-		items = items[:maxItems]
+	cr.renderCurrentPage(selected)
+	cr.active = true
+}
+
+// renderCurrentPage renders the current page of items
+func (cr *CompletionRenderer) renderCurrentPage(selected int) {
+	if len(cr.lastItems) == 0 {
+		return
 	}
 
+	// Calculate page bounds
+	startIdx := cr.currentPage * cr.itemsPerPage
+	endIdx := startIdx + cr.itemsPerPage
+	if endIdx > len(cr.lastItems) {
+		endIdx = len(cr.lastItems)
+	}
+
+	// Get items for current page
+	pageItems := cr.lastItems[startIdx:endIdx]
+
 	cols := 2
-	for i, item := range items {
+	for i, item := range pageItems {
 		if i > 0 && i%cols == 0 {
 			_, _ = cr.terminal.WriteString("\r\n")
 		}
 
 		// Show selection indicator for selected item
-		if i == selected {
+		globalIdx := startIdx + i
+		if globalIdx == selected {
 			_, _ = cr.terminal.WriteString(fmt.Sprintf("> %-33s", item.Text))
 		} else {
 			_, _ = cr.terminal.WriteString(fmt.Sprintf("  %-33s", item.Text))
@@ -65,7 +85,6 @@ func (cr *CompletionRenderer) ShowCompletion(items []CompletionItem, selected in
 	}
 
 	_, _ = cr.terminal.WriteString("\r\n")
-	cr.active = true
 }
 
 // UpdateSelection updates the selected item (like zsh's singledraw)
@@ -165,27 +184,56 @@ func (cr *CompletionRenderer) UpdateSelectionHighlight(oldSelected, newSelected 
 		return
 	}
 
+	// Check if we need to change pages
+	oldPage := oldSelected / cr.itemsPerPage
+	newPage := newSelected / cr.itemsPerPage
+
+	if oldPage != newPage {
+		// Page change required - re-render entire menu
+		cr.currentPage = newPage
+		cr.clearMenu()
+		cr.renderCurrentPage(newSelected)
+		return
+	}
+
+	// Same page - just update selection indicators
+	cr.updateSelectionOnSamePage(oldSelected, newSelected)
+}
+
+// clearMenu clears the current menu display
+func (cr *CompletionRenderer) clearMenu() {
+	// Move back to saved cursor position and clear menu area
+	_, _ = cr.terminal.WriteString("\033[u") // Restore cursor
+	_, _ = cr.terminal.WriteString("\033[J") // Clear from cursor to end of screen
+}
+
+// updateSelectionOnSamePage updates selection when staying on the same page
+func (cr *CompletionRenderer) updateSelectionOnSamePage(oldSelected, newSelected int) {
 	// Calculate positions in the 2-column layout
 	cols := 2
-	maxItems := 10
+	startIdx := cr.currentPage * cr.itemsPerPage
 
 	// Update old selection (remove "> ")
-	if oldSelected >= 0 && oldSelected < len(cr.lastItems) && oldSelected < maxItems {
-		row := (oldSelected / cols) + 1  // +1 for first menu line
-		col := (oldSelected%cols)*37 + 1 // 37 chars per column
+	if oldSelected >= 0 && oldSelected < len(cr.lastItems) {
+		pageIdx := oldSelected - startIdx
+		if pageIdx >= 0 && pageIdx < cr.itemsPerPage {
+			row := (pageIdx / cols) + 1  // +1 for first menu line
+			col := (pageIdx%cols)*37 + 1 // 37 chars per column
 
-		// Use saved cursor position and relative movements
-		_, _ = cr.terminal.WriteString("\033[u")                                    // Restore cursor to saved position
-		_, _ = cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG  ", row, col)) // Move down and right, clear selection
+			_, _ = cr.terminal.WriteString("\033[u")                                    // Restore cursor
+			_, _ = cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG  ", row, col)) // Clear selection
+		}
 	}
 
 	// Update new selection (add "> ")
-	if newSelected >= 0 && newSelected < len(cr.lastItems) && newSelected < maxItems {
-		row := (newSelected / cols) + 1  // +1 for first menu line
-		col := (newSelected%cols)*37 + 1 // 37 chars per column
+	if newSelected >= 0 && newSelected < len(cr.lastItems) {
+		pageIdx := newSelected - startIdx
+		if pageIdx >= 0 && pageIdx < cr.itemsPerPage {
+			row := (pageIdx / cols) + 1  // +1 for first menu line
+			col := (pageIdx%cols)*37 + 1 // 37 chars per column
 
-		// Use saved cursor position and relative movements
-		_, _ = cr.terminal.WriteString("\033[u")                                    // Restore cursor to saved position
-		_, _ = cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG> ", row, col)) // Move down and right, add selection
+			_, _ = cr.terminal.WriteString("\033[u")                                    // Restore cursor
+			_, _ = cr.terminal.WriteString(fmt.Sprintf("\033[%dB\033[%dG> ", row, col)) // Add selection
+		}
 	}
 }
